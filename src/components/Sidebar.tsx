@@ -59,101 +59,144 @@ const Sidebar = () => {
           <div className="w-3 h-3 rounded-full bg-gray-400"></div>
         </div>
 
-        <div className="font-bold text-lg mb-6">作品集</div>
+        <div 
+          className="font-bold text-lg mb-6 cursor-pointer" 
+          onClick={() => toggleExpand('作品集')}
+        >
+          作品集
+        </div>
         
-        <div className="space-y-4">
-          <div className="flex items-center">
-            <Icon icon="ri:arrow-right-s-line" className="w-5 h-5 mr-2 text-gray-500" />
-            <span className="flex-grow cursor-pointer" onClick={() => handleItemClick('《xxxx》1')}>《xxxx》</span>
-            <Icon icon="ri:download-line" className="w-5 h-5 mx-3 text-gray-500" />
-            <Icon icon="ri:add-line" className="w-5 h-5 text-gray-500" />
-            {showDropdown === '《xxxx》1' && (
-              <div 
-                ref={dropdownRef}
-                className="absolute mt-1 ml-6 bg-white shadow-md rounded-md z-10"
-                style={{ top: '100%', left: '0' }}
-              >
-                <ul className="py-1">
-                  <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">编辑</li>
-                  <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">删除</li>
-                  <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">复制</li>
-                </ul>
-              </div>
-            )}
-          </div>
-
-          <div className="flex items-center">
-            <Icon icon="ri:arrow-down-s-line" className="w-5 h-5 mr-2 text-gray-500" />
-            <span className="flex-grow cursor-pointer" onClick={() => handleItemClick('《xxxx》2')}>《xxxx》</span>
-            <Icon icon="ri:download-line" className="w-5 h-5 mx-3 text-gray-500" />
-            <Icon icon="ri:add-line" className="w-5 h-5 text-gray-500" />
-          </div>
-
-          {expandedItems['《xxxx》2'] && (
-            <div className="ml-7 space-y-4">
-              <div className="flex items-center">
-                <Icon icon="ri:arrow-down-s-line" className="w-5 h-5 mr-2 text-gray-500" />
-                <span className="flex-grow cursor-pointer" onClick={() => handleItemClick('角色剧本')}>角色剧本</span>
-                <Icon icon="ri:download-line" className="w-5 h-5 mx-3 text-gray-500" />
-                <Icon icon="ri:add-line" className="w-5 h-5 text-gray-500" />
-              </div>
-
-              {expandedItems['角色剧本'] && (
-                <div className="ml-7 space-y-4">
-                  <div className="flex items-center">
-                    <Icon icon="ri:arrow-down-s-line" className="w-5 h-5 mr-2 text-gray-500" />
-                    <span className="flex-grow cursor-pointer" onClick={() => handleItemClick('女1')}>女1: xxx</span>
-                    <Icon icon="ri:download-line" className="w-5 h-5 text-gray-500" />
-                  </div>
-
-                  {expandedItems['女1'] && (
-                    <div className="ml-7 space-y-4">
-                      <div className="flex items-center">
-                        <Icon icon="ri:arrow-right-s-line" className="w-5 h-5 mr-2 text-gray-500" />
-                        <span className="flex-grow cursor-pointer" onClick={() => handleItemClick('第一本')}>第一本</span>
-                        <Icon icon="ri:download-line" className="w-5 h-5 mx-3 text-gray-500" />
-                        <Icon icon="ri:add-line" className="w-5 h-5 text-gray-500" />
-                      </div>
-                      <div className="flex items-center">
-                        <Icon icon="ri:arrow-right-s-line" className="w-5 h-5 mr-2 text-gray-500" />
-                        <span className="flex-grow cursor-pointer" onClick={() => handleItemClick('第二本')}>第二本</span>
-                        <Icon icon="ri:download-line" className="w-5 h-5 mx-3 text-gray-500" />
-                        <Icon icon="ri:add-line" className="w-5 h-5 text-gray-500" />
-                      </div>
-                      <div className="flex items-center">
-                        <Icon icon="ri:arrow-right-s-line" className="w-5 h-5 mr-2 text-gray-500" />
-                        <span className="flex-grow cursor-pointer" onClick={() => handleItemClick('第三本')}>第三本</span>
-                        <Icon icon="ri:download-line" className="w-5 h-5 mx-3 text-gray-500" />
-                        <Icon icon="ri:add-line" className="w-5 h-5 text-gray-500" />
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex items-center">
-                    <Icon icon="ri:arrow-right-s-line" className="w-5 h-5 mr-2 text-gray-500" />
-                    <span className="flex-grow cursor-pointer" onClick={() => handleItemClick('女2')}>女2: xxx</span>
-                    <Icon icon="ri:download-line" className="w-5 h-5 mx-3 text-gray-500" />
-                    <Icon icon="ri:add-line" className="w-5 h-5 text-gray-500" />
-                  </div>
-
-                  <div className="flex items-center">
-                    <Icon icon="ri:arrow-right-s-line" className="w-5 h-5 mr-2 text-gray-500" />
-                    <span className="flex-grow cursor-pointer" onClick={() => handleItemClick('主持人手册')}>主持人手册</span>
-                    <Icon icon="ri:download-line" className="w-5 h-5 mx-3 text-gray-500" />
-                    <Icon icon="ri:add-line" className="w-5 h-5 text-gray-500" />
-                  </div>
-
-                  <div className="flex items-center">
-                    <Icon icon="ri:arrow-right-s-line" className="w-5 h-5 mr-2 text-gray-500" />
-                    <span className="flex-grow cursor-pointer" onClick={() => handleItemClick('物料')}>物料</span>
-                    <Icon icon="ri:download-line" className="w-5 h-5 mx-3 text-gray-500" />
-                    <Icon icon="ri:add-line" className="w-5 h-5 text-gray-500" />
-                  </div>
+        {expandedItems['作品集'] && (
+          <div className="space-y-4">
+            <div className="flex items-center">
+              <Icon icon="ri:arrow-right-s-line" className="w-5 h-5 mr-2 text-gray-500" />
+              <span className="flex-grow cursor-pointer" onClick={() => handleItemClick('《xxxx》1')}>《xxxx》</span>
+              <Icon icon="ri:download-line" className="w-5 h-5 mx-3 text-gray-500" />
+              <Icon icon="ri:add-line" className="w-5 h-5 text-gray-500" />
+              {showDropdown === '《xxxx》1' && (
+                <div 
+                  ref={dropdownRef}
+                  className="absolute mt-1 ml-6 bg-white shadow-md rounded-md z-10"
+                  style={{ top: '100%', left: '0' }}
+                >
+                  <ul className="py-1">
+                    <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">编辑</li>
+                    <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">删除</li>
+                    <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">复制</li>
+                  </ul>
                 </div>
               )}
             </div>
-          )}
-        </div>
+
+            <div className="flex items-center">
+              <Icon 
+                icon="ri:arrow-down-s-line" 
+                className="w-5 h-5 mr-2 text-gray-500"
+                onClick={() => toggleExpand('《xxxx》2')}
+              />
+              <span className="flex-grow cursor-pointer" onClick={() => toggleExpand('《xxxx》2')}>《xxxx》</span>
+              <Icon icon="ri:download-line" className="w-5 h-5 mx-3 text-gray-500" />
+              <Icon icon="ri:add-line" className="w-5 h-5 text-gray-500" />
+            </div>
+
+            {expandedItems['《xxxx》2'] && (
+              <div className="ml-7 space-y-4">
+                <div className="flex items-center">
+                  <Icon 
+                    icon="ri:arrow-down-s-line" 
+                    className="w-5 h-5 mr-2 text-gray-500"
+                    onClick={() => toggleExpand('角色剧本')}
+                  />
+                  <span className="flex-grow cursor-pointer" onClick={() => toggleExpand('角色剧本')}>角色剧本</span>
+                  <Icon icon="ri:download-line" className="w-5 h-5 mx-3 text-gray-500" />
+                  <Icon icon="ri:add-line" className="w-5 h-5 text-gray-500" />
+                </div>
+
+                {expandedItems['角色剧本'] && (
+                  <div className="ml-7 space-y-4">
+                    <div className="flex items-center">
+                      <Icon 
+                        icon="ri:arrow-down-s-line" 
+                        className="w-5 h-5 mr-2 text-gray-500"
+                        onClick={() => toggleExpand('女1')}
+                      />
+                      <span className="flex-grow cursor-pointer" onClick={() => toggleExpand('女1')}>女1: xxx</span>
+                      <Icon icon="ri:download-line" className="w-5 h-5 text-gray-500" />
+                    </div>
+
+                    {expandedItems['女1'] && (
+                      <div className="ml-7 space-y-4">
+                        <div className="flex items-center">
+                          <Icon 
+                            icon="ri:arrow-right-s-line" 
+                            className="w-5 h-5 mr-2 text-gray-500"
+                            onClick={() => toggleExpand('第一本')}
+                          />
+                          <span className="flex-grow cursor-pointer" onClick={() => toggleExpand('第一本')}>第一本</span>
+                          <Icon icon="ri:download-line" className="w-5 h-5 mx-3 text-gray-500" />
+                          <Icon icon="ri:add-line" className="w-5 h-5 text-gray-500" />
+                        </div>
+                        <div className="flex items-center">
+                          <Icon 
+                            icon="ri:arrow-right-s-line" 
+                            className="w-5 h-5 mr-2 text-gray-500"
+                            onClick={() => toggleExpand('第二本')}
+                          />
+                          <span className="flex-grow cursor-pointer" onClick={() => toggleExpand('第二本')}>第二本</span>
+                          <Icon icon="ri:download-line" className="w-5 h-5 mx-3 text-gray-500" />
+                          <Icon icon="ri:add-line" className="w-5 h-5 text-gray-500" />
+                        </div>
+                        <div className="flex items-center">
+                          <Icon 
+                            icon="ri:arrow-right-s-line" 
+                            className="w-5 h-5 mr-2 text-gray-500"
+                            onClick={() => toggleExpand('第三本')}
+                          />
+                          <span className="flex-grow cursor-pointer" onClick={() => toggleExpand('第三本')}>第三本</span>
+                          <Icon icon="ri:download-line" className="w-5 h-5 mx-3 text-gray-500" />
+                          <Icon icon="ri:add-line" className="w-5 h-5 text-gray-500" />
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex items-center">
+                      <Icon 
+                        icon="ri:arrow-right-s-line" 
+                        className="w-5 h-5 mr-2 text-gray-500"
+                        onClick={() => toggleExpand('女2')}
+                      />
+                      <span className="flex-grow cursor-pointer" onClick={() => toggleExpand('女2')}>女2: xxx</span>
+                      <Icon icon="ri:download-line" className="w-5 h-5 mx-3 text-gray-500" />
+                      <Icon icon="ri:add-line" className="w-5 h-5 text-gray-500" />
+                    </div>
+
+                    <div className="flex items-center">
+                      <Icon 
+                        icon="ri:arrow-right-s-line" 
+                        className="w-5 h-5 mr-2 text-gray-500"
+                        onClick={() => toggleExpand('主持人手册')}
+                      />
+                      <span className="flex-grow cursor-pointer" onClick={() => toggleExpand('主持人手册')}>主持人手册</span>
+                      <Icon icon="ri:download-line" className="w-5 h-5 mx-3 text-gray-500" />
+                      <Icon icon="ri:add-line" className="w-5 h-5 text-gray-500" />
+                    </div>
+
+                    <div className="flex items-center">
+                      <Icon 
+                        icon="ri:arrow-right-s-line" 
+                        className="w-5 h-5 mr-2 text-gray-500"
+                        onClick={() => toggleExpand('物料')}
+                      />
+                      <span className="flex-grow cursor-pointer" onClick={() => toggleExpand('物料')}>物料</span>
+                      <Icon icon="ri:download-line" className="w-5 h-5 mx-3 text-gray-500" />
+                      <Icon icon="ri:add-line" className="w-5 h-5 text-gray-500" />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="mt-10 flex justify-between items-center">
           <div className="font-bold text-lg">知识库</div>

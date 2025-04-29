@@ -17,7 +17,9 @@ const Sidebar = () => {
     '第二本': false,
     '第三本': false,
     '主持人手册': false,
-    '物料': false
+    '物料': false,
+    '知识库': false,
+    '工作流': false
   })
   const [showDropdown, setShowDropdown] = useState<string | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -198,15 +200,53 @@ const Sidebar = () => {
           </div>
         )}
 
-        <div className="mt-10 flex justify-between items-center">
-          <div className="font-bold text-lg">知识库</div>
+        <div 
+          className="font-bold text-lg mt-10 mb-6 cursor-pointer flex justify-between items-center" 
+          onClick={() => toggleExpand('知识库')}
+        >
+          <div>知识库</div>
           <Icon icon="ri:add-line" className="w-5 h-5 text-gray-500" />
         </div>
+        
+        {expandedItems['知识库'] && (
+          <div className="space-y-4">
+            <div className="flex items-center">
+              <Icon icon="ri:arrow-right-s-line" className="w-5 h-5 mr-2 text-gray-500" />
+              <span className="flex-grow cursor-pointer">基础知识</span>
+              <Icon icon="ri:download-line" className="w-5 h-5 mx-3 text-gray-500" />
+              <Icon icon="ri:add-line" className="w-5 h-5 text-gray-500" />
+            </div>
+            <div className="flex items-center">
+              <Icon icon="ri:arrow-right-s-line" className="w-5 h-5 mr-2 text-gray-500" />
+              <span className="flex-grow cursor-pointer">人物背景</span>
+              <Icon icon="ri:download-line" className="w-5 h-5 mx-3 text-gray-500" />
+              <Icon icon="ri:add-line" className="w-5 h-5 text-gray-500" />
+            </div>
+          </div>
+        )}
 
-        <div className="mt-10 flex justify-between items-center">
-          <div className="font-bold text-lg">工作流</div>
+        <div 
+          className="font-bold text-lg mt-10 mb-6 cursor-pointer flex justify-between items-center" 
+          onClick={() => toggleExpand('工作流')}
+        >
+          <div>工作流</div>
           <Icon icon="ri:add-line" className="w-5 h-5 text-gray-500" />
         </div>
+        
+        {expandedItems['工作流'] && (
+          <div className="space-y-4">
+            <div className="flex items-center">
+              <Icon icon="ri:arrow-right-s-line" className="w-5 h-5 mr-2 text-gray-500" />
+              <span className="flex-grow cursor-pointer">默认流程</span>
+              <Icon icon="ri:edit-line" className="w-5 h-5 mx-3 text-gray-500" />
+            </div>
+            <div className="flex items-center">
+              <Icon icon="ri:arrow-right-s-line" className="w-5 h-5 mr-2 text-gray-500" />
+              <span className="flex-grow cursor-pointer">自定义流程</span>
+              <Icon icon="ri:edit-line" className="w-5 h-5 mx-3 text-gray-500" />
+            </div>
+          </div>
+        )}
         
         <div className="text-gray-400 mt-16 text-sm">Writer.AI @千帆叙梦</div>
       </div>

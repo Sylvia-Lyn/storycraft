@@ -26,11 +26,19 @@ interface Character {
   type: 'draft' | 'final'
 }
 
+interface KnowledgeItem {
+  id: string
+  name: string
+}
+
 const Sidebar = () => {
   const [expandedItems, setExpandedItems] = useState<ExpandedItems>({})
   const [works, setWorks] = useState<Work[]>([])
   const [editingWorkId, setEditingWorkId] = useState<string | null>(null)
   const [editingWorkName, setEditingWorkName] = useState('')
+  const [knowledgeItems, setKnowledgeItems] = useState<KnowledgeItem[]>([])
+  const [editingKnowledgeId, setEditingKnowledgeId] = useState<string | null>(null)
+  const [editingKnowledgeName, setEditingKnowledgeName] = useState('')
   const editInputRef = useRef<HTMLInputElement>(null)
 
   // Handle expand/collapse
@@ -153,9 +161,51 @@ const Sidebar = () => {
     }
   }
 
-  // Handle knowledge base add click
+  // Handle knowledge base add
   const handleKnowledgeBaseAdd = () => {
-    toast('新功能加班加点更新中～')
+    const newItem: KnowledgeItem = {
+      id: `knowledge-${Date.now()}`,
+      name: '新知识库'
+    }
+    setKnowledgeItems(prev => [...prev, newItem])
+    setEditingKnowledgeId(newItem.id)
+    setEditingKnowledgeName(newItem.name)
+    
+    // 展开知识库部分
+    setExpandedItems(prev => ({
+      ...prev,
+      'knowledgeBase': true
+    }))
+  }
+
+  // Handle knowledge item edit save
+  const handleKnowledgeEditSave = () => {
+    if (editingKnowledgeId) {
+      setKnowledgeItems(prev => 
+        prev.map(item => 
+          item.id === editingKnowledgeId 
+            ? { ...item, name: editingKnowledgeName }
+            : item
+        )
+      )
+      setEditingKnowledgeId(null)
+      setEditingKnowledgeName('')
+    }
+  }
+
+  // Handle knowledge item edit cancel
+  const handleKnowledgeEditCancel = () => {
+    setEditingKnowledgeId(null)
+    setEditingKnowledgeName('')
+  }
+
+  // Handle knowledge item edit key press
+  const handleKnowledgeEditKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleKnowledgeEditSave()
+    } else if (e.key === 'Escape') {
+      handleKnowledgeEditCancel()
+    }
   }
 
   // Handle workflow add click
@@ -286,14 +336,31 @@ const Sidebar = () => {
         
         {expandedItems['knowledgeBase'] && (
           <div className="space-y-4">
-            <div className="flex items-center">
-              <Icon icon="ri:arrow-right-s-line" className="w-5 h-5 mr-2 text-gray-500" />
-              <span className="flex-grow cursor-pointer">基础知识</span>
-            </div>
-            <div className="flex items-center">
-              <Icon icon="ri:arrow-right-s-line" className="w-5 h-5 mr-2 text-gray-500" />
-              <span className="flex-grow cursor-pointer">人物背景</span>
-            </div>
+            {knowledgeItems.map(item => (
+              <div key={item.id} className="flex items-center">
+                <Icon icon="ri:file-text-line" className="w-5 h-5 mr-2 text-gray-500" />
+                {editingKnowledgeId === item.id ? (
+                  <input
+                    ref={editInputRef}
+                    value={editingKnowledgeName}
+                    onChange={e => setEditingKnowledgeName(e.target.value)}
+                    onBlur={handleKnowledgeEditSave}
+                    onKeyDown={handleKnowledgeEditKeyPress}
+                    className="flex-grow border border-gray-300 rounded px-2 py-1"
+                  />
+                ) : (
+                  <span 
+                    className="flex-grow cursor-pointer"
+                    onDoubleClick={() => {
+                      setEditingKnowledgeId(item.id)
+                      setEditingKnowledgeName(item.name)
+                    }}
+                  >
+                    {item.name}
+                  </span>
+                )}
+              </div>
+            ))}
           </div>
         )}
 

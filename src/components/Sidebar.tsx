@@ -158,6 +158,11 @@ const Sidebar = () => {
     toast('新功能加班加点更新中～')
   }
 
+  // Handle workflow add click
+  const handleWorkflowAdd = () => {
+    toast('新功能加班加点更新中～')
+  }
+
   useEffect(() => {
     if (editingWorkId && editInputRef.current) {
       editInputRef.current.focus()
@@ -301,22 +306,13 @@ const Sidebar = () => {
           <Icon 
             icon="ri:add-line" 
             className="w-5 h-5 text-gray-500 cursor-pointer"
-            onClick={handleKnowledgeBaseAdd}
+            onClick={handleWorkflowAdd}
           />
         </div>
         
+        {/* Empty workflow content */}
         {expandedItems['workflow'] && (
           <div className="space-y-4">
-            <div className="flex items-center">
-              <Icon icon="ri:arrow-right-s-line" className="w-5 h-5 mr-2 text-gray-500" />
-              <span className="flex-grow cursor-pointer">默认流程</span>
-              <Icon icon="ri:edit-line" className="w-5 h-5 mx-3 text-gray-500" />
-            </div>
-            <div className="flex items-center">
-              <Icon icon="ri:arrow-right-s-line" className="w-5 h-5 mr-2 text-gray-500" />
-              <span className="flex-grow cursor-pointer">自定义流程</span>
-              <Icon icon="ri:edit-line" className="w-5 h-5 mx-3 text-gray-500" />
-            </div>
           </div>
         )}
         

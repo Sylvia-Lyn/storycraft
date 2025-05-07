@@ -115,7 +115,7 @@ function MiddleSection() {
                 className="flex items-center border border-gray-300 rounded-md px-3 py-2 w-full cursor-pointer"
                 onClick={toggleKnowledgeDropdown}
               >
-                <span className="text-gray-700">知识库: <span style={selectedKnowledge === '科幻小说库' ? {fontSize: '12px'} : {}}>{selectedKnowledge}</span></span>
+                <span className="text-gray-700">知识库: {selectedKnowledge}</span>
                 <Icon icon="ri:arrow-down-s-line" className="ml-auto text-gray-700" />
               </div>
               
@@ -127,7 +127,7 @@ function MiddleSection() {
                       className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
                       onClick={() => selectKnowledge(kb)}
                     >
-                      <span style={kb === '科幻小说库' ? {fontSize: '12px'} : {}}>{kb}</span>
+                      {kb}
                     </div>
                   ))}
                 </div>

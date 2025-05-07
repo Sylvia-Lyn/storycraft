@@ -1,29 +1,39 @@
 import { useState, useRef, useEffect } from 'react'
 import { Icon } from '@iconify/react'
+import { toast } from 'react-hot-toast'
+import downloadWork from './WorkDownloader'
 
 interface ExpandedItems {
   [key: string]: boolean
 }
 
-const Sidebar = () => {
-  const [expandedItems, setExpandedItems] = useState<ExpandedItems>({
-    '作品集': true,
-    '《xxxx》1': false,
-    '《xxxx》2': true,
-    '角色剧本': true,
-    '女1': true,
-    '女2': false,
-    '第一本': false,
-    '第二本': false,
-    '第三本': false,
-    '主持人手册': false,
-    '物料': false,
-    '知识库': false,
-    '工作流': false
-  })
-  const [showDropdown, setShowDropdown] = useState<string | null>(null)
-  const dropdownRef = useRef<HTMLDivElement>(null)
+interface Work {
+  id: string
+  name: string
+  lastVisitedView?: string
+  characters?: Character[]
+  views: {
+    outline: boolean
+    characters: boolean
+    hostManual: boolean
+    materials: boolean
+  }
+}
 
+interface Character {
+  id: string
+  name: string
+  type: 'draft' | 'final'
+}
+
+const Sidebar = () => {
+  const [expandedItems, setExpandedItems] = useState<ExpandedItems>({})
+  const [works, setWorks] = useState<Work[]>([])
+  const [editingWorkId, setEditingWorkId] = useState<string | null>(null)
+  const [editingWorkName, setEditingWorkName] = useState('')
+  const editInputRef = useRef<HTMLInputElement>(null)
+
+  // Handle expand/collapse
   const toggleExpand = (key: string) => {
     setExpandedItems(prev => ({
       ...prev,
@@ -31,26 +41,128 @@ const Sidebar = () => {
     }))
   }
 
-  const handleClickOutside = (event: MouseEvent) => {
-    if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-      setShowDropdown(null)
+  // Handle work name click
+  const handleWorkClick = (work: Work) => {
+    // 导航到用户上次访问的视图或默认视图（大纲）
+    const view = work.lastVisitedView || 'outline'
+    console.log(`Navigating to ${view} view for work: ${work.name}`)
+  }
+
+  // Handle work name double click for editing
+  const handleWorkDoubleClick = (work: Work) => {
+    setEditingWorkId(work.id)
+    setEditingWorkName(work.name)
+  }
+
+  // Handle work name edit save
+  const handleWorkEditSave = () => {
+    if (editingWorkId) {
+      setWorks(prev => 
+        prev.map(work => 
+          work.id === editingWorkId 
+            ? { ...work, name: editingWorkName }
+            : work
+        )
+      )
+      setEditingWorkId(null)
+      setEditingWorkName('')
     }
+  }
+
+  // Handle work name edit cancel
+  const handleWorkEditCancel = () => {
+    setEditingWorkId(null)
+    setEditingWorkName('')
+  }
+
+  // Handle work name edit key press
+  const handleWorkEditKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleWorkEditSave()
+    } else if (e.key === 'Escape') {
+      handleWorkEditCancel()
+    }
+  }
+
+  // Handle add new work
+  const handleAddWork = () => {
+    const newWork: Work = {
+      id: `work-${Date.now()}`,
+      name: '新作品',
+      views: {
+        outline: true,      // 大纲视图
+        characters: true,   // 角色剧本视图
+        hostManual: true,   // 主持人手册视图
+        materials: true     // 物料视图
+      },
+      characters: [
+        {
+          id: `char-${Date.now()}-1`,
+          name: '角色1',
+          type: 'draft'
+        }
+      ]
+    }
+    setWorks(prev => [...prev, newWork])
+    setEditingWorkId(newWork.id)
+    setEditingWorkName(newWork.name)
+    
+    // 展开新作品
+    setExpandedItems(prev => ({
+      ...prev,
+      [newWork.id]: true
+    }))
+  }
+
+  // Handle download work
+  const handleDownloadWork = async (work: Work) => {
+    try {
+      // 下载大纲
+      await downloadWork({
+        type: 'work',
+        workName: work.name
+      })
+
+      // 下载角色剧本
+      if (work.characters) {
+        for (const character of work.characters) {
+          await downloadWork({
+            type: 'character',
+            workName: work.name,
+            characterName: character.name
+          })
+        }
+      }
+
+      // 下载主持人手册
+      await downloadWork({
+        type: 'host',
+        workName: work.name
+      })
+
+      // 下载物料
+      await downloadWork({
+        type: 'material',
+        workName: work.name
+      })
+
+      toast.success('下载成功')
+    } catch (error) {
+      toast.error('下载失败')
+      console.error('Download failed:', error)
+    }
+  }
+
+  // Handle knowledge base add click
+  const handleKnowledgeBaseAdd = () => {
+    toast('新功能加班加点更新中～')
   }
 
   useEffect(() => {
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
+    if (editingWorkId && editInputRef.current) {
+      editInputRef.current.focus()
     }
-  }, [])
-
-  const handleItemClick = (item: string) => {
-    if (showDropdown === item) {
-      setShowDropdown(null)
-    } else {
-      setShowDropdown(item)
-    }
-  }
+  }, [editingWorkId])
 
   return (
     <div className="w-[280px] bg-white border-r border-gray-200 overflow-auto">
@@ -61,179 +173,139 @@ const Sidebar = () => {
           <div className="w-3 h-3 rounded-full bg-gray-400"></div>
         </div>
 
-        <div 
-          className="font-bold text-lg mb-6 cursor-pointer" 
-          onClick={() => toggleExpand('作品集')}
-        >
-          作品集
+        {/* Works Section */}
+        <div className="font-bold text-lg mb-6 flex justify-between items-center">
+          <span 
+            className="cursor-pointer" 
+            onClick={() => toggleExpand('works')}
+          >
+            作品集
+          </span>
+          <Icon 
+            icon="ri:add-line" 
+            className="w-5 h-5 text-gray-500 cursor-pointer"
+            onClick={handleAddWork}
+          />
         </div>
         
-        {expandedItems['作品集'] && (
+        {expandedItems['works'] && (
           <div className="space-y-4">
-            <div className="flex items-center">
-              <Icon icon="ri:arrow-right-s-line" className="w-5 h-5 mr-2 text-gray-500" />
-              <span className="flex-grow cursor-pointer" onClick={() => handleItemClick('《xxxx》1')}>《xxxx》</span>
-              <Icon icon="ri:download-line" className="w-5 h-5 mx-3 text-gray-500" />
-              <Icon icon="ri:add-line" className="w-5 h-5 text-gray-500" />
-              {showDropdown === '《xxxx》1' && (
-                <div 
-                  ref={dropdownRef}
-                  className="absolute mt-1 ml-6 bg-white shadow-md rounded-md z-10"
-                  style={{ top: '100%', left: '0' }}
-                >
-                  <ul className="py-1">
-                    <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">编辑</li>
-                    <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">删除</li>
-                    <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">复制</li>
-                  </ul>
-                </div>
-              )}
-            </div>
-
-            <div className="flex items-center">
-              <Icon 
-                icon="ri:arrow-down-s-line" 
-                className="w-5 h-5 mr-2 text-gray-500"
-                onClick={() => toggleExpand('《xxxx》2')}
-              />
-              <span className="flex-grow cursor-pointer" onClick={() => toggleExpand('《xxxx》2')}>《xxxx》</span>
-              <Icon icon="ri:download-line" className="w-5 h-5 mx-3 text-gray-500" />
-              <Icon icon="ri:add-line" className="w-5 h-5 text-gray-500" />
-            </div>
-
-            {expandedItems['《xxxx》2'] && (
-              <div className="ml-7 space-y-4">
+            {works.map(work => (
+              <div key={work.id}>
                 <div className="flex items-center">
                   <Icon 
-                    icon="ri:arrow-down-s-line" 
-                    className="w-5 h-5 mr-2 text-gray-500"
-                    onClick={() => toggleExpand('角色剧本')}
+                    icon={expandedItems[work.id] ? "ri:arrow-down-s-line" : "ri:arrow-right-s-line"} 
+                    className="w-5 h-5 mr-2 text-gray-500 cursor-pointer"
+                    onClick={() => toggleExpand(work.id)}
                   />
-                  <span className="flex-grow cursor-pointer" onClick={() => toggleExpand('角色剧本')}>角色剧本</span>
-                  <Icon icon="ri:download-line" className="w-5 h-5 mx-3 text-gray-500" />
-                  <Icon icon="ri:add-line" className="w-5 h-5 text-gray-500" />
+                  {editingWorkId === work.id ? (
+                    <input
+                      ref={editInputRef}
+                      value={editingWorkName}
+                      onChange={e => setEditingWorkName(e.target.value)}
+                      onBlur={handleWorkEditSave}
+                      onKeyDown={handleWorkEditKeyPress}
+                      className="flex-grow border border-gray-300 rounded px-2 py-1"
+                    />
+                  ) : (
+                    <span 
+                      className="flex-grow cursor-pointer"
+                      onClick={() => handleWorkClick(work)}
+                      onDoubleClick={() => handleWorkDoubleClick(work)}
+                    >
+                      {work.name}
+                    </span>
+                  )}
+                  <Icon 
+                    icon="ri:download-line" 
+                    className="w-5 h-5 mx-3 text-gray-500 cursor-pointer"
+                    onClick={() => handleDownloadWork(work)}
+                  />
                 </div>
 
-                {expandedItems['角色剧本'] && (
-                  <div className="ml-7 space-y-4">
-                    <div className="flex items-center">
-                      <Icon 
-                        icon="ri:arrow-down-s-line" 
-                        className="w-5 h-5 mr-2 text-gray-500"
-                        onClick={() => toggleExpand('女1')}
-                      />
-                      <span className="flex-grow cursor-pointer" onClick={() => toggleExpand('女1')}>女1: xxx</span>
-                      <Icon icon="ri:download-line" className="w-5 h-5 text-gray-500" />
-                    </div>
-
-                    {expandedItems['女1'] && (
-                      <div className="ml-7 space-y-4">
+                {/* Show work views when expanded */}
+                {expandedItems[work.id] && (
+                  <div className="ml-7 space-y-2 mt-2">
+                    {work.views.outline && (
+                      <div className="flex items-center">
+                        <Icon icon="ri:file-text-line" className="w-4 h-4 mr-2 text-gray-500" />
+                        <span className="cursor-pointer">大纲</span>
+                      </div>
+                    )}
+                    {work.views.characters && work.characters && (
+                      <div>
                         <div className="flex items-center">
-                          <Icon 
-                            icon="ri:arrow-right-s-line" 
-                            className="w-5 h-5 mr-2 text-gray-500"
-                            onClick={() => toggleExpand('第一本')}
-                          />
-                          <span className="flex-grow cursor-pointer" onClick={() => toggleExpand('第一本')}>第一本</span>
-                          <Icon icon="ri:download-line" className="w-5 h-5 mx-3 text-gray-500" />
-                          <Icon icon="ri:add-line" className="w-5 h-5 text-gray-500" />
+                          <Icon icon="ri:group-line" className="w-4 h-4 mr-2 text-gray-500" />
+                          <span className="cursor-pointer">角色剧本</span>
                         </div>
-                        <div className="flex items-center">
-                          <Icon 
-                            icon="ri:arrow-right-s-line" 
-                            className="w-5 h-5 mr-2 text-gray-500"
-                            onClick={() => toggleExpand('第二本')}
-                          />
-                          <span className="flex-grow cursor-pointer" onClick={() => toggleExpand('第二本')}>第二本</span>
-                          <Icon icon="ri:download-line" className="w-5 h-5 mx-3 text-gray-500" />
-                          <Icon icon="ri:add-line" className="w-5 h-5 text-gray-500" />
-                        </div>
-                        <div className="flex items-center">
-                          <Icon 
-                            icon="ri:arrow-right-s-line" 
-                            className="w-5 h-5 mr-2 text-gray-500"
-                            onClick={() => toggleExpand('第三本')}
-                          />
-                          <span className="flex-grow cursor-pointer" onClick={() => toggleExpand('第三本')}>第三本</span>
-                          <Icon icon="ri:download-line" className="w-5 h-5 mx-3 text-gray-500" />
-                          <Icon icon="ri:add-line" className="w-5 h-5 text-gray-500" />
+                        <div className="ml-6 mt-1 space-y-1">
+                          {work.characters.map(char => (
+                            <div key={char.id} className="flex items-center">
+                              <Icon icon="ri:user-line" className="w-4 h-4 mr-2 text-gray-500" />
+                              <span className="cursor-pointer">{char.name}</span>
+                            </div>
+                          ))}
                         </div>
                       </div>
                     )}
-
-                    <div className="flex items-center">
-                      <Icon 
-                        icon="ri:arrow-right-s-line" 
-                        className="w-5 h-5 mr-2 text-gray-500"
-                        onClick={() => toggleExpand('女2')}
-                      />
-                      <span className="flex-grow cursor-pointer" onClick={() => toggleExpand('女2')}>女2: xxx</span>
-                      <Icon icon="ri:download-line" className="w-5 h-5 mx-3 text-gray-500" />
-                      <Icon icon="ri:add-line" className="w-5 h-5 text-gray-500" />
-                    </div>
-
-                    <div className="flex items-center">
-                      <Icon 
-                        icon="ri:arrow-right-s-line" 
-                        className="w-5 h-5 mr-2 text-gray-500"
-                        onClick={() => toggleExpand('主持人手册')}
-                      />
-                      <span className="flex-grow cursor-pointer" onClick={() => toggleExpand('主持人手册')}>主持人手册</span>
-                      <Icon icon="ri:download-line" className="w-5 h-5 mx-3 text-gray-500" />
-                      <Icon icon="ri:add-line" className="w-5 h-5 text-gray-500" />
-                    </div>
-
-                    <div className="flex items-center">
-                      <Icon 
-                        icon="ri:arrow-right-s-line" 
-                        className="w-5 h-5 mr-2 text-gray-500"
-                        onClick={() => toggleExpand('物料')}
-                      />
-                      <span className="flex-grow cursor-pointer" onClick={() => toggleExpand('物料')}>物料</span>
-                      <Icon icon="ri:download-line" className="w-5 h-5 mx-3 text-gray-500" />
-                      <Icon icon="ri:add-line" className="w-5 h-5 text-gray-500" />
-                    </div>
+                    {work.views.hostManual && (
+                      <div className="flex items-center">
+                        <Icon icon="ri:book-line" className="w-4 h-4 mr-2 text-gray-500" />
+                        <span className="cursor-pointer">主持人手册</span>
+                      </div>
+                    )}
+                    {work.views.materials && (
+                      <div className="flex items-center">
+                        <Icon icon="ri:folder-line" className="w-4 h-4 mr-2 text-gray-500" />
+                        <span className="cursor-pointer">物料</span>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-            )}
+            ))}
           </div>
         )}
 
+        {/* Knowledge Base Section */}
         <div 
-          className="font-bold text-lg mt-10 mb-6 cursor-pointer flex justify-between items-center" 
-          onClick={() => toggleExpand('知识库')}
+          className="font-bold text-lg mt-10 mb-6 flex justify-between items-center cursor-pointer" 
         >
-          <div>知识库</div>
-          <Icon icon="ri:add-line" className="w-5 h-5 text-gray-500" />
+          <span onClick={() => toggleExpand('knowledgeBase')}>知识库</span>
+          <Icon 
+            icon="ri:add-line" 
+            className="w-5 h-5 text-gray-500 cursor-pointer"
+            onClick={handleKnowledgeBaseAdd}
+          />
         </div>
         
-        {expandedItems['知识库'] && (
+        {expandedItems['knowledgeBase'] && (
           <div className="space-y-4">
             <div className="flex items-center">
               <Icon icon="ri:arrow-right-s-line" className="w-5 h-5 mr-2 text-gray-500" />
               <span className="flex-grow cursor-pointer">基础知识</span>
-              <Icon icon="ri:download-line" className="w-5 h-5 mx-3 text-gray-500" />
-              <Icon icon="ri:add-line" className="w-5 h-5 text-gray-500" />
             </div>
             <div className="flex items-center">
               <Icon icon="ri:arrow-right-s-line" className="w-5 h-5 mr-2 text-gray-500" />
               <span className="flex-grow cursor-pointer">人物背景</span>
-              <Icon icon="ri:download-line" className="w-5 h-5 mx-3 text-gray-500" />
-              <Icon icon="ri:add-line" className="w-5 h-5 text-gray-500" />
             </div>
           </div>
         )}
 
+        {/* Workflow Section */}
         <div 
           className="font-bold text-lg mt-10 mb-6 cursor-pointer flex justify-between items-center" 
-          onClick={() => toggleExpand('工作流')}
+          onClick={() => toggleExpand('workflow')}
         >
-          <div>工作流</div>
-          <Icon icon="ri:add-line" className="w-5 h-5 text-gray-500" />
+          <span>工作流</span>
+          <Icon 
+            icon="ri:add-line" 
+            className="w-5 h-5 text-gray-500 cursor-pointer"
+            onClick={handleKnowledgeBaseAdd}
+          />
         </div>
         
-        {expandedItems['工作流'] && (
+        {expandedItems['workflow'] && (
           <div className="space-y-4">
             <div className="flex items-center">
               <Icon icon="ri:arrow-right-s-line" className="w-5 h-5 mr-2 text-gray-500" />

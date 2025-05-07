@@ -32,7 +32,9 @@ interface KnowledgeItem {
 }
 
 const Sidebar = () => {
-  const [expandedItems, setExpandedItems] = useState<ExpandedItems>({})
+  const [expandedItems, setExpandedItems] = useState<ExpandedItems>({
+    works: true  // 默认展开作品集
+  })
   const [works, setWorks] = useState<Work[]>([])
   const [editingWorkId, setEditingWorkId] = useState<string | null>(null)
   const [editingWorkName, setEditingWorkName] = useState('')
@@ -125,30 +127,55 @@ const Sidebar = () => {
   // Handle download work
   const handleDownloadWork = async (work: Work) => {
     try {
-      // 下载大纲
+      // 下载作品（包括大纲、所有角色剧本、主持人手册和物料）
       await downloadWork({
         type: 'work',
-        workName: work.name
+        workName: work.name,
+        downloadType: 'all'
       })
 
-      // 下载角色剧本
-      if (work.characters) {
-        for (const character of work.characters) {
-          await downloadWork({
-            type: 'character',
-            workName: work.name,
-            characterName: character.name
-          })
-        }
-      }
+      toast.success('下载成功')
+    } catch (error) {
+      toast.error('下载失败')
+      console.error('Download failed:', error)
+    }
+  }
 
-      // 下载主持人手册
+  // Handle download character script
+  const handleDownloadCharacterScript = async (work: Work, character: Character) => {
+    try {
+      await downloadWork({
+        type: 'character',
+        workName: work.name,
+        characterName: character.name,
+        downloadType: 'all'  // 下载初稿和终稿
+      })
+
+      toast.success('下载成功')
+    } catch (error) {
+      toast.error('下载失败')
+      console.error('Download failed:', error)
+    }
+  }
+
+  // Handle download host manual
+  const handleDownloadHostManual = async (work: Work) => {
+    try {
       await downloadWork({
         type: 'host',
         workName: work.name
       })
 
-      // 下载物料
+      toast.success('下载成功')
+    } catch (error) {
+      toast.error('下载失败')
+      console.error('Download failed:', error)
+    }
+  }
+
+  // Handle download materials
+  const handleDownloadMaterials = async (work: Work) => {
+    try {
       await downloadWork({
         type: 'material',
         workName: work.name
@@ -298,6 +325,14 @@ const Sidebar = () => {
                             <div key={char.id} className="flex items-center">
                               <Icon icon="ri:user-line" className="w-4 h-4 mr-2 text-gray-500" />
                               <span className="cursor-pointer">{char.name}</span>
+                              <Icon 
+                                icon="ri:download-line" 
+                                className="w-4 h-4 ml-2 text-gray-500 cursor-pointer"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleDownloadCharacterScript(work, char)
+                                }}
+                              />
                             </div>
                           ))}
                         </div>
@@ -307,12 +342,28 @@ const Sidebar = () => {
                       <div className="flex items-center">
                         <Icon icon="ri:book-line" className="w-4 h-4 mr-2 text-gray-500" />
                         <span className="cursor-pointer">主持人手册</span>
+                        <Icon 
+                          icon="ri:download-line" 
+                          className="w-4 h-4 ml-2 text-gray-500 cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleDownloadHostManual(work)
+                          }}
+                        />
                       </div>
                     )}
                     {work.views.materials && (
                       <div className="flex items-center">
                         <Icon icon="ri:folder-line" className="w-4 h-4 mr-2 text-gray-500" />
                         <span className="cursor-pointer">物料</span>
+                        <Icon 
+                          icon="ri:download-line" 
+                          className="w-4 h-4 ml-2 text-gray-500 cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleDownloadMaterials(work)
+                          }}
+                        />
                       </div>
                     )}
                   </div>

@@ -214,9 +214,9 @@ export function useAppState() {
     // 实际项目中应该调用后端API
     const generatedScenes = segments.map((segment, index) => {
       // 构建分幕剧情总结的提示词
-      const prompt = `根据以下「${characterName}」的文本，以「${characterName}」的视角总结剧情，要求总结为一句话，
-      并且有明确原文对应，且剧情总结中要包含「${characterName}」和哪些角色在什么地方发生了什么事件，
-      有什么样的情感变化和什么样的结果`;
+      // const prompt = `根据以下「${characterName}」的文本，以「${characterName}」的视角总结剧情，要求总结为一句话，
+      // 并且有明确原文对应，且剧情总结中要包含「${characterName}」和哪些角色在什么地方发生了什么事件，
+      // 有什么样的情感变化和什么样的结果`;
       
       // 这里模拟生成剧情总结
       // 真实项目中，这部分应该调用API，传入段落内容和角色名
@@ -236,7 +236,7 @@ export function useAppState() {
   // 生成优化剧情
   const generateOptimizedText = (
     text: string,
-    prompt: string = '请优化以下剧情，使其更加生动有趣，情节更合理：'
+    // prompt: string = '请优化以下剧情，使其更加生动有趣，情节更合理：'
   ) => {
     setIsOptimizing(true);
     

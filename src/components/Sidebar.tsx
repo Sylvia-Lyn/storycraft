@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
 import { Icon } from '@iconify/react'
 import { toast } from 'react-hot-toast'
-import { useNavigate } from 'react-router-dom'
-import downloadWork from './WorkDownloader'
+// import { useNavigate } from 'react-router-dom'
+// import downloadWork from './WorkDownloader'
 
 interface ExpandedItems {
   [key: string]: boolean
@@ -40,15 +40,15 @@ interface KnowledgeItem {
 
 const Sidebar = () => {
   // 尝试获取navigate，如果不在Router上下文中则使用一个空函数
-  let navigate;
-  try {
-    navigate = useNavigate();
-  } catch (e) {
-    navigate = (path: string) => {
-      console.warn('Navigation attempted outside Router context:', path);
-      window.location.href = path; // 降级为直接跳转
-    };
-  }
+  // let navigate;
+  // try {
+  //   navigate = useNavigate();
+  // } catch (e) {
+  //   navigate = (path: string) => {
+  //     console.warn('Navigation attempted outside Router context:', path);
+  //     window.location.href = path; // 降级为直接跳转
+  //   };
+  // }
   
   const [expandedItems, setExpandedItems] = useState<ExpandedItems>({
     works: true,  // 默认展开作品集
@@ -89,9 +89,9 @@ const Sidebar = () => {
   
   const [editingWorkId, setEditingWorkId] = useState<string | null>(null)
   const [editingWorkName, setEditingWorkName] = useState('')
-  const [knowledgeItems, setKnowledgeItems] = useState<KnowledgeItem[]>([])
-  const [editingKnowledgeId, setEditingKnowledgeId] = useState<string | null>(null)
-  const [editingKnowledgeName, setEditingKnowledgeName] = useState('')
+  // const [knowledgeItems, setKnowledgeItems] = useState<KnowledgeItem[]>([])
+  // const [editingKnowledgeId, setEditingKnowledgeId] = useState<string | null>(null)
+  // const [editingKnowledgeName, setEditingKnowledgeName] = useState('')
   const editInputRef = useRef<HTMLInputElement>(null)
 
   // 处理展开/折叠功能
@@ -155,29 +155,29 @@ const Sidebar = () => {
   }
 
   // 处理下载作品
-  const handleDownloadWork = async (work: Work) => {
+  const handleDownloadWork = async () => {
     showToast()
   }
 
   // 处理下载角色剧本
-  const handleDownloadCharacterScript = async (work: Work, character: Character) => {
+  const handleDownloadCharacterScript = async () => {
     showToast()
   }
 
   // 处理下载单个剧本
-  const handleDownloadScript = async (work: Work, character: Character, script: Script) => {
+  const handleDownloadScript = async () => {
     showToast()
   }
 
   // 处理添加新剧本
-  const handleAddScript = (work: Work, character: Character) => {
+  const handleAddScript = () => {
     showToast()
   }
 
   // 处理知识库添加
-  const handleKnowledgeBaseAdd = () => {
-    showToast()
-  }
+  // const handleKnowledgeBaseAdd = () => {
+  //   showToast()
+  // }
 
   // 处理工作流其他按钮点击
   const handleWorkflowOtherAction = (e: React.MouseEvent) => {
@@ -186,12 +186,12 @@ const Sidebar = () => {
   }
 
   // 处理知识库项点击
-  const handleKnowledgeItemClick = (item: KnowledgeItem) => {
+  const handleKnowledgeItemClick = () => {
     showToast()
   }
 
   // 处理脚本点击
-  const handleScriptClick = (script: Script) => {
+  const handleScriptClick = () => {
     showToast()
   }
 
@@ -261,7 +261,7 @@ const Sidebar = () => {
                   <Icon 
                     icon="ri:download-line" 
                     className="w-5 h-5 ml-2 text-gray-500 cursor-pointer"
-                    onClick={() => handleDownloadWork(work)}
+                    onClick={() => handleDownloadWork()}
                   />
                   <Icon 
                     icon="ri:add-line" 
@@ -286,12 +286,12 @@ const Sidebar = () => {
                           <Icon 
                             icon="ri:download-line" 
                             className="w-5 h-5 ml-2 text-gray-500 cursor-pointer"
-                            onClick={() => work.characters && work.characters.length > 0 ? handleDownloadCharacterScript(work, work.characters[0]) : showToast()}
+                            onClick={() => work.characters && work.characters.length > 0 ? handleDownloadCharacterScript() : showToast()}
                           />
                           <Icon 
                             icon="ri:add-line" 
                             className="w-5 h-5 ml-2 text-gray-500 cursor-pointer"
-                            onClick={() => work.characters && work.characters.length > 0 ? handleAddScript(work, work.characters[0]) : showToast()}
+                            onClick={() => work.characters && work.characters.length > 0 ? handleAddScript() : showToast()}
                           />
                         </div>
                         
@@ -309,12 +309,12 @@ const Sidebar = () => {
                                   <Icon 
                                     icon="ri:download-line" 
                                     className="w-5 h-5 ml-2 text-gray-500 cursor-pointer"
-                                    onClick={() => handleDownloadCharacterScript(work, char)}
+                                    onClick={() => handleDownloadCharacterScript()}
                                   />
                                   <Icon 
                                     icon="ri:add-line" 
                                     className="w-5 h-5 ml-2 text-gray-500 cursor-pointer"
-                                    onClick={() => handleAddScript(work, char)}
+                                    onClick={() => handleAddScript()}
                                   />
                                 </div>
                                 
@@ -329,14 +329,14 @@ const Sidebar = () => {
                                         />
                                         <span 
                                           className="flex-grow cursor-pointer"
-                                          onClick={() => handleScriptClick(script)}
+                                          onClick={() => handleScriptClick()}
                                         >
                                           {script.name}
                                         </span>
                                         <Icon 
                                           icon="ri:download-line" 
                                           className="w-5 h-5 ml-2 text-gray-500 cursor-pointer"
-                                          onClick={() => handleDownloadScript(work, char, script)}
+                                          onClick={() => handleDownloadScript()}
                                         />
                                         <Icon 
                                           icon="ri:add-line" 
@@ -412,7 +412,7 @@ const Sidebar = () => {
         <div className="font-bold text-lg mt-6 mb-2 flex justify-between items-center hover:bg-gray-50 p-2 rounded-md">
           <span 
             className="cursor-pointer flex items-center" 
-            onClick={() => handleKnowledgeItemClick({id: 'default', name: '知识库'})}
+            onClick={() => handleKnowledgeItemClick()}
           >
             <Icon 
               icon="ri:arrow-right-s-line" 

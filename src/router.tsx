@@ -1,4 +1,4 @@
-import { createHashRouter, Outlet } from 'react-router-dom'
+import { createHashRouter } from 'react-router-dom'
 import ScriptEditor from './components/ScriptEditor'
 import SceneList from './components/SceneList'
 import SceneEditor from './components/SceneEditor'

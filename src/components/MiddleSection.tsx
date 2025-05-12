@@ -33,23 +33,23 @@ function MiddleSection() {
     knowledgeBases,
     
     // 剧情选项相关
-    generatingScenarios,
-    scenarioOptions,
-    selectedScenario,
-    selectScenario,
-    generateScenarioOptions,
+    // generatingScenarios,
+    // scenarioOptions,
+    // selectedScenario,
+    // selectScenario,
+    // generateScenarioOptions,
     
     // 消息相关
-    optimizationText,
-    setOptimizationText,
+    // optimizationText,
+    // setOptimizationText,
     messages,
-    handleKeyDown
+    // handleKeyDown
   } = useAppState();
   
   // 初稿相关状态
   const [previousDraftContent, setPreviousDraftContent] = useState("");
   const [currentDraftContent, setCurrentDraftContent] = useState("");
-  const [selectedText, setSelectedText] = useState("");
+  // const [selectedText, setSelectedText] = useState("");
   const [feedbackText, setFeedbackText] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [optimizationResults, setOptimizationResults] = useState<Array<{id: string, text: string}>>([]);
@@ -58,7 +58,7 @@ function MiddleSection() {
   useEffect(() => {
     const handleDraftTextSelected = (event: CustomEvent) => {
       if (event.detail && event.detail.text) {
-        setSelectedText(event.detail.text);
+        // setSelectedText(event.detail.text);
         // 可能还需要获取之前的内容和当前分幕内容
         if (event.detail.previousContent) {
           setPreviousDraftContent(event.detail.previousContent);
@@ -147,9 +147,9 @@ function MiddleSection() {
       console.log("API返回结果:", data);
       
       // 将API返回的结果转换为选项格式
-      const results = data.results.map((result: string, index: number) => ({
-        id: String(index + 1),
-        text: `${index + 1}. ${result}`
+      const results = data.results.map((result: string, i: number) => ({
+        id: String(i + 1),
+        text: `${i + 1}. ${result}`
       }));
       
       console.log("格式化后的结果:", results);
@@ -172,18 +172,7 @@ function MiddleSection() {
     });
     window.dispatchEvent(event);
     
-    // 添加一条用户消息，表示用户已选择
-    const userMessage = {
-      text: `我选择了: "${optimizedText.substring(0, 30)}..."`,
-      isUser: true
-    };
-    
-    // 更新消息列表
-    // 注意: 如果messages是通过useAppState获取的，可能需要调用setMessages函数
-    // setMessages([...messages, userMessage]);
-    
     // 清空当前选择和结果
-    setSelectedText("");
     setPreviousDraftContent("");
     setCurrentDraftContent("");
     setFeedbackText("");
@@ -350,7 +339,7 @@ function MiddleSection() {
             </div>
           ) : optimizationResults.length > 0 ? (
             <div className="space-y-4 mb-6">
-              {optimizationResults.map((option, index) => (
+              {optimizationResults.map((option) => (
                 <div 
                   key={option.id}
                   className="border border-gray-200 rounded-lg p-4 cursor-pointer hover:border-gray-400 hover:bg-gray-50 transition-colors overflow-hidden"

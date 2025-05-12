@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react'
-import { Link } from 'react-router-dom'
 import { Icon } from '@iconify/react'
 import Sidebar from './Sidebar'
 import Navigation from './Navigation'
@@ -53,13 +52,11 @@ const columnHelper = createColumnHelper<Scene>();
 
 // 分幕列表页面主组件
 function SceneList() {
-  const [selectedTab, setSelectedTab] = useState('分幕');
   const tabs = ['大纲', '角色', '关系', '章节', '分幕', '剧本'];
   const [isPlotView, setIsPlotView] = useState(true);
   const [showModelDropdown, setShowModelDropdown] = useState(false);
   const [selectedModel, setSelectedModel] = useState('claude35_sonnet2');
   const [userInput, setUserInput] = useState('');
-  const [selectedCell, setSelectedCell] = useState('');
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
   
   // AI模型列表
@@ -154,16 +151,6 @@ function SceneList() {
     },
   });
 
-  // 处理单元格点击，模拟选择内容
-  const handleCellClick = (cell: any) => {
-    const content = cell.getValue();
-    if (typeof content === 'string') {
-      setSelectedCell(content.substring(0, 50) + '...');
-    } else if (Array.isArray(content)) {
-      setSelectedCell(content.join(', '));
-    }
-  };
-
   const customScrollbarStyle = `
     .custom-scrollbar::-webkit-scrollbar {
       width: 6px;
@@ -197,7 +184,7 @@ function SceneList() {
             <Navigation 
               tabs={tabs} 
               defaultTab="分幕" 
-              onTabChange={setSelectedTab}
+              onTabChange={(tab) => console.log(tab)}
             />
           </div>
           

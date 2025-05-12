@@ -33,11 +33,6 @@ interface Work {
   }
 }
 
-interface KnowledgeItem {
-  id: string
-  name: string
-}
-
 const Sidebar = () => {
   // 尝试获取navigate，如果不在Router上下文中则使用一个空函数
   // let navigate;

@@ -17,12 +17,25 @@ function MiddleSection() {
     selectModel,
     models,
     
+    // 文风相关
+    showStyleDropdown,
+    toggleStyleDropdown,
+    selectedStyle,
+    selectStyle,
+    styles,
+    
     // 知识库相关
     showKnowledgeDropdown,
     toggleKnowledgeDropdown,
     selectedKnowledge,
     selectKnowledge,
     knowledgeBases,
+    
+    // 剧情选项相关
+    generatingScenarios,
+    scenarioOptions,
+    selectedScenario,
+    selectScenario,
     
     // 消息相关
     optimizationText,
@@ -93,21 +106,47 @@ function MiddleSection() {
                   {models.map(model => (
                     <div 
                       key={model} 
-                      className="px-3 py-2 hover:bg-gray-100 cursor-pointer flex items-center"
+                      className={`px-3 py-2 hover:bg-gray-100 cursor-pointer flex items-center ${selectedModel === model ? 'bg-gray-100' : ''}`}
                       onClick={() => selectModel(model)}
                     >
                       <div className="flex items-center justify-center bg-white h-5 w-5 rounded-sm mr-2">
                         <span className="text-black text-xs font-medium">AI</span>
                       </div>
-                      {model}
+                      <span>{model}</span>
+                      {selectedModel === model && (
+                        <Icon icon="ri:check-line" className="ml-auto text-black" />
+                      )}
                     </div>
                   ))}
                 </div>
               )}
             </div>
             
-            <div className="flex items-center justify-center px-3 py-2 w-20">
-              <span className="text-gray-700">文风</span>
+            <div className="relative flex-1">
+              <div 
+                className="flex items-center bg-gray-100 rounded-md px-3 py-2 w-full cursor-pointer"
+                onClick={toggleStyleDropdown}
+              >
+                <span className="text-black">文风: {selectedStyle}</span>
+                <Icon icon="ri:arrow-down-s-line" className="ml-auto text-gray-700" />
+              </div>
+              
+              {showStyleDropdown && (
+                <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg z-10">
+                  {styles.map(style => (
+                    <div 
+                      key={style} 
+                      className={`px-3 py-2 hover:bg-gray-100 cursor-pointer flex items-center ${selectedStyle === style ? 'bg-gray-100' : ''}`}
+                      onClick={() => selectStyle(style)}
+                    >
+                      <span>{style}</span>
+                      {selectedStyle === style && (
+                        <Icon icon="ri:check-line" className="ml-auto text-black" />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
             
             <div className="relative flex-1">
@@ -124,10 +163,13 @@ function MiddleSection() {
                   {knowledgeBases.map(kb => (
                     <div 
                       key={kb} 
-                      className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                      className={`px-3 py-2 hover:bg-gray-100 cursor-pointer flex items-center ${selectedKnowledge === kb ? 'bg-gray-100' : ''}`}
                       onClick={() => selectKnowledge(kb)}
                     >
-                      {kb}
+                      <span>{kb}</span>
+                      {selectedKnowledge === kb && (
+                        <Icon icon="ri:check-line" className="ml-auto text-black" />
+                      )}
                     </div>
                   ))}
                 </div>
@@ -151,52 +193,76 @@ function MiddleSection() {
             ))}
           </div>
           
-          <div className="border border-gray-200 rounded-lg p-4 mb-4 max-h-[120px] overflow-hidden">
-            <div className="flex h-full">
-              <div className="font-medium mr-2 flex-shrink-0">1.</div>
-              <div className="flex-1 overflow-y-auto pr-2">
-                <p className="mb-2">xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</p>
-                <p className="mb-2">xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</p>
-                <p className="mb-2">xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</p>
-                <p className="mb-2">xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</p>
-                <p>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</p>
-              </div>
+          {/* 剧情选项区域 */}
+          {generatingScenarios ? (
+            <div className="text-center py-6">
+              <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900"></div>
+              <p className="mt-2 text-gray-600">正在使用 {selectedModel} 模型和 {selectedStyle} 文风生成剧情选项...</p>
             </div>
-          </div>
-          
-          <div className="border border-gray-200 rounded-lg p-4 mb-4 max-h-[120px] overflow-hidden">
-            <div className="flex h-full">
-              <div className="font-medium mr-2 flex-shrink-0">2.</div>
-              <div className="flex-1 overflow-y-auto pr-2">
-                <p className="mb-2">xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</p>
-                <p className="mb-2">xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</p>
-                <p className="mb-2">xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</p>
-                <p className="mb-2">xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</p>
-                <p>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</p>
-              </div>
+          ) : scenarioOptions.length > 0 ? (
+            <div className="space-y-4 mb-6">
+              <div className="text-sm text-gray-500 mb-2">请选择一个剧情方向：</div>
+              {scenarioOptions.map(option => (
+                <div 
+                  key={option.id}
+                  onClick={() => selectScenario(option.id)}
+                  className={`border ${selectedScenario === option.id ? 'border-black bg-gray-50' : 'border-gray-200'} rounded-lg p-4 cursor-pointer hover:border-gray-400 transition-colors`}
+                >
+                  <p>{option.text}</p>
+                </div>
+              ))}
             </div>
-          </div>
-          
-          <div className="border border-gray-200 rounded-lg p-4 mb-4 max-h-[120px] overflow-hidden">
-            <div className="flex h-full">
-              <div className="font-medium mr-2 flex-shrink-0">3.</div>
-              <div className="flex-1 overflow-y-auto pr-2">
-                <p>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</p>
+          ) : (
+            <>
+              <div className="border border-gray-200 rounded-lg p-4 mb-4 max-h-[120px] overflow-hidden">
+                <div className="flex h-full">
+                  <div className="font-medium mr-2 flex-shrink-0">1.</div>
+                  <div className="flex-1 overflow-y-auto pr-2">
+                    <p className="mb-2">xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</p>
+                    <p className="mb-2">xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</p>
+                    <p className="mb-2">xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</p>
+                    <p className="mb-2">xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</p>
+                    <p>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</p>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-          
-          <div className="mb-5">
-            <button className="rounded-lg p-4 w-full text-left hover:bg-gray-50">
-              <span className="font-bold">点击替换</span>。这个方向对吗？还是从xxxxxxxxxx展开？
-            </button>
-          </div>
+              
+              <div className="border border-gray-200 rounded-lg p-4 mb-4 max-h-[120px] overflow-hidden">
+                <div className="flex h-full">
+                  <div className="font-medium mr-2 flex-shrink-0">2.</div>
+                  <div className="flex-1 overflow-y-auto pr-2">
+                    <p className="mb-2">xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</p>
+                    <p className="mb-2">xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</p>
+                    <p className="mb-2">xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</p>
+                    <p className="mb-2">xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</p>
+                    <p>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="border border-gray-200 rounded-lg p-4 mb-4 max-h-[120px] overflow-hidden">
+                <div className="flex h-full">
+                  <div className="font-medium mr-2 flex-shrink-0">3.</div>
+                  <div className="flex-1 overflow-y-auto pr-2">
+                    <p>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mb-5">
+                <button className="rounded-lg p-4 w-full text-left hover:bg-gray-50 flex items-center">
+                  <Icon icon="ri:ai-generate" className="mr-2 text-gray-700" />
+                  <span>点击一个段落，使用 <span className="font-semibold">{selectedModel}</span> 和 <span className="font-semibold">{selectedStyle}</span> 文风进行优化</span>
+                </button>
+              </div>
+            </>
+          )}
           
           <div className="mb-5">
             <input 
               type="text" 
               className="border border-gray-200 rounded-lg p-4 w-full focus:outline-none focus:ring-1 focus:ring-gray-300" 
-              placeholder="剧情不好？告诉我如何优化，如：xxxxxxxx"
+              placeholder="剧情不好？点击单元格，告诉我如何优化"
               value={optimizationText}
               onChange={(e) => setOptimizationText(e.target.value)}
               onKeyDown={handleKeyDown}

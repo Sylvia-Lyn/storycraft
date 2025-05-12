@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Icon } from '@iconify/react'
 import { toast } from 'react-hot-toast'
+import { useNavigate } from 'react-router-dom'
 import downloadWork from './WorkDownloader'
 
 interface ExpandedItems {
@@ -38,6 +39,16 @@ interface KnowledgeItem {
 }
 
 const Sidebar = () => {
+  // 尝试获取navigate，如果不在Router上下文中则使用一个空函数
+  let navigate;
+  try {
+    navigate = useNavigate();
+  } catch (e) {
+    navigate = (path: string) => {
+      console.warn('Navigation attempted outside Router context:', path);
+      window.location.href = path; // 降级为直接跳转
+    };
+  }
   const [expandedItems, setExpandedItems] = useState<ExpandedItems>({
     works: true,  // 默认展开作品集
     'work-1': true, // 默认展开第一个作品
@@ -304,6 +315,15 @@ const Sidebar = () => {
     toast('新功能加班加点更新中～')
   }
 
+  // 处理脚本点击
+  const handleScriptClick = (script: Script) => {
+    if (script.name === '分幕') {
+      navigate('/scenes')
+    } else {
+      toast('新功能加班加点更新中～')
+    }
+  }
+
   useEffect(() => {
     if (editingWorkId && editInputRef.current) {
       editInputRef.current.focus()
@@ -446,7 +466,12 @@ const Sidebar = () => {
                                           icon="ri:arrow-right-s-line" 
                                           className="w-5 h-5 mr-2 text-gray-500"
                                         />
-                                        <span className="flex-grow cursor-pointer">{script.name}</span>
+                                        <span 
+                                          className="flex-grow cursor-pointer"
+                                          onClick={() => handleScriptClick(script)}
+                                        >
+                                          {script.name}
+                                        </span>
                                         <Icon 
                                           icon="ri:download-line" 
                                           className="w-5 h-5 ml-2 text-gray-500 cursor-pointer"

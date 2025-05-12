@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 interface NavigationProps {
   tabs: string[];
@@ -8,9 +9,26 @@ interface NavigationProps {
 
 function Navigation({ tabs, defaultTab, onTabChange }: NavigationProps) {
   const [selectedTab, setSelectedTab] = useState(defaultTab || tabs[0]);
+  
+  // 尝试获取navigate，如果不在Router上下文中则使用一个空函数
+  let navigate;
+  try {
+    navigate = useNavigate();
+  } catch (e) {
+    navigate = (path: string) => {
+      console.warn('Navigation attempted outside Router context:', path);
+      window.location.href = path; // 降级为直接跳转
+    };
+  }
 
   const handleTabClick = (tab: string) => {
     setSelectedTab(tab);
+    
+    // 如果点击分幕标签，导航到分幕列表页面
+    if (tab === '分幕') {
+      navigate('/scenes');
+    }
+    
     onTabChange(tab);
   };
 

@@ -7,6 +7,18 @@ interface ExpandedItems {
   [key: string]: boolean
 }
 
+interface Script {
+  id: string
+  name: string
+}
+
+interface Character {
+  id: string
+  name: string
+  type: 'draft' | 'final'
+  scripts?: Script[]
+}
+
 interface Work {
   id: string
   name: string
@@ -20,12 +32,6 @@ interface Work {
   }
 }
 
-interface Character {
-  id: string
-  name: string
-  type: 'draft' | 'final'
-}
-
 interface KnowledgeItem {
   id: string
   name: string
@@ -33,9 +39,40 @@ interface KnowledgeItem {
 
 const Sidebar = () => {
   const [expandedItems, setExpandedItems] = useState<ExpandedItems>({
-    works: true  // 默认展开作品集
+    works: true,  // 默认展开作品集
+    'work-1': true, // 默认展开第一个作品
+    'work-1-characters': true, // 默认展开角色剧本
+    'work-1-char-1': true // 默认展开第一个角色
   })
-  const [works, setWorks] = useState<Work[]>([])
+  const [works, setWorks] = useState<Work[]>([
+    {
+      id: 'work-1',
+      name: '《xxxx》',
+      views: {
+        outline: true,      // 大纲视图
+        characters: true,   // 角色剧本视图
+        hostManual: true,   // 主持人手册视图
+        materials: true     // 物料视图
+      },
+      characters: [
+        {
+          id: 'char-1',
+          name: '女1: xxx',
+          type: 'draft',
+          scripts: [
+            { id: 'script-1', name: '第一本' },
+            { id: 'script-2', name: '第二本' },
+            { id: 'script-3', name: '第三本' }
+          ]
+        },
+        {
+          id: 'char-2',
+          name: '女2: xxx',
+          type: 'draft'
+        }
+      ]
+    }
+  ])
   const [editingWorkId, setEditingWorkId] = useState<string | null>(null)
   const [editingWorkName, setEditingWorkName] = useState('')
   const [knowledgeItems, setKnowledgeItems] = useState<KnowledgeItem[]>([])
@@ -158,6 +195,23 @@ const Sidebar = () => {
     }
   }
 
+  // Handle download script
+  const handleDownloadScript = async (work: Work, character: Character, script: Script) => {
+    try {
+      await downloadWork({
+        type: 'character',
+        workName: work.name,
+        characterName: character.name,
+        downloadType: 'all'  // 下载初稿和终稿
+      })
+
+      toast.success('下载成功')
+    } catch (error) {
+      toast.error('下载失败')
+      console.error('Download failed:', error)
+    }
+  }
+
   // Handle download host manual
   const handleDownloadHostManual = async (work: Work) => {
     try {
@@ -188,21 +242,14 @@ const Sidebar = () => {
     }
   }
 
+  // Handle add new script for character
+  const handleAddScript = (work: Work, character: Character) => {
+    toast('新功能加班加点更新中～')
+  }
+
   // Handle knowledge base add
   const handleKnowledgeBaseAdd = () => {
-    const newItem: KnowledgeItem = {
-      id: `knowledge-${Date.now()}`,
-      name: '新知识库'
-    }
-    setKnowledgeItems(prev => [...prev, newItem])
-    setEditingKnowledgeId(newItem.id)
-    setEditingKnowledgeName(newItem.name)
-    
-    // 展开知识库部分
-    setExpandedItems(prev => ({
-      ...prev,
-      'knowledgeBase': true
-    }))
+    toast('新功能加班加点更新中～')
   }
 
   // Handle knowledge item edit save
@@ -240,6 +287,23 @@ const Sidebar = () => {
     toast('新功能加班加点更新中～')
   }
 
+  // 处理知识库其他按钮点击
+  const handleKnowledgeOtherAction = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    toast('新功能加班加点更新中～')
+  }
+
+  // 处理工作流其他按钮点击
+  const handleWorkflowOtherAction = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    toast('新功能加班加点更新中～')
+  }
+
+  // 处理知识库项点击
+  const handleKnowledgeItemClick = (item: KnowledgeItem) => {
+    toast('新功能加班加点更新中～')
+  }
+
   useEffect(() => {
     if (editingWorkId && editInputRef.current) {
       editInputRef.current.focus()
@@ -258,9 +322,13 @@ const Sidebar = () => {
         {/* Works Section */}
         <div className="font-bold text-lg mb-6 flex justify-between items-center">
           <span 
-            className="cursor-pointer" 
+            className="cursor-pointer flex items-center" 
             onClick={() => toggleExpand('works')}
           >
+            <Icon 
+              icon={expandedItems['works'] ? "ri:arrow-down-s-line" : "ri:arrow-right-s-line"} 
+              className="w-5 h-5 mr-1 text-gray-500"
+            />
             作品集
           </span>
           <Icon 
@@ -300,69 +368,153 @@ const Sidebar = () => {
                   )}
                   <Icon 
                     icon="ri:download-line" 
-                    className="w-5 h-5 mx-3 text-gray-500 cursor-pointer"
+                    className="w-5 h-5 ml-2 text-gray-500 cursor-pointer"
                     onClick={() => handleDownloadWork(work)}
+                  />
+                  <Icon 
+                    icon="ri:add-line" 
+                    className="w-5 h-5 ml-2 text-gray-500 cursor-pointer"
+                    onClick={handleAddWork}
                   />
                 </div>
 
                 {/* Show work views when expanded */}
                 {expandedItems[work.id] && (
                   <div className="ml-7 space-y-2 mt-2">
-                    {work.views.outline && (
-                      <div className="flex items-center">
-                        <Icon icon="ri:file-text-line" className="w-4 h-4 mr-2 text-gray-500" />
-                        <span className="cursor-pointer">大纲</span>
-                      </div>
-                    )}
+                    {/* 角色剧本部分 */}
                     {work.views.characters && work.characters && (
                       <div>
                         <div className="flex items-center">
-                          <Icon icon="ri:group-line" className="w-4 h-4 mr-2 text-gray-500" />
-                          <span className="cursor-pointer">角色剧本</span>
+                          <Icon 
+                            icon={expandedItems[`${work.id}-characters`] ? "ri:arrow-down-s-line" : "ri:arrow-right-s-line"} 
+                            className="w-5 h-5 mr-2 text-gray-500 cursor-pointer"
+                            onClick={() => toggleExpand(`${work.id}-characters`)}
+                          />
+                          <span className="flex-grow cursor-pointer">角色剧本</span>
+                          <Icon 
+                            icon="ri:download-line" 
+                            className="w-5 h-5 ml-2 text-gray-500 cursor-pointer"
+                            onClick={() => {
+                              const allCharacters = work.characters || []
+                              allCharacters.forEach(char => {
+                                handleDownloadCharacterScript(work, char)
+                              })
+                            }}
+                          />
+                          <Icon 
+                            icon="ri:add-line" 
+                            className="w-5 h-5 ml-2 text-gray-500 cursor-pointer"
+                            onClick={() => toast('新功能加班加点更新中～')}
+                          />
                         </div>
-                        <div className="ml-6 mt-1 space-y-1">
-                          {work.characters.map(char => (
-                            <div key={char.id} className="flex items-center">
-                              <Icon icon="ri:user-line" className="w-4 h-4 mr-2 text-gray-500" />
-                              <span className="cursor-pointer">{char.name}</span>
-                              <Icon 
-                                icon="ri:download-line" 
-                                className="w-4 h-4 ml-2 text-gray-500 cursor-pointer"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  handleDownloadCharacterScript(work, char)
-                                }}
-                              />
-                            </div>
-                          ))}
-                        </div>
+                        
+                        {expandedItems[`${work.id}-characters`] && (
+                          <div className="ml-6 mt-1 space-y-1">
+                            {work.characters.map(char => (
+                              <div key={char.id}>
+                                <div className="flex items-center">
+                                  <Icon 
+                                    icon={expandedItems[char.id] ? "ri:arrow-down-s-line" : "ri:arrow-right-s-line"} 
+                                    className="w-5 h-5 mr-2 text-gray-500 cursor-pointer"
+                                    onClick={() => toggleExpand(char.id)}
+                                  />
+                                  <span className="flex-grow cursor-pointer">{char.name}</span>
+                                  <Icon 
+                                    icon="ri:download-line" 
+                                    className="w-5 h-5 ml-2 text-gray-500 cursor-pointer"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleDownloadCharacterScript(work, char)
+                                    }}
+                                  />
+                                  <Icon 
+                                    icon="ri:add-line" 
+                                    className="w-5 h-5 ml-2 text-gray-500 cursor-pointer"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleAddScript(work, char)
+                                    }}
+                                  />
+                                </div>
+                                
+                                {/* 如果角色有剧本且角色展开，则显示剧本列表 */}
+                                {expandedItems[char.id] && char.scripts && (
+                                  <div className="ml-7 space-y-1 mt-1">
+                                    {char.scripts.map(script => (
+                                      <div key={script.id} className="flex items-center">
+                                        <Icon 
+                                          icon="ri:arrow-right-s-line" 
+                                          className="w-5 h-5 mr-2 text-gray-500"
+                                        />
+                                        <span className="flex-grow cursor-pointer">{script.name}</span>
+                                        <Icon 
+                                          icon="ri:download-line" 
+                                          className="w-5 h-5 ml-2 text-gray-500 cursor-pointer"
+                                          onClick={(e) => {
+                                            e.stopPropagation()
+                                            handleDownloadScript(work, char, script)
+                                          }}
+                                        />
+                                        <Icon 
+                                          icon="ri:add-line" 
+                                          className="w-5 h-5 ml-2 text-gray-500 cursor-pointer"
+                                          onClick={() => toast('新功能加班加点更新中～')}
+                                        />
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     )}
+                    
+                    {/* 主持人手册部分 */}
                     {work.views.hostManual && (
                       <div className="flex items-center">
-                        <Icon icon="ri:book-line" className="w-4 h-4 mr-2 text-gray-500" />
-                        <span className="cursor-pointer">主持人手册</span>
+                        <Icon 
+                          icon="ri:arrow-right-s-line" 
+                          className="w-5 h-5 mr-2 text-gray-500"
+                        />
+                        <span className="flex-grow cursor-pointer">主持人手册</span>
                         <Icon 
                           icon="ri:download-line" 
-                          className="w-4 h-4 ml-2 text-gray-500 cursor-pointer"
+                          className="w-5 h-5 ml-2 text-gray-500 cursor-pointer"
                           onClick={(e) => {
                             e.stopPropagation()
                             handleDownloadHostManual(work)
                           }}
                         />
+                        <Icon 
+                          icon="ri:add-line" 
+                          className="w-5 h-5 ml-2 text-gray-500 cursor-pointer"
+                          onClick={() => toast('新功能加班加点更新中～')}
+                        />
                       </div>
                     )}
+                    
+                    {/* 物料部分 */}
                     {work.views.materials && (
                       <div className="flex items-center">
-                        <Icon icon="ri:folder-line" className="w-4 h-4 mr-2 text-gray-500" />
-                        <span className="cursor-pointer">物料</span>
+                        <Icon 
+                          icon="ri:arrow-right-s-line" 
+                          className="w-5 h-5 mr-2 text-gray-500"
+                        />
+                        <span className="flex-grow cursor-pointer">物料</span>
                         <Icon 
                           icon="ri:download-line" 
-                          className="w-4 h-4 ml-2 text-gray-500 cursor-pointer"
+                          className="w-5 h-5 ml-2 text-gray-500 cursor-pointer"
                           onClick={(e) => {
                             e.stopPropagation()
                             handleDownloadMaterials(work)
                           }}
+                        />
+                        <Icon 
+                          icon="ri:add-line" 
+                          className="w-5 h-5 ml-2 text-gray-500 cursor-pointer"
+                          onClick={() => toast('新功能加班加点更新中～')}
                         />
                       </div>
                     )}
@@ -375,9 +527,18 @@ const Sidebar = () => {
 
         {/* Knowledge Base Section */}
         <div 
-          className="font-bold text-lg mt-10 mb-6 flex justify-between items-center cursor-pointer" 
+          className="font-bold text-lg mt-10 mb-6 flex justify-between items-center" 
         >
-          <span onClick={() => toggleExpand('knowledgeBase')}>知识库</span>
+          <span 
+            className="cursor-pointer flex items-center" 
+            onClick={() => toggleExpand('knowledgeBase')}
+          >
+            <Icon 
+              icon={expandedItems['knowledgeBase'] ? "ri:arrow-down-s-line" : "ri:arrow-right-s-line"} 
+              className="w-5 h-5 mr-1 text-gray-500"
+            />
+            知识库
+          </span>
           <Icon 
             icon="ri:add-line" 
             className="w-5 h-5 text-gray-500 cursor-pointer"
@@ -386,41 +547,28 @@ const Sidebar = () => {
         </div>
         
         {expandedItems['knowledgeBase'] && (
-          <div className="space-y-4">
-            {knowledgeItems.map(item => (
-              <div key={item.id} className="flex items-center">
-                <Icon icon="ri:file-text-line" className="w-5 h-5 mr-2 text-gray-500" />
-                {editingKnowledgeId === item.id ? (
-                  <input
-                    ref={editInputRef}
-                    value={editingKnowledgeName}
-                    onChange={e => setEditingKnowledgeName(e.target.value)}
-                    onBlur={handleKnowledgeEditSave}
-                    onKeyDown={handleKnowledgeEditKeyPress}
-                    className="flex-grow border border-gray-300 rounded px-2 py-1"
-                  />
-                ) : (
-                  <span 
-                    className="flex-grow cursor-pointer"
-                    onDoubleClick={() => {
-                      setEditingKnowledgeId(item.id)
-                      setEditingKnowledgeName(item.name)
-                    }}
-                  >
-                    {item.name}
-                  </span>
-                )}
-              </div>
-            ))}
+          <div className="space-y-4 text-gray-500 text-sm italic">
+            <div className="flex items-center">
+              <Icon icon="ri:information-line" className="w-5 h-5 mr-2" />
+              <span>暂无知识库，请点击"+"添加</span>
+            </div>
           </div>
         )}
 
         {/* Workflow Section */}
         <div 
-          className="font-bold text-lg mt-10 mb-6 cursor-pointer flex justify-between items-center" 
-          onClick={() => toggleExpand('workflow')}
+          className="font-bold text-lg mt-10 mb-6 flex justify-between items-center" 
         >
-          <span>工作流</span>
+          <span 
+            className="cursor-pointer flex items-center" 
+            onClick={() => toggleExpand('workflow')}
+          >
+            <Icon 
+              icon={expandedItems['workflow'] ? "ri:arrow-down-s-line" : "ri:arrow-right-s-line"} 
+              className="w-5 h-5 mr-1 text-gray-500"
+            />
+            工作流
+          </span>
           <Icon 
             icon="ri:add-line" 
             className="w-5 h-5 text-gray-500 cursor-pointer"
@@ -428,9 +576,13 @@ const Sidebar = () => {
           />
         </div>
         
-        {/* Empty workflow content */}
+        {/* Workflow content */}
         {expandedItems['workflow'] && (
-          <div className="space-y-4">
+          <div className="space-y-4 text-gray-500 text-sm italic">
+            <div className="flex items-center">
+              <Icon icon="ri:information-line" className="w-5 h-5 mr-2" />
+              <span>暂无工作流，请点击"+"添加</span>
+            </div>
           </div>
         )}
         

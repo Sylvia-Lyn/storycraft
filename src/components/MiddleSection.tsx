@@ -84,6 +84,7 @@ function MiddleSection() {
     }
     
     setIsGenerating(true);
+    console.log("开始生成优化内容, 输入:", feedbackText);
     
     // 构建优化提示词
     let prompt = '';
@@ -106,8 +107,15 @@ function MiddleSection() {
       prompt += `补充：${feedbackText}\n`;
     }
     
+    console.log("构建的提示词:", prompt);
+    
     try {
       // 调用API获取优化结果
+      console.log("调用API...");
+      
+      // 临时使用模拟数据，因为API可能还没实现
+      // 实际使用时取消注释下面的代码
+      /*
       const response = await fetch('/api/optimize-content', {
         method: 'POST',
         headers: {
@@ -125,6 +133,18 @@ function MiddleSection() {
       }
       
       const data = await response.json();
+      */
+      
+      // 模拟API响应
+      const data = {
+        results: [
+          "这是第一个优化结果，根据你的反馈，我们调整了剧情走向...",
+          "这是第二个可能的剧情发展方向，角色将面临不同的选择...",
+          "第三个方案提供了完全不同的视角，让我们从另一个角度看这个故事..."
+        ]
+      };
+      
+      console.log("API返回结果:", data);
       
       // 将API返回的结果转换为选项格式
       const results = data.results.map((result: string, index: number) => ({
@@ -132,6 +152,7 @@ function MiddleSection() {
         text: `${index + 1}. ${result}`
       }));
       
+      console.log("格式化后的结果:", results);
       setOptimizationResults(results);
     } catch (error) {
       console.error('生成优化内容失败:', error);
@@ -143,11 +164,23 @@ function MiddleSection() {
   
   // 选择并应用优化结果
   const applyOptimizedText = (optimizedText: string) => {
+    console.log("正在应用选择的优化内容:", optimizedText);
+    
     // 触发自定义事件，通知其他组件替换文本
     const event = new CustomEvent('optimizedTextReady', {
       detail: { text: optimizedText }
     });
     window.dispatchEvent(event);
+    
+    // 添加一条用户消息，表示用户已选择
+    const userMessage = {
+      text: `我选择了: "${optimizedText.substring(0, 30)}..."`,
+      isUser: true
+    };
+    
+    // 更新消息列表
+    // 注意: 如果messages是通过useAppState获取的，可能需要调用setMessages函数
+    // setMessages([...messages, userMessage]);
     
     // 清空当前选择和结果
     setSelectedText("");
@@ -155,6 +188,8 @@ function MiddleSection() {
     setCurrentDraftContent("");
     setFeedbackText("");
     setOptimizationResults([]);
+    
+    console.log("优化内容已应用");
   };
   
   const customScrollbarStyle = `
@@ -308,7 +343,7 @@ function MiddleSection() {
           </div>
           
           {/* 剧情选项区域 */}
-          {generatingScenarios ? (
+          {isGenerating ? (
             <div className="text-center py-6">
               <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900"></div>
               <p className="mt-2 text-gray-600">正在使用 {selectedModel} 模型和 {selectedStyle} 文风生成剧情选项...</p>
@@ -318,12 +353,16 @@ function MiddleSection() {
               {optimizationResults.map((option, index) => (
                 <div 
                   key={option.id}
-                  className="border border-gray-200 rounded-lg p-4 cursor-pointer hover:border-gray-400 transition-colors overflow-hidden"
+                  className="border border-gray-200 rounded-lg p-4 cursor-pointer hover:border-gray-400 hover:bg-gray-50 transition-colors overflow-hidden"
+                  onClick={() => applyOptimizedText(option.text)}
                 >
                   <p className="whitespace-normal break-words">{option.text}</p>
                 </div>
               ))}
-              <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+              <div 
+                className="border border-gray-200 rounded-lg p-4 bg-gray-50 cursor-pointer hover:border-gray-400 transition-colors"
+                onClick={() => setOptimizationResults([])} // 清空结果，返回输入状态
+              >
                 <p className="text-gray-700">点击替换。这个方向对吗？还是从xxxxxxxxxx展开？</p>
               </div>
             </div>

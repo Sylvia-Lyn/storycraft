@@ -24,9 +24,19 @@ function Navigation({ tabs, defaultTab, onTabChange }: NavigationProps) {
   const handleTabClick = (tab: string) => {
     setSelectedTab(tab);
     
-    // 如果点击分幕标签，导航到分幕列表页面
+    // 根据不同标签执行不同的路由导航
     if (tab === '分幕') {
       navigate('/scenes');
+    } else if (tab === '剧本') {
+      navigate('/'); // 剧本页面是根路径
+    } else if (tab === '大纲') {
+      navigate('/outline');
+    } else if (tab === '角色') {
+      navigate('/characters');
+    } else if (tab === '关系') {
+      navigate('/relations');
+    } else if (tab === '章节') {
+      navigate('/chapters');
     }
     
     onTabChange(tab);

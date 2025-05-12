@@ -1,6 +1,7 @@
 import { Icon } from '@iconify/react'
 import Navigation from './Navigation'
 import { useAppState } from '../hooks/useAppState'
+import { useState, useEffect } from 'react'
 
 // Middle Section Component
 function MiddleSection() {
@@ -36,6 +37,7 @@ function MiddleSection() {
     scenarioOptions,
     selectedScenario,
     selectScenario,
+    generateScenarioOptions,
     
     // 消息相关
     optimizationText,
@@ -43,6 +45,117 @@ function MiddleSection() {
     messages,
     handleKeyDown
   } = useAppState();
+  
+  // 初稿相关状态
+  const [previousDraftContent, setPreviousDraftContent] = useState("");
+  const [currentDraftContent, setCurrentDraftContent] = useState("");
+  const [selectedText, setSelectedText] = useState("");
+  const [feedbackText, setFeedbackText] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [optimizationResults, setOptimizationResults] = useState<Array<{id: string, text: string}>>([]);
+  
+  // 监听文本选择事件
+  useEffect(() => {
+    const handleDraftTextSelected = (event: CustomEvent) => {
+      if (event.detail && event.detail.text) {
+        setSelectedText(event.detail.text);
+        // 可能还需要获取之前的内容和当前分幕内容
+        if (event.detail.previousContent) {
+          setPreviousDraftContent(event.detail.previousContent);
+        }
+        if (event.detail.currentContent) {
+          setCurrentDraftContent(event.detail.currentContent);
+        }
+      }
+    };
+    
+    // 注册自定义事件监听
+    window.addEventListener('draftTextSelected' as any, handleDraftTextSelected);
+    
+    return () => {
+      window.removeEventListener('draftTextSelected' as any, handleDraftTextSelected);
+    };
+  }, []);
+  
+  // 生成优化剧情
+  const generateOptimizedContent = async () => {
+    if (!feedbackText.trim()) {
+      return;
+    }
+    
+    setIsGenerating(true);
+    
+    // 构建优化提示词
+    let prompt = '';
+    
+    // 如果有之前的内容，添加"接上文"
+    if (previousDraftContent) {
+      prompt += `接上文：\n${previousDraftContent}\n`;
+    }
+    
+    // 添加角色视角和基本要求
+    prompt += `以「角色名称」的第二人称视角，要求符合逻辑、不能有超现实内容，并输出三种可能性的结果，继续展开以下剧情：\n`;
+    
+    // 如果有当前分幕剧情，添加分幕剧情
+    if (currentDraftContent) {
+      prompt += `${currentDraftContent}\n`;
+    }
+    
+    // 如果有用户输入的内容，添加补充说明
+    if (feedbackText) {
+      prompt += `补充：${feedbackText}\n`;
+    }
+    
+    try {
+      // 调用API获取优化结果
+      const response = await fetch('/api/optimize-content', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt,
+          model: selectedModel,
+          style: selectedStyle
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('API调用失败');
+      }
+      
+      const data = await response.json();
+      
+      // 将API返回的结果转换为选项格式
+      const results = data.results.map((result: string, index: number) => ({
+        id: String(index + 1),
+        text: `${index + 1}. ${result}`
+      }));
+      
+      setOptimizationResults(results);
+    } catch (error) {
+      console.error('生成优化内容失败:', error);
+      // 可以在这里添加错误处理，如显示错误消息
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+  
+  // 选择并应用优化结果
+  const applyOptimizedText = (optimizedText: string) => {
+    // 触发自定义事件，通知其他组件替换文本
+    const event = new CustomEvent('optimizedTextReady', {
+      detail: { text: optimizedText }
+    });
+    window.dispatchEvent(event);
+    
+    // 清空当前选择和结果
+    setSelectedText("");
+    setPreviousDraftContent("");
+    setCurrentDraftContent("");
+    setFeedbackText("");
+    setOptimizationResults([]);
+  };
   
   const customScrollbarStyle = `
     .custom-scrollbar::-webkit-scrollbar {
@@ -88,6 +201,7 @@ function MiddleSection() {
             onTabChange={setSelectedTab}
           />
           
+          {/* 模型、文风和知识库选择 */}
           <div className="flex gap-4 mb-6">
             <div className="relative flex-1">
               <div 
@@ -127,7 +241,7 @@ function MiddleSection() {
                 className="flex items-center bg-gray-100 rounded-md px-3 py-2 w-full cursor-pointer"
                 onClick={toggleStyleDropdown}
               >
-                <span className="text-black">文风: {selectedStyle}</span>
+                <span className="text-black">文风</span>
                 <Icon icon="ri:arrow-down-s-line" className="ml-auto text-gray-700" />
               </div>
               
@@ -154,7 +268,7 @@ function MiddleSection() {
                 className="flex items-center border border-gray-300 rounded-md px-3 py-2 w-full cursor-pointer"
                 onClick={toggleKnowledgeDropdown}
               >
-                <span className="text-gray-700">知识库: {selectedKnowledge}</span>
+                <span className="text-gray-700">知识库: xxxxxxx</span>
                 <Icon icon="ri:arrow-down-s-line" className="ml-auto text-gray-700" />
               </div>
               
@@ -177,9 +291,9 @@ function MiddleSection() {
             </div>
           </div>
           
-          {/* 消息区域 */}
+          {/* 对话消息区域 */}
           <div className="space-y-6 mb-6">
-            {messages.map((message, index) => (
+            {messages.length > 0 && messages.map((message, index) => (
               <div key={index} className={`flex ${message.isUser ? 'justify-end' : 'justify-start'} my-6`}>
                 <div className={`${message.isUser ? 'bg-black text-white' : 'bg-white border border-gray-200'} rounded-lg px-4 py-3 relative max-w-[80%]`}>
                   <div className={message.isUser ? 'text-right' : ''}>
@@ -199,79 +313,40 @@ function MiddleSection() {
               <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900"></div>
               <p className="mt-2 text-gray-600">正在使用 {selectedModel} 模型和 {selectedStyle} 文风生成剧情选项...</p>
             </div>
-          ) : scenarioOptions.length > 0 ? (
+          ) : optimizationResults.length > 0 ? (
             <div className="space-y-4 mb-6">
-              <div className="text-sm text-gray-500 mb-2">请选择一个剧情方向：</div>
-              {scenarioOptions.map(option => (
+              {optimizationResults.map((option, index) => (
                 <div 
                   key={option.id}
-                  onClick={() => selectScenario(option.id)}
-                  className={`border ${selectedScenario === option.id ? 'border-black bg-gray-50' : 'border-gray-200'} rounded-lg p-4 cursor-pointer hover:border-gray-400 transition-colors`}
+                  className="border border-gray-200 rounded-lg p-4 cursor-pointer hover:border-gray-400 transition-colors overflow-hidden"
                 >
-                  <p>{option.text}</p>
+                  <p className="whitespace-normal break-words">{option.text}</p>
                 </div>
               ))}
+              <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                <p className="text-gray-700">点击替换。这个方向对吗？还是从xxxxxxxxxx展开？</p>
+              </div>
             </div>
           ) : (
-            <>
-              <div className="border border-gray-200 rounded-lg p-4 mb-4 max-h-[120px] overflow-hidden">
-                <div className="flex h-full">
-                  <div className="font-medium mr-2 flex-shrink-0">1.</div>
-                  <div className="flex-1 overflow-y-auto pr-2">
-                    <p className="mb-2">xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</p>
-                    <p className="mb-2">xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</p>
-                    <p className="mb-2">xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</p>
-                    <p className="mb-2">xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</p>
-                    <p>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="border border-gray-200 rounded-lg p-4 mb-4 max-h-[120px] overflow-hidden">
-                <div className="flex h-full">
-                  <div className="font-medium mr-2 flex-shrink-0">2.</div>
-                  <div className="flex-1 overflow-y-auto pr-2">
-                    <p className="mb-2">xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</p>
-                    <p className="mb-2">xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</p>
-                    <p className="mb-2">xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</p>
-                    <p className="mb-2">xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</p>
-                    <p>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="border border-gray-200 rounded-lg p-4 mb-4 max-h-[120px] overflow-hidden">
-                <div className="flex h-full">
-                  <div className="font-medium mr-2 flex-shrink-0">3.</div>
-                  <div className="flex-1 overflow-y-auto pr-2">
-                    <p>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="mb-5">
-                <button className="rounded-lg p-4 w-full text-left hover:bg-gray-50 flex items-center">
-                  <Icon icon="ri:ai-generate" className="mr-2 text-gray-700" />
-                  <span>点击一个段落，使用 <span className="font-semibold">{selectedModel}</span> 和 <span className="font-semibold">{selectedStyle}</span> 文风进行优化</span>
-                </button>
-              </div>
-            </>
+            <div className="mb-6">
+              <input
+                type="text"
+                placeholder="剧情不好？告诉我如何优化，如：xxxxxx"
+                className="w-full border border-gray-300 rounded-lg p-4 text-gray-500"
+                value={feedbackText}
+                onChange={(e) => setFeedbackText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && feedbackText.trim()) {
+                    generateOptimizedContent();
+                  }
+                }}
+              />
+            </div>
           )}
-          
-          <div className="mb-5">
-            <input 
-              type="text" 
-              className="border border-gray-200 rounded-lg p-4 w-full focus:outline-none focus:ring-1 focus:ring-gray-300" 
-              placeholder="剧情不好？点击单元格，告诉我如何优化"
-              value={optimizationText}
-              onChange={(e) => setOptimizationText(e.target.value)}
-              onKeyDown={handleKeyDown}
-            />
-          </div>
         </div>
       </div>
     </div>
-  )
+  );
 }
 
-export default MiddleSection 
+export default MiddleSection; 

@@ -11,6 +11,18 @@ export interface ScenarioOption {
   text: string;
 }
 
+export interface Scene {
+  id: string;
+  summary: string;
+  startPos: number;
+  endPos: number;
+}
+
+export interface OptimizedResult {
+  id: string;
+  text: string;
+}
+
 export function useAppState() {
   // 尝试获取navigate，如果不在Router上下文中则使用一个空函数
   let navigate;
@@ -70,6 +82,17 @@ export function useAppState() {
     }
   ])
   
+  // 分幕剧情管理
+  const [scenes, setScenes] = useState<Scene[]>([])
+  const [selectedScene, setSelectedScene] = useState<string | null>(null)
+  const [characterName, setCharacterName] = useState("主角")
+  
+  // 初稿优化管理
+  const [selectedDraftText, setSelectedDraftText] = useState("")
+  const [optimizationPrompt, setOptimizationPrompt] = useState("请优化以下剧情，使其更加生动有趣，情节更合理：")
+  const [optimizedResults, setOptimizedResults] = useState<OptimizedResult[]>([])
+  const [isOptimizing, setIsOptimizing] = useState(false)
+  
   // 生成剧情选项
   const generateScenarioOptions = (
     previousContent: string = '',
@@ -125,6 +148,120 @@ export function useAppState() {
         text: `根据${selectedModel}模型和${selectedStyle}文风，为您提供以下剧情选择:`,
         isUser: false
       }]);
+    }, 2000);
+  };
+  
+  // 生成分幕剧情总结
+  const generateSceneSummaries = (
+    content: string,
+    characterName: string = '主角'
+  ) => {
+    if (!content || content.trim().length === 0) {
+      alert("请先输入初稿内容");
+      return;
+    }
+
+    if (content.length > 50000) {
+      alert("初稿内容不能超过5万字");
+      return;
+    }
+    
+    // 将文本分成多个段落，每段2000-5000字
+    const segments: Array<{text: string, startPos: number, endPos: number}> = [];
+    let currentPos = 0;
+    let remainingText = content;
+    
+    while (remainingText.length > 0) {
+      // 目标段落长度
+      const targetLength = Math.min(
+        Math.max(2000, Math.floor(Math.random() * 3000) + 2000),
+        remainingText.length
+      );
+      
+      // 如果剩余文本小于目标长度，直接作为最后一段
+      if (remainingText.length <= targetLength) {
+        segments.push({
+          text: remainingText,
+          startPos: currentPos,
+          endPos: currentPos + remainingText.length
+        });
+        break;
+      }
+      
+      // 查找句号或段落结束位置，确保在合理位置断开
+      let cutPosition = targetLength;
+      for (let i = targetLength; i > targetLength - 500 && i > 0; i--) {
+        if (remainingText[i] === '。' || remainingText[i] === '\n') {
+          cutPosition = i + 1;
+          break;
+        }
+      }
+      
+      // 分割文本段落
+      const segment = remainingText.substring(0, cutPosition);
+      segments.push({
+        text: segment,
+        startPos: currentPos,
+        endPos: currentPos + cutPosition
+      });
+      
+      // 更新剩余文本和位置
+      remainingText = remainingText.substring(cutPosition);
+      currentPos += cutPosition;
+    }
+    
+    // 模拟API调用，根据提示词生成场景总结
+    // 实际项目中应该调用后端API
+    const generatedScenes = segments.map((segment, index) => {
+      // 构建分幕剧情总结的提示词
+      const prompt = `根据以下「${characterName}」的文本，以「${characterName}」的视角总结剧情，要求总结为一句话，
+      并且有明确原文对应，且剧情总结中要包含「${characterName}」和哪些角色在什么地方发生了什么事件，
+      有什么样的情感变化和什么样的结果`;
+      
+      // 这里模拟生成剧情总结
+      // 真实项目中，这部分应该调用API，传入段落内容和角色名
+      const summary = `${characterName}在第${index + 1}段落中与其他角色发生互动，情节发展带来情感变化`;
+      
+      return {
+        id: `scene-${index + 1}`,
+        summary,
+        startPos: segment.startPos,
+        endPos: segment.endPos
+      };
+    });
+    
+    return generatedScenes;
+  };
+  
+  // 生成优化剧情
+  const generateOptimizedText = (
+    text: string,
+    prompt: string = '请优化以下剧情，使其更加生动有趣，情节更合理：'
+  ) => {
+    setIsOptimizing(true);
+    
+    // 在实际应用中，这里应该调用API发送优化请求
+    // 包含 text, prompt, selectedModel, selectedStyle 等参数
+    
+    // 模拟API调用
+    setTimeout(() => {
+      const results = [
+        {
+          id: '1',
+          text: `优化版本1 (${selectedModel}/${selectedStyle}): ${text.substring(0, 20)}... 【这里是优化后的内容，使用了更生动的描写和合理的情节发展】`
+        },
+        {
+          id: '2',
+          text: `优化版本2 (${selectedModel}/${selectedStyle}): ${text.substring(0, 20)}... 【另一种优化方向，增强了角色情感和场景氛围描写】`
+        },
+        {
+          id: '3',
+          text: `优化版本3 (${selectedModel}/${selectedStyle}): ${text.substring(0, 20)}... 【第三种优化方案，调整了情节节奏和冲突设置】`
+        }
+      ];
+      
+      setOptimizedResults(results);
+      setIsOptimizing(false);
     }, 2000);
   };
   
@@ -222,6 +359,26 @@ export function useAppState() {
     selectedScenario,
     generateScenarioOptions,
     selectScenario,
+    
+    // 分幕剧情相关
+    scenes,
+    setScenes,
+    selectedScene,
+    setSelectedScene,
+    characterName,
+    setCharacterName,
+    generateSceneSummaries,
+    
+    // 初稿优化相关
+    selectedDraftText,
+    setSelectedDraftText,
+    optimizationPrompt,
+    setOptimizationPrompt,
+    optimizedResults,
+    setOptimizedResults,
+    isOptimizing,
+    setIsOptimizing,
+    generateOptimizedText,
     
     // 消息相关
     optimizationText,

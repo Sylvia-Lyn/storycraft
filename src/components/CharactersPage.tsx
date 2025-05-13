@@ -15,7 +15,7 @@ function CharactersPage() {
     console.log('Tab changed to:', tab);
   };
 
-  const handleCharacterChange = (event: React.SyntheticEvent, newValue: number) => {
+  const handleCharacterChange = (_: React.SyntheticEvent, newValue: number) => {
     setSelectedCharacter(newValue);
   };
 

@@ -155,7 +155,7 @@ function RelationsPage() {
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-  const [selectedRelation, setSelectedRelation] = useState({ label: '爱情线80%', char: '角色1' });
+  const [selectedRelation] = useState({ label: '爱情线80%', char: '角色1' });
   
   // 引用用于图谱操作
   const reactFlowInstance = useRef(null);
@@ -191,11 +191,11 @@ function RelationsPage() {
       <div className="flex-1 flex flex-col overflow-hidden pl-5">
         {/* 导航栏 - 向左偏移 */}
         <div className="flex w-full pl-10">
-          <Navigation 
-            tabs={tabs} 
-            defaultTab="关系" 
-            onTabChange={handleTabChange} 
-          />
+      <Navigation 
+        tabs={tabs} 
+        defaultTab="关系" 
+        onTabChange={handleTabChange} 
+      />
         </div>
         
         {/* 关系页面主体内容 */}

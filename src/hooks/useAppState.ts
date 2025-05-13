@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { generateDeepSeekContent } from '../services/deepseekService'
 
 export interface Message {
   text: string;
@@ -51,8 +52,8 @@ export function useAppState() {
   
   // 模型选择状态管理
   const [showModelDropdown, setShowModelDropdown] = useState(false)
-  const [selectedModel, setSelectedModel] = useState('claude37')
-  const models = ['claude37', 'claude_opus', 'gpt-4', 'gpt-4o', 'gemini-pro', 'deepseekv3']
+  const [selectedModel, setSelectedModel] = useState('deepseekr1')
+  const models = ['deepseekr1']
   
   // 文风选择状态管理
   const [showStyleDropdown, setShowStyleDropdown] = useState(false)
@@ -73,11 +74,11 @@ export function useAppState() {
   const [optimizationText, setOptimizationText] = useState('')
   const [messages, setMessages] = useState<Message[]>([
     {
-      text: '角色1和角色2在xxx发生了xxx而不是xxx',
+      text: '角色1和角色2在不同场景下的互动',
       isUser: true
     },
     {
-      text: '根据xxxxxxxx，为您提供以下内容选择:',
+      text: '根据您的需求，为您提供以下内容选择:',
       isUser: false
     }
   ])
@@ -94,7 +95,7 @@ export function useAppState() {
   const [isOptimizing, setIsOptimizing] = useState(false)
   
   // 生成剧情选项
-  const generateScenarioOptions = (
+  const generateScenarioOptions = async (
     previousContent: string = '',
     currentContent: string = '',
     characterName: string = '主角',
@@ -122,33 +123,92 @@ export function useAppState() {
     console.log('Generating scenarios with prompt:', prompt);
     console.log('Using model:', selectedModel, 'with style:', selectedStyle);
     
-    // 模拟API调用，实际项目中应该调用后端
-    setTimeout(() => {
-      // 模拟返回的三个选项，基于选择的模型和文风
-      const options = [
-        {
-          id: '1',
-          text: `选项1 (${selectedModel}/${selectedStyle}): 你走进房间，发现桌上放着一封信。拆开后，你不敢相信自己的眼睛...`
-        },
-        {
-          id: '2',
-          text: `选项2 (${selectedModel}/${selectedStyle}): 你犹豫了一下，决定先不进入房间。直觉告诉你应该先确认周围环境...`
-        },
-        {
-          id: '3',
-          text: `选项3 (${selectedModel}/${selectedStyle}): 你深吸一口气，推开了房门。出乎意料的是，房间里空无一人，但窗户大开...`
+    try {
+      // 如果选择了DeepSeek模型
+      if (selectedModel === 'deepseekr1') {
+        const deepseekResponse = await generateDeepSeekContent(prompt);
+        
+        // 解析DeepSeek响应为三个选项
+        const lines = deepseekResponse.split('\n');
+        const options = [];
+        
+        let currentOption = { id: '', text: '' };
+        for (const line of lines) {
+          if (line.startsWith('选项') || line.startsWith('Option')) {
+            if (currentOption.id) {
+              options.push(currentOption);
+              if (options.length >= 3) break;
+            }
+            currentOption = { 
+              id: options.length + 1 + '', 
+              text: line
+            };
+          } else if (currentOption.id && line.trim()) {
+            currentOption.text += ' ' + line.trim();
+          }
         }
-      ];
+        
+        // 如果还有最后一个选项没添加
+        if (currentOption.id && options.length < 3) {
+          options.push(currentOption);
+        }
+        
+        // 如果选项少于3个，补充到3个
+        while (options.length < 3) {
+          options.push({
+            id: (options.length + 1) + '',
+            text: `选项${options.length + 1}: DeepSeek生成的额外选项...`
+          });
+        }
+        
+        setScenarioOptions(options);
+        setGeneratingScenarios(false);
+        
+        // 添加系统消息
+        setMessages(prev => [...prev, {
+          text: `根据DeepSeek模型和${selectedStyle}文风，为您提供以下剧情选择:`,
+          isUser: false
+        }]);
+        return;
+      }
       
-      setScenarioOptions(options);
+      // 其他模型的逻辑不变
+      setTimeout(() => {
+        // 模拟返回的三个选项，基于选择的模型和文风
+        const options = [
+          {
+            id: '1',
+            text: `选项1 (${selectedModel}/${selectedStyle}): 你走进房间，发现桌上放着一封信。拆开后，你不敢相信自己的眼睛...`
+          },
+          {
+            id: '2',
+            text: `选项2 (${selectedModel}/${selectedStyle}): 你犹豫了一下，决定先不进入房间。直觉告诉你应该先确认周围环境...`
+          },
+          {
+            id: '3',
+            text: `选项3 (${selectedModel}/${selectedStyle}): 你深吸一口气，推开了房门。出乎意料的是，房间里空无一人，但窗户大开...`
+          }
+        ];
+        
+        setScenarioOptions(options);
+        setGeneratingScenarios(false);
+        
+        // 添加系统消息
+        setMessages(prev => [...prev, {
+          text: `根据${selectedModel}模型和${selectedStyle}文风，为您提供以下剧情选择:`,
+          isUser: false
+        }]);
+      }, 2000);
+    } catch (error) {
+      console.error("生成剧情选项时出错:", error);
       setGeneratingScenarios(false);
       
-      // 添加系统消息
+      // 添加错误消息
       setMessages(prev => [...prev, {
-        text: `根据${selectedModel}模型和${selectedStyle}文风，为您提供以下剧情选择:`,
+        text: `生成剧情选项时发生错误，请稍后重试。`,
         isUser: false
       }]);
-    }, 2000);
+    }
   };
   
   // 生成分幕剧情总结
@@ -233,36 +293,51 @@ export function useAppState() {
     return generatedScenes;
   };
   
-  // 生成优化剧情
-  const generateOptimizedText = (
+  // 生成优化文本
+  const generateOptimizedText = async (
     text: string,
-    // prompt: string = '请优化以下剧情，使其更加生动有趣，情节更合理：'
   ) => {
+    if (!text || text.trim().length === 0) {
+      alert("请选择需要优化的文本");
+      return;
+    }
+    
     setIsOptimizing(true);
     
-    // 在实际应用中，这里应该调用API发送优化请求
-    // 包含 text, prompt, selectedModel, selectedStyle 等参数
+    const prompt = `${optimizationPrompt}\n\n${text}`;
     
-    // 模拟API调用
-    setTimeout(() => {
-      const results = [
-        {
-          id: '1',
-          text: `优化版本1 (${selectedModel}/${selectedStyle}): ${text.substring(0, 20)}... 【这里是优化后的内容，使用了更生动的描写和合理的情节发展】`
-        },
-        {
-          id: '2',
-          text: `优化版本2 (${selectedModel}/${selectedStyle}): ${text.substring(0, 20)}... 【另一种优化方向，增强了角色情感和场景氛围描写】`
-        },
-        {
-          id: '3',
-          text: `优化版本3 (${selectedModel}/${selectedStyle}): ${text.substring(0, 20)}... 【第三种优化方案，调整了情节节奏和冲突设置】`
-        }
-      ];
+    try {
+      // 如果选择了DeepSeek模型
+      if (selectedModel === 'deepseekr1') {
+        const deepseekResponse = await generateDeepSeekContent(prompt);
+        
+        const result = {
+          id: Date.now().toString(),
+          text: deepseekResponse
+        };
+        
+        setOptimizedResults(prev => [...prev, result]);
+        setIsOptimizing(false);
+        return;
+      }
       
-      setOptimizedResults(results);
+      // 其他模型的模拟逻辑不变
+      setTimeout(() => {
+        const optimizedText = `【${selectedModel}优化结果】这是一段使用${selectedStyle}文风优化的文本示例。它不仅保留了原文的核心内容，还增加了更多的细节描写和情感表达，使故事更加生动。\n\n${text}\n\n这里是延伸和丰富后的内容...`;
+        
+        const result = {
+          id: Date.now().toString(),
+          text: optimizedText
+        };
+        
+        setOptimizedResults(prev => [...prev, result]);
+        setIsOptimizing(false);
+      }, 2000);
+    } catch (error) {
+      console.error("生成优化文本时出错:", error);
       setIsOptimizing(false);
-    }, 2000);
+      alert("生成优化文本时发生错误，请稍后重试");
+    }
   };
   
   // 选择剧情选项
@@ -282,20 +357,55 @@ export function useAppState() {
     }
   };
   
-  // 消息处理逻辑
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && optimizationText.trim() !== '') {
+  // 处理用户输入的键盘事件
+  const handleKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && (e.currentTarget as HTMLInputElement).value) {
+      const inputValue = (e.currentTarget as HTMLInputElement).value;
+      
       // 添加用户消息
-      setMessages([...messages, {
-        text: optimizationText,
+      setMessages(prev => [...prev, {
+        text: inputValue,
         isUser: true
       }]);
       
-      // 调用剧情生成函数
-      generateScenarioOptions('', '', '主角', optimizationText);
-      
       // 清空输入框
       setOptimizationText('');
+      
+      try {
+        // 如果选择了DeepSeek模型，直接调用API
+        if (selectedModel === 'deepseekr1') {
+          setMessages(prev => [...prev, {
+            text: "DeepSeek正在思考中...",
+            isUser: false
+          }]);
+          
+          const deepseekResponse = await generateDeepSeekContent(inputValue);
+          
+          // 更新最后一条消息为实际响应
+          setMessages(prev => {
+            const updatedMessages = [...prev];
+            updatedMessages[updatedMessages.length - 1] = {
+              text: deepseekResponse,
+              isUser: false
+            };
+            return updatedMessages;
+          });
+          
+          return;
+        }
+        
+        // 对于其他模型，使用模拟响应
+        setMessages(prev => [...prev, {
+          text: `这是来自${selectedModel}的模拟响应，基于您的输入："${inputValue}"`,
+          isUser: false
+        }]);
+      } catch (error) {
+        console.error("处理用户输入时出错:", error);
+        setMessages(prev => [...prev, {
+          text: "处理您的请求时发生错误，请稍后重试。",
+          isUser: false
+        }]);
+      }
     }
   };
   
@@ -377,7 +487,6 @@ export function useAppState() {
     optimizedResults,
     setOptimizedResults,
     isOptimizing,
-    setIsOptimizing,
     generateOptimizedText,
     
     // 消息相关

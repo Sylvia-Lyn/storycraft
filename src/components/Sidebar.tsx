@@ -447,7 +447,7 @@ const Sidebar = () => {
           />
         </div>
         
-        <div className="text-gray-400 mt-16 text-sm">Writer.AI @千帆叙梦</div>
+        <div className="text-gray-400 text-sm absolute bottom-4 left-4">Writer.AI @千帆叙梦</div>
       </div>
     </div>
   )

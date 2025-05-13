@@ -3,6 +3,7 @@ import { Icon } from '@iconify/react'
 import Sidebar from './Sidebar'
 import MiddleSection from './MiddleSection'
 import { useAppState } from '../hooks/useAppState'
+import TextEditorArea, { TextEditorAreaRef } from './TextEditorArea'
 
 // 分幕剧情组件
 function SceneBreakdown({ 
@@ -60,7 +61,7 @@ function ContentArea() {
   const [selectionRange, setSelectionRange] = React.useState<{start: number, end: number} | null>(null);
   
   // 文本区域的引用
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const textareaRef = useRef<TextEditorAreaRef>(null);
 
   // 监听从中间操作台传来的优化文本
   useEffect(() => {
@@ -79,35 +80,34 @@ function ContentArea() {
   }, [selectionRange]); // 依赖于selectionRange，确保在选中范围变化时重新订阅
 
   // 处理文本选择
-  const handleTextSelection = () => {
-    if (textareaRef.current) {
-      const start = textareaRef.current.selectionStart;
-      const end = textareaRef.current.selectionEnd;
+  const handleTextSelection = (e: React.SyntheticEvent<HTMLTextAreaElement>) => {
+    const target = e.target as HTMLTextAreaElement;
+    const start = target.selectionStart;
+    const end = target.selectionEnd;
+    
+    if (start !== end) {
+      const selected = draftContent.substring(start, end);
+      setSelectedText(selected);
+      setSelectionRange({ start, end });
       
-      if (start !== end) {
-        const selected = draftContent.substring(start, end);
-        setSelectedText(selected);
-        setSelectionRange({ start, end });
-        
-        // 同时更新全局应用状态中的选中文本
-        setSelectedDraftText(selected);
-        
-        // 触发自定义事件，将选中的文本发送到中间操作台
-        const event = new CustomEvent('draftTextSelected', {
-          detail: { text: selected }
-        });
-        window.dispatchEvent(event);
-      } else {
-        setSelectedText("");
-        setSelectionRange(null);
-        setSelectedDraftText("");
-      }
+      // 同时更新全局应用状态中的选中文本
+      setSelectedDraftText(selected);
+      
+      // 触发自定义事件，将选中的文本发送到中间操作台
+      const event = new CustomEvent('draftTextSelected', {
+        detail: { text: selected }
+      });
+      window.dispatchEvent(event);
+    } else {
+      setSelectedText("");
+      setSelectionRange(null);
+      setSelectedDraftText("");
     }
   };
 
   // 处理文本替换
   const replaceSelectedText = (newText: string) => {
-    if (selectionRange && textareaRef.current) {
+    if (selectionRange) {
       const newContent = 
         draftContent.substring(0, selectionRange.start) + 
         newText + 
@@ -119,8 +119,11 @@ function ContentArea() {
       setTimeout(() => {
         if (textareaRef.current) {
           textareaRef.current.focus();
-          const newPosition = selectionRange.start + newText.length;
-          textareaRef.current.setSelectionRange(newPosition, newPosition);
+          const textareaElement = textareaRef.current.getTextarea();
+          if (textareaElement) {
+            const newPosition = selectionRange.start + newText.length;
+            textareaElement.setSelectionRange(newPosition, newPosition);
+          }
         }
       }, 0);
       
@@ -137,15 +140,19 @@ function ContentArea() {
     if (scene && textareaRef.current) {
       setSelectedScene(sceneId);
       textareaRef.current.focus();
-      textareaRef.current.setSelectionRange(scene.startPos, scene.endPos);
       
-      // 计算滚动位置
-      const lineHeight = 24; // 估计的行高
-      const textBeforeScene = draftContent.substring(0, scene.startPos);
-      const linesBeforeScene = textBeforeScene.split('\n').length;
-      const scrollPosition = linesBeforeScene * lineHeight;
-      
-      textareaRef.current.scrollTop = scrollPosition;
+      const textareaElement = textareaRef.current.getTextarea();
+      if (textareaElement) {
+        textareaElement.setSelectionRange(scene.startPos, scene.endPos);
+        
+        // 计算滚动位置
+        const lineHeight = 24; // 估计的行高
+        const textBeforeScene = draftContent.substring(0, scene.startPos);
+        const linesBeforeScene = textBeforeScene.split('\n').length;
+        const scrollPosition = linesBeforeScene * lineHeight;
+        
+        textareaElement.scrollTop = scrollPosition;
+      }
     }
   };
 
@@ -196,7 +203,7 @@ function ContentArea() {
     <div className="flex-1 overflow-auto p-4 bg-white flex flex-col h-full">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center">
-          <div className="font-bold text-lg">初稿编辑与分幕剧情</div>
+          <div className="font-bold text-lg">初稿编辑</div>
         </div>
         
         <div className="flex items-center space-x-2">
@@ -226,17 +233,14 @@ function ContentArea() {
 
       <div className="flex flex-grow h-full gap-4">
         {/* 左侧：初稿编辑区 */}
-        <div className="flex-1 border border-gray-300 rounded">
-          <textarea
-            ref={textareaRef}
-            className="w-full h-full p-4 resize-none outline-none"
-            value={draftContent}
-            onChange={(e) => setDraftContent(e.target.value)}
-            onSelect={handleTextSelection}
-            placeholder="在这里输入初稿全文（不超过5万字）..."
-            style={{ lineHeight: '1.6' }}
-          />
-        </div>
+        <TextEditorArea
+          ref={textareaRef}
+          content={draftContent}
+          onChange={setDraftContent}
+          onSelect={handleTextSelection}
+          placeholder="在这里输入初稿全文（不超过5万字）..."
+          style={{ lineHeight: '1.6' }}
+        />
         
         {/* 右侧：分幕剧情区 */}
         <div className="w-64 overflow-y-auto">

@@ -225,89 +225,60 @@ function MiddleSection() {
             onTabChange={setSelectedTab}
           />
           
-          {/* 模型、文风和知识库选择 */}
-          <div className="flex gap-4 mb-6">
-            <div className="relative flex-1">
+          {/* 顶部选择器区域 - 按照设计图排列 */}
+          <div className="flex items-center gap-4 mb-6 mt-4">
+            {/* AI模型选择区域 */}
+            <div className="relative">
               <div 
-                className="flex items-center bg-gray-100 rounded-md px-3 py-2 w-full cursor-pointer"
+                className="flex items-center px-4 py-2 bg-gray-100 rounded-md cursor-pointer"
                 onClick={toggleModelDropdown}
               >
-                <div className="flex items-center justify-center bg-white h-5 w-5 rounded-sm mr-2">
-                  <span className="text-black text-xs font-medium">AI</span>
+                <div className="flex items-center justify-center mr-2">
+                  <span className="font-medium text-black">AI</span>
                 </div>
-                <span className="text-black">{selectedModel}</span>
-                <Icon icon="ri:arrow-down-s-line" className="ml-auto text-gray-700" />
+                <span className="font-medium text-black">{selectedModel}</span>
+                <Icon icon="mdi:chevron-down" className="ml-2 text-gray-700" />
               </div>
               
               {showModelDropdown && (
-                <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg z-10">
+                <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded shadow-lg z-10 w-full">
                   {models.map(model => (
                     <div 
-                      key={model} 
-                      className={`px-3 py-2 hover:bg-gray-100 cursor-pointer flex items-center ${selectedModel === model ? 'bg-gray-100' : ''}`}
+                      key={model}
+                      className={`px-3 py-2 cursor-pointer hover:bg-gray-100 ${selectedModel === model ? 'bg-gray-100' : ''}`}
                       onClick={() => selectModel(model)}
                     >
-                      <div className="flex items-center justify-center bg-white h-5 w-5 rounded-sm mr-2">
-                        <span className="text-black text-xs font-medium">AI</span>
-                      </div>
-                      <span>{model}</span>
-                      {selectedModel === model && (
-                        <Icon icon="ri:check-line" className="ml-auto text-black" />
-                      )}
+                      {model}
                     </div>
                   ))}
                 </div>
               )}
             </div>
-            
-            <div className="relative flex-1">
-              <div 
-                className="flex items-center bg-gray-100 rounded-md px-3 py-2 w-full cursor-pointer"
-                onClick={toggleStyleDropdown}
-              >
-                <span className="text-black">文风</span>
-                <Icon icon="ri:arrow-down-s-line" className="ml-auto text-gray-700" />
-              </div>
-              
-              {showStyleDropdown && (
-                <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg z-10">
-                  {styles.map(style => (
-                    <div 
-                      key={style} 
-                      className={`px-3 py-2 hover:bg-gray-100 cursor-pointer flex items-center ${selectedStyle === style ? 'bg-gray-100' : ''}`}
-                      onClick={() => selectStyle(style)}
-                    >
-                      <span>{style}</span>
-                      {selectedStyle === style && (
-                        <Icon icon="ri:check-line" className="ml-auto text-black" />
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
+
+            {/* 文风显示 - 仅显示，不可点击 */}
+            <div className="px-4 py-2">
+              <span className="font-medium text-black">文风</span>
             </div>
             
+            {/* 知识库选择器 */}
             <div className="relative flex-1">
               <div 
-                className="flex items-center border border-gray-300 rounded-md px-3 py-2 w-full cursor-pointer"
+                className="flex items-center border border-gray-300 rounded-md px-4 py-2 cursor-pointer"
                 onClick={toggleKnowledgeDropdown}
               >
-                <span className="text-gray-700">知识库: xxxxxxx</span>
-                <Icon icon="ri:arrow-down-s-line" className="ml-auto text-gray-700" />
+                <span className="text-black">知识库: {selectedKnowledge}</span>
+                <Icon icon="mdi:chevron-down" className="ml-2 text-gray-700" />
               </div>
               
               {showKnowledgeDropdown && (
-                <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg z-10">
+                <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded shadow-lg z-10 w-full">
                   {knowledgeBases.map(kb => (
                     <div 
-                      key={kb} 
-                      className={`px-3 py-2 hover:bg-gray-100 cursor-pointer flex items-center ${selectedKnowledge === kb ? 'bg-gray-100' : ''}`}
+                      key={kb}
+                      className={`px-3 py-2 cursor-pointer hover:bg-gray-100 ${selectedKnowledge === kb ? 'bg-gray-100' : ''}`}
                       onClick={() => selectKnowledge(kb)}
                     >
-                      <span>{kb}</span>
-                      {selectedKnowledge === kb && (
-                        <Icon icon="ri:check-line" className="ml-auto text-black" />
-                      )}
+                      {kb}
                     </div>
                   ))}
                 </div>
@@ -335,7 +306,7 @@ function MiddleSection() {
           {isGenerating ? (
             <div className="text-center py-6">
               <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900"></div>
-              <p className="mt-2 text-gray-600">正在使用 {selectedModel} 模型和 {selectedStyle} 文风生成剧情选项...</p>
+              <p className="mt-2 text-gray-600">正在使用 {selectedModel} 生成内容...</p>
             </div>
           ) : optimizationResults.length > 0 ? (
             <div className="space-y-4 mb-6">

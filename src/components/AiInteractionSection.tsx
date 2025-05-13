@@ -19,18 +19,25 @@ function AiInteractionSection({
   setUserInput,
   handleKeyDown,
   aiSuggestions,
-  inputPlaceholder = "这段内容不好？点击单元格，告诉我如何优化，如：xxxxxx"
+  inputPlaceholder = "这段内容不好？点击单元格，告诉我如何优化"
 }: AiInteractionSectionProps) {
   const [showModelDropdown, setShowModelDropdown] = useState(false);
   
+  // DeepSeek API密钥
+  const DEEPSEEK_API_KEY = "sk-a66b3a944d5441469d3bd013b8f43cf7";
+  
   // AI模型列表
   const models = [
-    'claude35_sonnet2',
-    'claude35_haiku',
-    'claude37_sonnet',
-    'gpt-4o',
-    'gemini-pro'
+    'deepseekr1',
   ];
+  
+  // 根据选择的模型获取输入框占位符
+  const getPlaceholder = () => {
+    if (selectedModel === 'deepseekr1') {
+      return "输入提示来生成内容，按回车发送...";
+    }
+    return inputPlaceholder;
+  };
   
   return (
     <div className="border-t border-gray-200 pt-4 pb-4 bg-white">
@@ -67,14 +74,14 @@ function AiInteractionSection({
       <div className="py-3 px-6">
         <div className="flex justify-end mb-4">
           <div className="bg-black text-white px-4 py-3 rounded-lg max-w-[80%] relative">
-            <p>角色1和角色2在xxx发生了xxx而不是xxx</p>
+            <p>角色1和角色2在不同场景下的互动</p>
             <div className="absolute w-3 h-3 bg-black transform rotate-45 right-[-6px] top-1/2 -translate-y-1/2"></div>
           </div>
         </div>
         
         <div className="flex justify-start mb-4">
           <div className="bg-white border border-gray-200 px-4 py-3 rounded-lg max-w-[80%]">
-            <p className="text-sm text-gray-700">根据xxxxxxxx, 为您提供以下内容选择:</p>
+            <p className="text-sm text-gray-700">根据您的需求，为您提供以下内容选择:</p>
           </div>
         </div>
       </div>
@@ -94,7 +101,7 @@ function AiInteractionSection({
       <div className="px-6 pt-2">
         <input
           type="text"
-          placeholder={inputPlaceholder}
+          placeholder={getPlaceholder()}
           className="w-full border border-gray-300 rounded-lg p-4 text-gray-600"
           value={userInput}
           onChange={(e) => setUserInput(e.target.value)}

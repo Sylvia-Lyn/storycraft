@@ -18,6 +18,10 @@ function MiddleSection() {
     selectModel,
     models,
     
+    // 文风相关
+    selectedStyle,
+    styles,
+    
     // 知识库相关
     showKnowledgeDropdown,
     toggleKnowledgeDropdown,
@@ -238,14 +242,19 @@ function MiddleSection() {
               )}
             </div>
 
+            {/* 文风显示 */}
+            <div className="flex items-center px-4 py-2 bg-gray-50 rounded-md">
+              <span className="text-gray-700">文风: {selectedStyle}</span>
+            </div>
+
             {/* 知识库选择器 */}
-            <div className="relative flex-1">
+            <div className="relative flex-1 max-w-[180px]">
               <div 
                 className="flex items-center border border-gray-300 rounded-md px-4 py-2 cursor-pointer"
                 onClick={toggleKnowledgeDropdown}
               >
-                <span className="text-black">知识库: {selectedKnowledge}</span>
-                <Icon icon="mdi:chevron-down" className="ml-2 text-gray-700" />
+                <span className="text-black truncate">知识库: {selectedKnowledge}</span>
+                <Icon icon="mdi:chevron-down" className="ml-2 text-gray-700 flex-shrink-0" />
               </div>
               
               {showKnowledgeDropdown && (

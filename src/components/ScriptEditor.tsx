@@ -238,7 +238,6 @@ function ContentArea() {
           content={draftContent}
           onChange={setDraftContent}
           onSelect={handleTextSelection}
-          placeholder="在这里输入初稿全文（不超过5万字）..."
           style={{ lineHeight: '1.6' }}
         />
         

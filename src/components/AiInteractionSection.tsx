@@ -23,9 +23,6 @@ function AiInteractionSection({
 }: AiInteractionSectionProps) {
   const [showModelDropdown, setShowModelDropdown] = useState(false);
   
-  // DeepSeek API密钥
-  const DEEPSEEK_API_KEY = "sk-a66b3a944d5441469d3bd013b8f43cf7";
-  
   // AI模型列表
   const models = [
     'deepseekr1',

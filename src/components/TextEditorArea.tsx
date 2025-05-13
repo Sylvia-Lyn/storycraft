@@ -1,4 +1,4 @@
-import { forwardRef, useRef, useImperativeHandle, useEffect, ChangeEvent, MouseEvent } from 'react';
+import { forwardRef, useRef, useImperativeHandle, useEffect, ChangeEvent } from 'react';
 
 interface TextEditorAreaProps {
   content: string;

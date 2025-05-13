@@ -18,13 +18,6 @@ function MiddleSection() {
     selectModel,
     models,
     
-    // 文风相关
-    showStyleDropdown,
-    toggleStyleDropdown,
-    selectedStyle,
-    selectStyle,
-    styles,
-    
     // 知识库相关
     showKnowledgeDropdown,
     toggleKnowledgeDropdown,
@@ -32,18 +25,8 @@ function MiddleSection() {
     selectKnowledge,
     knowledgeBases,
     
-    // 剧情选项相关
-    // generatingScenarios,
-    // scenarioOptions,
-    // selectedScenario,
-    // selectScenario,
-    // generateScenarioOptions,
-    
     // 消息相关
-    // optimizationText,
-    // setOptimizationText,
     messages,
-    // handleKeyDown
   } = useAppState();
   
   // 初稿相关状态
@@ -255,11 +238,6 @@ function MiddleSection() {
               )}
             </div>
 
-            {/* 文风显示 - 仅显示，不可点击 */}
-            <div className="px-4 py-2">
-              <span className="font-medium text-black">文风</span>
-            </div>
-            
             {/* 知识库选择器 */}
             <div className="relative flex-1">
               <div 

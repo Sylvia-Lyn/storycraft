@@ -1,8 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Icon } from '@iconify/react'
 import { toast } from 'react-hot-toast'
-// import { useNavigate } from 'react-router-dom'
-// import downloadWork from './WorkDownloader'
+
 
 interface ExpandedItems {
   [key: string]: boolean

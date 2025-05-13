@@ -20,7 +20,6 @@ function MiddleSection() {
     
     // 文风相关
     selectedStyle,
-    styles,
     
     // 知识库相关
     showKnowledgeDropdown,

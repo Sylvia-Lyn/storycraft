@@ -66,7 +66,7 @@ const TextEditorArea = forwardRef<TextEditorAreaRef, TextEditorAreaProps>(
       <div className={`flex-1 border border-gray-300 rounded ${className}`}>
         <textarea
           ref={textareaRef}
-          className="w-full h-full p-4 resize-none outline-none"
+          className="w-full h-full p-3 resize-none outline-none"
           value={content}
           onChange={handleChange}
           onSelect={onSelect}

@@ -70,79 +70,103 @@ function MiddleSection() {
     }
     
     setIsGenerating(true);
-    console.log("开始生成优化内容, 输入:", feedbackText);
+    console.log("开始生成优化内容，输入:", feedbackText);
     
-    // 构建优化提示词
+    // 构建上下文和提示词
     let prompt = '';
     
     // 如果有之前的内容，添加"接上文"
     if (previousDraftContent) {
-      prompt += `接上文：\n${previousDraftContent}\n`;
+      prompt += `接上文：${previousDraftContent}\n\n`;
     }
     
-    // 添加角色视角和基本要求
-    prompt += `以「角色名称」的第二人称视角，要求符合逻辑、不能有超现实内容，并输出三种可能性的结果，继续展开以下剧情：\n`;
-    
-    // 如果有当前分幕剧情，添加分幕剧情
+    // 添加当前内容
     if (currentDraftContent) {
-      prompt += `${currentDraftContent}\n`;
+      prompt += `当前剧情：${currentDraftContent}\n\n`;
     }
     
-    // 如果有用户输入的内容，添加补充说明
-    if (feedbackText) {
-      prompt += `补充：${feedbackText}\n`;
-    }
+    // 添加用户输入
+    prompt += `用户反馈：${feedbackText}\n\n`;
     
-    console.log("构建的提示词:", prompt);
+    // 添加指令
+    prompt += `根据以上上下文，请提供三种不同的剧情优化方向，每个方向具有创意性和连贯性，符合角色设定和故事逻辑。`;
     
     try {
-      // 调用API获取优化结果
-      console.log("调用API...");
+      console.log("调用DeepSeek API...");
       
-      // 临时使用模拟数据，因为API可能还没实现
-      // 实际使用时取消注释下面的代码
-      /*
-      const response = await fetch('/api/optimize-content', {
+      // 调用DeepSeek API
+      const DEEPSEEK_API_KEY = 'sk-657e30eb77ba48e0834a0821dcd8279f';
+      
+      const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
         },
         body: JSON.stringify({
-          prompt,
-          model: selectedModel,
-          style: selectedStyle
-        }),
+          model: "deepseek-chat",
+          messages: [
+            {
+              role: "system",
+              content: "你是一个专业的剧本顾问和编剧，擅长分析故事结构、角色发展并提供富有创意的剧情建议。你的回答应当简洁、具体、有创意，并且分为三个不同的选项。每个选项都应该以数字编号（1. 2. 3.）开头。"
+            },
+            {
+              role: "user",
+              content: prompt
+            }
+          ],
+          temperature: 0.8,
+          max_tokens: 2000,
+          top_p: 0.95
+        })
       });
       
       if (!response.ok) {
-        throw new Error('API调用失败');
+        throw new Error(`API调用失败: ${response.status}`);
       }
       
       const data = await response.json();
-      */
+      console.log("DeepSeek API返回:", data);
       
-      // 模拟API响应
-      const data = {
-        results: [
-          "这是第一个优化结果，根据你的反馈，我们调整了剧情走向...",
-          "这是第二个可能的剧情发展方向，角色将面临不同的选择...",
-          "第三个方案提供了完全不同的视角，让我们从另一个角度看这个故事..."
-        ]
-      };
+      // 解析API返回的内容，提取三个建议
+      const content = data.choices[0].message.content;
       
-      console.log("API返回结果:", data);
+      // 解析内容，提取三个建议
+      // 这里的正则表达式可能需要根据实际返回格式调整
+      const suggestions = content
+        .split(/\n\s*\d+[\.\)]\s+/)
+        .filter((item: string) => item.trim().length > 0)
+        .slice(0, 3)  // 确保只有3个结果
+        .map((suggestion: string) => suggestion.trim());
       
-      // 将API返回的结果转换为选项格式
-      const results = data.results.map((result: string, i: number) => ({
+      // 将提取的建议转换为选项格式
+      const results = suggestions.map((suggestion: string, i: number) => ({
         id: String(i + 1),
-        text: `${i + 1}. ${result}`
+        text: `${i + 1}. ${suggestion}`
       }));
       
-      console.log("格式化后的结果:", results);
+      // 如果没有得到足够的建议，添加一些默认选项
+      while (results.length < 3) {
+        results.push({
+          id: String(results.length + 1),
+          text: `${results.length + 1}. 抱歉，我无法为您提供更多的建议。`
+        });
+      }
+      
+      console.log("格式化后的建议:", results);
       setOptimizationResults(results);
+      
     } catch (error) {
       console.error('生成优化内容失败:', error);
-      // 可以在这里添加错误处理，如显示错误消息
+      
+      // 出错时显示一些默认选项
+      const fallbackResults = [
+        { id: "1", text: "1. 由于API调用失败，这是一个默认的建议选项。您可以尝试重新发送您的请求。" },
+        { id: "2", text: "2. 您也可以尝试修改您的输入，使其更具体或更清晰。" },
+        { id: "3", text: "3. 如果问题持续存在，可能是API密钥或连接问题，请联系技术支持。" }
+      ];
+      
+      setOptimizationResults(fallbackResults);
     } finally {
       setIsGenerating(false);
     }
@@ -150,8 +174,9 @@ function MiddleSection() {
   
   // 选择并应用优化结果
   const applyOptimizedText = (optimizedText: string) => {
-    console.log("正在应用选择的优化内容:", optimizedText);
+    console.log("选择了回复:", optimizedText);
     
+    // 在这里，我们不去除编号，保持原始格式
     // 触发自定义事件，通知其他组件替换文本
     const event = new CustomEvent('optimizedTextReady', {
       detail: { text: optimizedText }
@@ -164,7 +189,7 @@ function MiddleSection() {
     setFeedbackText("");
     setOptimizationResults([]);
     
-    console.log("优化内容已应用");
+    console.log("回复已选择");
   };
   
   const customScrollbarStyle = `
@@ -201,9 +226,10 @@ function MiddleSection() {
     <div className="w-[520px] border-r border-gray-200 bg-white flex flex-col h-full">
       <style dangerouslySetInnerHTML={{ __html: customScrollbarStyle }} />
       
-      <div className="scrollbar-container flex-1 relative">
+      {/* 中间内容区域 */}
+      <div className="scrollbar-container flex-1 relative overflow-auto">
         <div className="scrollbar-overlay"></div>
-        <div className="p-4 h-full overflow-y-auto custom-scrollbar">
+        <div className="p-4 overflow-y-auto custom-scrollbar">
           {/* 使用Navigation组件 */}
           <Navigation 
             tabs={tabs} 
@@ -273,9 +299,9 @@ function MiddleSection() {
           </div>
           
           {/* 对话消息区域 */}
-          <div className="space-y-6 mb-6">
+          <div className="space-y-4 mb-6">
             {messages.length > 0 && messages.map((message, index) => (
-              <div key={index} className={`flex ${message.isUser ? 'justify-end' : 'justify-start'} my-6`}>
+              <div key={index} className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}>
                 <div className={`${message.isUser ? 'bg-black text-white' : 'bg-white border border-gray-200'} rounded-lg px-4 py-3 relative max-w-[80%]`}>
                   <div className={message.isUser ? 'text-right' : ''}>
                     {message.text}
@@ -288,48 +314,64 @@ function MiddleSection() {
             ))}
           </div>
           
-          {/* 剧情选项区域 */}
+          {/* 生成内容区域 */}
           {isGenerating ? (
-            <div className="text-center py-6">
+            <div className="text-center py-4 mb-4">
               <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900"></div>
-              <p className="mt-2 text-gray-600">正在使用 {selectedModel} 生成内容...</p>
+              <p className="mt-2 text-gray-600">正在使用 {selectedModel} 生成回复...</p>
             </div>
           ) : optimizationResults.length > 0 ? (
-            <div className="space-y-4 mb-6">
+            <div className="space-y-3 mb-4">
+              <p className="text-sm text-gray-500 mb-2">根据xxxxxxx, 为您提供以下内容选择：</p>
               {optimizationResults.map((option) => (
                 <div 
                   key={option.id}
-                  className="border border-gray-200 rounded-lg p-4 cursor-pointer hover:border-gray-400 hover:bg-gray-50 transition-colors overflow-hidden"
+                  className="border border-gray-200 rounded-lg p-3 cursor-pointer hover:border-gray-400 hover:bg-gray-50 transition-colors overflow-hidden"
                   onClick={() => applyOptimizedText(option.text)}
                 >
                   <p className="whitespace-normal break-words">{option.text}</p>
                 </div>
               ))}
               <div 
-                className="border border-gray-200 rounded-lg p-4 bg-gray-50 cursor-pointer hover:border-gray-400 transition-colors"
-                onClick={() => setOptimizationResults([])} // 清空结果，返回输入状态
+                className="border border-gray-200 rounded-lg p-3 bg-gray-50 cursor-pointer hover:border-gray-400 transition-colors"
+                onClick={() => setOptimizationResults([])}
               >
                 <p className="text-gray-700">点击替换。这个方向对吗？还是从xxxxxxxxxx展开？</p>
               </div>
             </div>
-          ) : (
-            <div className="mb-6">
-              <input
-                type="text"
-                placeholder="剧情不好？告诉我如何优化，如：xxxxxx"
-                className="w-full border border-gray-300 rounded-lg p-4 text-gray-500"
-                value={feedbackText}
-                onChange={(e) => setFeedbackText(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && feedbackText.trim()) {
-                    generateOptimizedContent();
-                  }
-                }}
-              />
-            </div>
-          )}
+          ) : null}
         </div>
       </div>
+      
+      {/* 底部固定输入框 */}
+      {!isGenerating && optimizationResults.length === 0 && (
+        <div className="px-4 py-3 border-t border-gray-200">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="剧情不好？告诉我如何优化，如：xxxxxx"
+              className="w-full border border-gray-300 rounded-lg p-3 pr-10 text-gray-700 focus:border-black focus:ring-0 transition-colors"
+              value={feedbackText}
+              onChange={(e) => setFeedbackText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && feedbackText.trim()) {
+                  generateOptimizedContent();
+                }
+              }}
+            />
+            <button
+              className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${feedbackText.trim() ? 'text-black' : 'text-gray-400'}`}
+              onClick={() => {
+                if (feedbackText.trim()) {
+                  generateOptimizedContent();
+                }
+              }}
+            >
+              <Icon icon="mdi:send" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

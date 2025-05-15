@@ -18,16 +18,16 @@ function SceneBreakdown({
   characterName: string
 }) {
   return (
-    <div className="mb-4">
+    <div className="mb-3">
       <div className="flex items-center justify-between mb-2">
-        <h2 className="font-bold">分幕剧情总结</h2>
-        <div className="text-sm text-gray-500">以「{characterName}」的视角</div>
+        <h2 className="font-bold text-sm">分幕剧情总结</h2>
+        <div className="text-xs text-gray-500">以「{characterName}」的视角</div>
       </div>
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         {scenes.map((scene) => (
           <div 
             key={scene.id}
-            className={`p-3 border rounded-md cursor-pointer ${selectedScene === scene.id ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'}`}
+            className={`p-2 border rounded-md cursor-pointer text-sm ${selectedScene === scene.id ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'}`}
             onClick={() => onSceneSelect(scene.id)}
           >
             {scene.summary}
@@ -200,8 +200,8 @@ function ContentArea() {
   };
 
   return (
-    <div className="flex-1 overflow-auto p-4 bg-white flex flex-col h-full">
-        <div className="flex items-center justify-between mb-4">
+    <div className="flex-1 overflow-auto p-3 bg-white flex flex-col h-full">
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center">
           <div className="font-bold text-lg">初稿编辑</div>
         </div>
@@ -217,7 +217,7 @@ function ContentArea() {
           <button 
             onClick={handleGenerateSceneSummaries}
             disabled={isProcessing}
-            className="bg-black text-white px-4 py-1 rounded text-sm flex items-center disabled:bg-gray-400"
+            className="bg-black text-white px-3 py-1 rounded text-sm flex items-center disabled:bg-gray-400"
           >
             {isProcessing ? (
               <>
@@ -231,7 +231,7 @@ function ContentArea() {
         </div>
       </div>
 
-      <div className="flex flex-grow h-full gap-4">
+      <div className="flex flex-grow h-full gap-3">
         {/* 左侧：初稿编辑区 */}
         <TextEditorArea
           ref={textareaRef}
@@ -239,10 +239,11 @@ function ContentArea() {
           onChange={setDraftContent}
           onSelect={handleTextSelection}
           style={{ lineHeight: '1.6' }}
+          className="flex-grow w-full"
         />
         
         {/* 右侧：分幕剧情区 */}
-        <div className="w-64 overflow-y-auto">
+        <div className="w-52 min-w-52 overflow-y-auto">
           {scenes.length > 0 && (
             <SceneBreakdown 
               scenes={scenes} 
@@ -250,12 +251,6 @@ function ContentArea() {
               onSceneSelect={(id) => scrollToScene(id)}
               characterName={characterName}
             />
-          )}
-          
-          {scenes.length === 0 && !isProcessing && (
-            <div className="text-gray-500 text-center p-4 border border-dashed border-gray-300 rounded">
-              输入初稿内容并点击"生成分幕剧情"按钮来进行分幕总结
-            </div>
           )}
           
           {isProcessing && (
@@ -267,30 +262,30 @@ function ContentArea() {
           </div>
         </div>
 
-      {/* 选中文本操作区 */}
-      {selectedText && (
-        <div className="mt-4 p-3 border border-gray-300 rounded bg-gray-50">
-          <div className="flex items-center justify-between mb-2">
-            <div className="font-medium">已选中文本</div>
+        {/* 选中文本操作区 */}
+        {selectedText && (
+          <div className="mt-3 p-2 border border-gray-300 rounded bg-gray-50">
+            <div className="flex items-center justify-between mb-1">
+              <div className="font-medium text-sm">已选中文本</div>
+              <button 
+                onClick={() => {
+                  setSelectedText("");
+                  setSelectedDraftText("");
+                }}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <Icon icon="ri:close-line" />
+              </button>
+            </div>
+            <div className="text-xs text-gray-600 mb-1 line-clamp-2">
+              {selectedText.length > 100 ? selectedText.substring(0, 100) + "..." : selectedText}
+            </div>
             <button 
-              onClick={() => {
-                setSelectedText("");
-                setSelectedDraftText("");
-              }}
-              className="text-gray-500 hover:text-gray-700"
+              onClick={sendToMiddleSection}
+              className="bg-black text-white px-3 py-1 rounded text-sm"
             >
-              <Icon icon="ri:close-line" />
+              发送到中间操作台优化
             </button>
-          </div>
-          <div className="text-sm text-gray-600 mb-2 line-clamp-2">
-            {selectedText.length > 100 ? selectedText.substring(0, 100) + "..." : selectedText}
-          </div>
-          <button 
-            onClick={sendToMiddleSection}
-            className="bg-black text-white px-3 py-1 rounded text-sm"
-          >
-            发送到中间操作台优化
-          </button>
           </div>
         )}
     </div>

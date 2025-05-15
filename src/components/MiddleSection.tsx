@@ -1,7 +1,7 @@
 import { Icon } from '@iconify/react'
 import Navigation from './Navigation'
 import { useAppState } from '../hooks/useAppState'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 
 // Middle Section Component
 function MiddleSection() {
@@ -40,6 +40,10 @@ function MiddleSection() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [optimizationResults, setOptimizationResults] = useState<Array<{id: string, text: string}>>([]);
   
+  // 添加引用
+  const resultsContainerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  
   // 监听文本选择事件
   useEffect(() => {
     const handleDraftTextSelected = (event: CustomEvent) => {
@@ -62,6 +66,42 @@ function MiddleSection() {
       window.removeEventListener('draftTextSelected' as any, handleDraftTextSelected);
     };
   }, []);
+  
+  // 使用useEffect监听键盘快捷键
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // 监听Command+C/V，不做特殊处理，让浏览器默认行为生效
+      
+      // 当按下Escape键时，如果有结果显示，则返回输入状态
+      if (e.key === 'Escape' && optimizationResults.length > 0) {
+        setOptimizationResults([]);
+      }
+      
+      // 选择结果的快捷键 (1-3)
+      if (optimizationResults.length > 0 && ['1', '2', '3'].includes(e.key)) {
+        const index = parseInt(e.key) - 1;
+        if (optimizationResults[index]) {
+          applyOptimizedText(optimizationResults[index].text);
+        }
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [optimizationResults]);
+  
+  // 当结果变化时，确保结果区域可以被选择和复制
+  useEffect(() => {
+    if (optimizationResults.length > 0 && resultsContainerRef.current) {
+      // 确保结果区域可以接收焦点
+      resultsContainerRef.current.focus();
+    } else if (inputRef.current) {
+      // 当没有结果时，聚焦到输入框
+      inputRef.current.focus();
+    }
+  }, [optimizationResults.length]);
   
   // 生成优化剧情
   const generateOptimizedContent = async () => {
@@ -192,6 +232,20 @@ function MiddleSection() {
     console.log("回复已选择");
   };
   
+  // 使用useCallback包装复制函数以避免不必要的渲染
+  const copyToClipboard = useCallback((text: string) => {
+    // 移除编号前缀
+    const cleanText = text.replace(/^\d+\.\s+/, '');
+    navigator.clipboard.writeText(cleanText)
+      .then(() => {
+        console.log('文本已复制到剪贴板');
+        // 这里可以添加一个临时提示，表示复制成功
+      })
+      .catch(err => {
+        console.error('复制失败:', err);
+      });
+  }, []);
+  
   const customScrollbarStyle = `
     .custom-scrollbar::-webkit-scrollbar {
       width: 6px;
@@ -321,15 +375,48 @@ function MiddleSection() {
               <p className="mt-2 text-gray-600">正在使用 {selectedModel} 生成回复...</p>
             </div>
           ) : optimizationResults.length > 0 ? (
-            <div className="space-y-3 mb-4">
+            <div 
+              className="space-y-3 mb-4" 
+              tabIndex={0} 
+              ref={resultsContainerRef}
+            >
               <p className="text-sm text-gray-500 mb-2">根据xxxxxxx, 为您提供以下内容选择：</p>
               {optimizationResults.map((option) => (
                 <div 
                   key={option.id}
-                  className="border border-gray-200 rounded-lg p-3 cursor-pointer hover:border-gray-400 hover:bg-gray-50 transition-colors overflow-hidden"
-                  onClick={() => applyOptimizedText(option.text)}
+                  className="border border-gray-200 rounded-lg p-3 cursor-pointer hover:border-gray-400 hover:bg-gray-50 transition-colors overflow-hidden relative group"
+                  onClick={(e) => {
+                    // 防止点击导致焦点跳转
+                    e.preventDefault();
+                    // 仅在双击时应用文本
+                    if (e.detail === 2) {
+                      applyOptimizedText(option.text);
+                    }
+                  }}
+                  onDoubleClick={() => applyOptimizedText(option.text)}
                 >
-                  <p className="whitespace-normal break-words">{option.text}</p>
+                  <div 
+                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <button 
+                      className="p-1 bg-gray-100 rounded-md hover:bg-gray-200 text-gray-600"
+                      onClick={(e) => {
+                        e.stopPropagation(); // 阻止事件冒泡
+                        copyToClipboard(option.text);
+                      }}
+                      title="复制内容"
+                      aria-label="复制内容"
+                    >
+                      <Icon icon="mdi:content-copy" className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <p 
+                    className="whitespace-normal break-words" 
+                    style={{ userSelect: 'text' }}
+                  >
+                    <span className="font-medium">{option.id}. </span>
+                    {option.text.replace(/^\d+\.\s+/, '')}
+                  </p>
                 </div>
               ))}
               <div 
@@ -348,6 +435,7 @@ function MiddleSection() {
         <div className="px-4 py-3 border-t border-gray-200">
           <div className="relative">
             <input
+              ref={inputRef}
               type="text"
               placeholder="剧情不好？告诉我如何优化，如：xxxxxx"
               className="w-full border border-gray-300 rounded-lg p-3 pr-10 text-gray-700 focus:border-black focus:ring-0 transition-colors"

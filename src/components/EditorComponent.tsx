@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useImperativeHandle, forwardRef } from 'react';
+import { useEffect, useRef, useState, useImperativeHandle, forwardRef } from 'react';
 import EditorJS from '@editorjs/editorjs';
 import Header from '@editorjs/header';
 import List from '@editorjs/list';
@@ -20,7 +20,6 @@ const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({ 
   const editorRef = useRef<EditorJS | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [selection, setSelection] = useState<{text: string, range: Range | null}>({text: '', range: null});
-  const [cursorPosition, setCursorPosition] = useState<{blockIndex: number, offset: number} | null>(null);
   const [showTemplates, setShowTemplates] = useState(false);
   
   // 预设的模板句式

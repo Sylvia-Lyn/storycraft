@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import { Icon } from '@iconify/react'
 import Sidebar from './Sidebar'
 import MiddleSection from './MiddleSection'
@@ -60,7 +60,7 @@ function ContentArea() {
   };
 
   // 处理文本选择
-  const handleTextSelection = (text: string, range: Range | null) => {
+  const handleTextSelection = (text: string, _range: Range | null) => {
     if (text) {
       setSelectedText(text);
       setSelectedDraftText(text);

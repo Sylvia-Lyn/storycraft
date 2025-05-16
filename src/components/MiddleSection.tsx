@@ -56,7 +56,7 @@ function MiddleSection() {
   
   // 添加缓存和快速响应相关状态
   const [responseCache, setResponseCache] = useState<{[key: string]: Array<{id: string, text: string}>}>({});
-  const [quickResponses, setQuickResponses] = useState<Array<{id: string, text: string}>>([
+  const [quickResponses] = useState<Array<{id: string, text: string}>>([
     { id: "q1", text: "1. 建议让角色动机更加明确，增加角色内心的矛盾和挣扎，使角色更加立体。" },
     { id: "q2", text: "2. 情节可以更加紧凑，节奏感更强，增加一些意外转折来提高读者兴趣。" },
     { id: "q3", text: "3. 考虑增加更多环境描写和细节，让读者能够更好地沉浸在故事世界中。" }
@@ -331,8 +331,8 @@ function MiddleSection() {
   };
   
   // 切换工作模式
-  const toggleWorkingMode = () => {
-    setWorkingMode(prev => prev === "conversation" ? "optimization" : "conversation");
+  const changeWorkingMode = (mode: "conversation" | "optimization") => {
+    setWorkingMode(mode);
   };
   
   // 更新最近输入
@@ -922,13 +922,13 @@ function MiddleSection() {
           <div className="flex items-center gap-2">
             <button
               className={`px-3 py-1 text-xs rounded-full ${workingMode === "conversation" ? 'bg-black text-white' : 'bg-gray-100 text-gray-700'}`}
-              onClick={() => setWorkingMode("conversation")}
+              onClick={() => changeWorkingMode("conversation")}
             >
               对话模式
             </button>
             <button
               className={`px-3 py-1 text-xs rounded-full ${workingMode === "optimization" ? 'bg-black text-white' : 'bg-gray-100 text-gray-700'}`}
-              onClick={() => setWorkingMode("optimization")}
+              onClick={() => changeWorkingMode("optimization")}
             >
               优化模式
             </button>

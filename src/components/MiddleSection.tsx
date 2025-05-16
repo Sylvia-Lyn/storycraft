@@ -21,13 +21,6 @@ function MiddleSection() {
     // 文风相关
     selectedStyle,
     
-    // 知识库相关
-    showKnowledgeDropdown,
-    toggleKnowledgeDropdown,
-    selectedKnowledge,
-    selectKnowledge,
-    knowledgeBases,
-    
     // 消息相关
     messages,
     setMessages,
@@ -743,31 +736,6 @@ function MiddleSection() {
             <div className="flex items-center px-4 py-2 bg-gray-50 rounded-md">
               <span className="text-gray-700">文风: {selectedStyle}</span>
             </div>
-
-            {/* 知识库选择器 */}
-            <div className="relative flex-1 max-w-[180px]">
-              <div 
-                className="flex items-center border border-gray-300 rounded-md px-4 py-2 cursor-pointer"
-                onClick={toggleKnowledgeDropdown}
-              >
-                <span className="text-black truncate">知识库: {selectedKnowledge}</span>
-                <Icon icon="mdi:chevron-down" className="ml-2 text-gray-700 flex-shrink-0" />
-              </div>
-              
-              {showKnowledgeDropdown && (
-                <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded shadow-lg z-10 w-full">
-                  {knowledgeBases.map(kb => (
-                    <div 
-                      key={kb}
-                      className={`px-3 py-2 cursor-pointer hover:bg-gray-100 ${selectedKnowledge === kb ? 'bg-gray-100' : ''}`}
-                      onClick={() => selectKnowledge(kb)}
-                    >
-                      {kb}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
           </div>
           
           {/* 对话消息区域 */}
@@ -807,6 +775,7 @@ function MiddleSection() {
                             onClick={saveEditedMessage}
                           >
                             保存
+                            
                           </button>
                         </div>
                       </div>

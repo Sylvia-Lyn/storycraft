@@ -55,15 +55,10 @@ export function useAppState() {
   const [selectedModel, setSelectedModel] = useState('deepseekr1')
   const models = ['deepseekr1']
   
-  // 文风选择状态管理
+  // 文风相关状态管理
   const [showStyleDropdown, setShowStyleDropdown] = useState(false)
-  const [selectedStyle, setSelectedStyle] = useState('标准')
-  const styles = ['标准', '轻松', '严肃', '幽默', '文艺', '悬疑']
-  
-  // 知识库选择状态管理
-  const [showKnowledgeDropdown, setShowKnowledgeDropdown] = useState(false)
-  const [selectedKnowledge, setSelectedKnowledge] = useState('科幻小说库')
-  const knowledgeBases = ['科幻小说库', '玄幻小说库', '言情小说库']
+  const [selectedStyle, setSelectedStyle] = useState('简洁')
+  const styles = ['简洁', '细腻', '幽默', '悬疑', '浪漫']
   
   // 剧情选项管理
   const [generatingScenarios, setGeneratingScenarios] = useState(false)
@@ -427,15 +422,6 @@ export function useAppState() {
     setShowStyleDropdown(false);
   };
   
-  // 切换知识库下拉菜单
-  const toggleKnowledgeDropdown = () => setShowKnowledgeDropdown(!showKnowledgeDropdown);
-  
-  // 选择知识库
-  const selectKnowledge = (kb: string) => {
-    setSelectedKnowledge(kb);
-    setShowKnowledgeDropdown(false);
-  };
-  
   return {
     // 标签相关
     selectedTab,
@@ -455,13 +441,6 @@ export function useAppState() {
     selectedStyle,
     selectStyle,
     styles,
-    
-    // 知识库相关
-    showKnowledgeDropdown,
-    toggleKnowledgeDropdown,
-    selectedKnowledge,
-    selectKnowledge,
-    knowledgeBases,
     
     // 剧情选项相关
     generatingScenarios,

@@ -30,6 +30,7 @@ function MiddleSection() {
     
     // 消息相关
     messages,
+    setMessages,
   } = useAppState();
   
   // 初稿相关状态
@@ -60,6 +61,24 @@ function MiddleSection() {
     { id: "q2", text: "2. 情节可以更加紧凑，节奏感更强，增加一些意外转折来提高读者兴趣。" },
     { id: "q3", text: "3. 考虑增加更多环境描写和细节，让读者能够更好地沉浸在故事世界中。" }
   ]);
+  
+  // 添加消息编辑与重新生成相关状态
+  const [editingMessageIndex, setEditingMessageIndex] = useState<number | null>(null);
+  const [editingMessageText, setEditingMessageText] = useState("");
+  const [regeneratingMessageIndex, setRegeneratingMessageIndex] = useState<number | null>(null);
+  const [showPresetPrompts, setShowPresetPrompts] = useState(false);
+  
+  // 预设的Prompt模板
+  const presetPrompts = [
+    "请帮我分析这个角色的心理动机",
+    "为这个场景增加更多冲突元素",
+    "优化这段对话，使其更加自然流畅",
+    "调整情节节奏，增加高潮部分的紧凑感",
+    "为这个情节添加一个意外转折"
+  ];
+  
+  // 工作模式
+  const [workingMode, setWorkingMode] = useState<"conversation" | "optimization">("conversation");
   
   // 预定义的一些常见建议模板
   const suggestionTemplates = {
@@ -213,6 +232,109 @@ function MiddleSection() {
     return phrases;
   }, []);
   
+  // 开始编辑消息
+  const startEditingMessage = (index: number) => {
+    setEditingMessageIndex(index);
+    setEditingMessageText(messages[index].text);
+  };
+  
+  // 保存编辑的消息
+  const saveEditedMessage = () => {
+    if (editingMessageIndex === null || !editingMessageText.trim()) return;
+    
+    const updatedMessages = [...messages];
+    updatedMessages[editingMessageIndex] = {
+      ...updatedMessages[editingMessageIndex],
+      text: editingMessageText
+    };
+    
+    setMessages(updatedMessages);
+    setEditingMessageIndex(null);
+    setEditingMessageText("");
+  };
+  
+  // 取消编辑消息
+  const cancelEditingMessage = () => {
+    setEditingMessageIndex(null);
+    setEditingMessageText("");
+  };
+  
+  // 删除消息
+  const deleteMessage = (index: number) => {
+    const updatedMessages = messages.filter((_, i) => i !== index);
+    setMessages(updatedMessages);
+  };
+  
+  // 重新生成AI回复
+  const regenerateAIMessage = async (index: number) => {
+    if (messages[index].isUser) return; // 只能重新生成AI消息
+    
+    setRegeneratingMessageIndex(index);
+    
+    // 查找前一条用户消息作为提示
+    let userPrompt = "";
+    for (let i = index - 1; i >= 0; i--) {
+      if (messages[i].isUser) {
+        userPrompt = messages[i].text;
+        break;
+      }
+    }
+    
+    if (!userPrompt) {
+      // 如果找不到用户消息，使用默认提示
+      userPrompt = "请继续故事发展";
+    }
+    
+    // 保存当前的feedbackText
+    const originalFeedback = feedbackText;
+    setFeedbackText(userPrompt);
+    
+    try {
+      await generateOptimizedContent(true, 0);
+      
+      // 如果生成成功，用第一个结果替换AI消息
+      if (optimizationResults.length > 0) {
+        const updatedMessages = [...messages];
+        updatedMessages[index] = {
+          ...updatedMessages[index],
+          text: optimizationResults[0].text.replace(/^\d+\.\s+/, '')
+        };
+        
+        setMessages(updatedMessages);
+        setOptimizationResults([]);
+      }
+    } catch (error) {
+      console.error("重新生成AI回复失败:", error);
+    } finally {
+      // 恢复原始的feedbackText
+      setFeedbackText(originalFeedback);
+      setRegeneratingMessageIndex(null);
+    }
+  };
+  
+  // 清空历史记录
+  const clearHistory = () => {
+    if (window.confirm("确定要清空所有对话历史吗？此操作不可撤销。")) {
+      setMessages([]);
+      setOptimizationResults([]);
+    }
+  };
+  
+  // 使用预设Prompt
+  const usePresetPrompt = (prompt: string) => {
+    setFeedbackText(prompt);
+    setShowPresetPrompts(false);
+    // 聚焦输入框
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  };
+  
+  // 切换工作模式
+  const toggleWorkingMode = () => {
+    setWorkingMode(prev => prev === "conversation" ? "optimization" : "conversation");
+  };
+  
   // 更新最近输入
   const updateRecentInputs = useCallback((input: string) => {
     if (input.trim() === '') return;
@@ -279,7 +401,7 @@ function MiddleSection() {
     updateRecentInputs(feedbackText);
     
     if (showLoading) {
-      setIsGenerating(true);
+    setIsGenerating(true);
     }
     
     console.log("开始生成优化内容，输入:", feedbackText);
@@ -436,6 +558,55 @@ function MiddleSection() {
     // 保存到最近输入
     updateRecentInputs(feedbackText);
     
+    // 对话模式直接添加消息
+    if (workingMode === "conversation") {
+      // 添加用户消息
+      setMessages(prevMessages => [
+        ...prevMessages, 
+        { text: feedbackText, isUser: true }
+      ]);
+      
+      // 立即显示AI正在输入的状态
+      setIsGenerating(true);
+      
+      // 延迟一小段时间模拟加载
+      setTimeout(async () => {
+        try {
+          // 直接使用优化内容生成函数处理对话
+          await generateOptimizedContent(false, 0);
+          
+          // 如果成功生成了回复
+          if (optimizationResults.length > 0) {
+            // 选择第一个回复作为AI回答
+            const aiReply = optimizationResults[0].text.replace(/^\d+\.\s+/, '');
+            
+            // 添加AI回复消息
+            setMessages(prevMessages => [
+              ...prevMessages, 
+              { text: aiReply, isUser: false }
+            ]);
+            
+            // 清空生成结果和输入
+            setOptimizationResults([]);
+            setFeedbackText("");
+          }
+        } catch (error) {
+          console.error("生成AI回复失败:", error);
+          
+          // 添加错误消息
+          setMessages(prevMessages => [
+            ...prevMessages, 
+            { text: "抱歉，生成回复时发生错误，请稍后重试。", isUser: false }
+          ]);
+        } finally {
+          setIsGenerating(false);
+        }
+      }, 300);
+      
+      return;
+    }
+    
+    // 优化模式显示选项
     // 立即显示快速响应
     setOptimizationResults(quickResponses);
     
@@ -447,7 +618,7 @@ function MiddleSection() {
       // 启动实际的API调用，带重试机制
       generateOptimizedContent(false, 0);
     }, 300);
-  }, [feedbackText, responseCache, quickResponses]);
+  }, [feedbackText, responseCache, quickResponses, workingMode]);
   
   // 选择并应用优化结果
   const applyOptimizedText = (optimizedText: string) => {
@@ -601,18 +772,93 @@ function MiddleSection() {
           
           {/* 对话消息区域 */}
           <div className="space-y-4 mb-6">
-            {messages.length > 0 && messages.map((message, index) => (
-              <div key={index} className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}>
-                <div className={`${message.isUser ? 'bg-black text-white' : 'bg-white border border-gray-200'} rounded-lg px-4 py-3 relative max-w-[80%]`}>
+            {messages.length > 0 ? (
+              <>
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="text-sm font-medium text-gray-500">对话历史</h3>
+                  <button 
+                    className="text-xs text-gray-500 hover:text-red-500 flex items-center gap-1"
+                    onClick={clearHistory}
+                  >
+                    <Icon icon="mdi:delete-outline" className="w-4 h-4" />
+                    <span>清空历史</span>
+                  </button>
+                </div>
+                {messages.map((message, index) => (
+                  <div key={index} className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}>
+                    {editingMessageIndex === index ? (
+                      <div className="w-full max-w-[80%] bg-white border border-gray-300 rounded-lg overflow-hidden">
+                        <textarea
+                          className="w-full p-3 focus:outline-none resize-none"
+                          value={editingMessageText}
+                          onChange={(e) => setEditingMessageText(e.target.value)}
+                          rows={3}
+                          autoFocus
+                        />
+                        <div className="flex justify-end p-2 bg-gray-50 border-t border-gray-200">
+                          <button 
+                            className="px-3 py-1 text-xs text-gray-600 hover:text-gray-800 mr-2"
+                            onClick={cancelEditingMessage}
+                          >
+                            取消
+                          </button>
+                          <button 
+                            className="px-3 py-1 text-xs bg-black text-white rounded-md"
+                            onClick={saveEditedMessage}
+                          >
+                            保存
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className={`${message.isUser ? 'bg-black text-white' : 'bg-white border border-gray-200'} rounded-lg px-4 py-3 relative max-w-[80%] group`}>
                   <div className={message.isUser ? 'text-right' : ''}>
                     {message.text}
                   </div>
                   {message.isUser && (
                     <div className="absolute w-3 h-3 bg-black transform rotate-45 right-[-6px] top-1/2 -translate-y-1/2"></div>
+                        )}
+                        
+                        {/* 消息操作按钮 */}
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                          <button 
+                            className="p-1 bg-gray-100 rounded-md hover:bg-gray-200 text-gray-600"
+                            onClick={() => startEditingMessage(index)}
+                            title="编辑消息"
+                          >
+                            <Icon icon="mdi:pencil" className="w-3 h-3" />
+                          </button>
+                          
+                          {!message.isUser && (
+                            <button 
+                              className={`p-1 bg-gray-100 rounded-md hover:bg-gray-200 text-gray-600 ${regeneratingMessageIndex === index ? 'animate-spin' : ''}`}
+                              onClick={() => regenerateAIMessage(index)}
+                              disabled={regeneratingMessageIndex !== null}
+                              title="重新生成"
+                            >
+                              <Icon icon="mdi:refresh" className="w-3 h-3" />
+                            </button>
+                          )}
+                          
+                          <button 
+                            className="p-1 bg-gray-100 rounded-md hover:bg-gray-200 text-gray-600"
+                            onClick={() => deleteMessage(index)}
+                            title="删除消息"
+                          >
+                            <Icon icon="mdi:delete" className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
                   )}
                 </div>
+                ))}
+              </>
+            ) : (
+              <div className="text-center py-10 text-gray-500">
+                <p>暂无对话历史</p>
+                <p className="text-sm mt-1">输入内容开始对话</p>
               </div>
-            ))}
+            )}
           </div>
           
           {/* 生成内容区域 */}
@@ -672,20 +918,51 @@ function MiddleSection() {
       
       {/* 底部固定输入框 - 移除条件渲染，使其始终显示 */}
       <div className="px-4 py-3 border-t border-gray-200 bg-white">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <button
+              className={`px-3 py-1 text-xs rounded-full ${workingMode === "conversation" ? 'bg-black text-white' : 'bg-gray-100 text-gray-700'}`}
+              onClick={() => setWorkingMode("conversation")}
+            >
+              对话模式
+            </button>
+            <button
+              className={`px-3 py-1 text-xs rounded-full ${workingMode === "optimization" ? 'bg-black text-white' : 'bg-gray-100 text-gray-700'}`}
+              onClick={() => setWorkingMode("optimization")}
+            >
+              优化模式
+            </button>
+          </div>
+          
+          <button
+            className="flex items-center gap-1 text-xs text-gray-600 hover:text-gray-900"
+            onClick={() => setShowPresetPrompts(!showPresetPrompts)}
+          >
+            <Icon icon="mdi:lightning-bolt" className="w-4 h-4" />
+            <span>预设Prompt</span>
+          </button>
+        </div>
+        
         <div className="relative">
-          <input
+              <input
             ref={inputRef}
-            type="text"
-            placeholder={isGenerating ? "正在生成内容..." : "剧情不好？告诉我如何优化，如：xxxxxx"}
+                type="text"
+            placeholder={isGenerating 
+              ? "正在生成内容..." 
+              : workingMode === "conversation" 
+                ? "输入内容开始对话..." 
+                : "剧情不好？告诉我如何优化，如：xxxxxx"
+            }
             className="w-full border border-gray-300 rounded-lg p-3 pr-10 text-gray-700 focus:border-black focus:ring-0 transition-colors"
-            value={feedbackText}
-            onChange={(e) => setFeedbackText(e.target.value)}
-            onKeyDown={(e) => {
+                value={feedbackText}
+                onChange={(e) => setFeedbackText(e.target.value)}
+                onKeyDown={(e) => {
               if (e.key === 'Enter' && feedbackText.trim() && !isGenerating) {
                 generateQuickContent();
               } else if (e.key === 'Escape') {
                 setShowSuggestions(false);
                 setShowAutoComplete(false);
+                setShowPresetPrompts(false);
               } else if (e.key === 'ArrowDown' && showSuggestions) {
                 // 导航到建议列表
                 const suggestionElements = document.querySelectorAll('.suggestion-item');
@@ -738,6 +1015,35 @@ function MiddleSection() {
           >
             <Icon icon={isGenerating ? "mdi:loading" : "mdi:send"} className={isGenerating ? "animate-spin" : ""} />
           </button>
+          
+          {/* 预设Prompt下拉菜单 */}
+          {showPresetPrompts && (
+            <div className="absolute left-0 right-0 bottom-full mb-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 overflow-hidden max-h-60 overflow-y-auto">
+              <div className="px-3 py-2 text-xs text-gray-500 border-b border-gray-100 flex justify-between items-center">
+                <span>预设Prompt</span>
+                <button 
+                  className="text-gray-400 hover:text-gray-600"
+                  onClick={() => setShowPresetPrompts(false)}
+                >
+                  <Icon icon="mdi:close" className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="divide-y divide-gray-50">
+                {presetPrompts.map((prompt, index) => (
+                  <div
+                    key={index}
+                    className="px-3 py-2.5 hover:bg-gray-50 cursor-pointer text-gray-700 transition-colors"
+                    onClick={() => usePresetPrompt(prompt)}
+                  >
+                    <div className="flex items-center">
+                      <Icon icon="mdi:lightning-bolt" className="mr-2 text-gray-400 flex-shrink-0" />
+                      <span>{prompt}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           
           {/* 输入建议下拉框 */}
           {showSuggestions && (

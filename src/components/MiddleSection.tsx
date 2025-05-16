@@ -627,7 +627,6 @@ function MiddleSection() {
               tabIndex={0} 
               ref={resultsContainerRef}
             >
-              <p className="text-sm text-gray-500 mb-2">根据xxxxxxx, 为您提供以下内容选择：</p>
               {optimizationResults.map((option) => (
                 <div 
                   key={option.id}
@@ -666,12 +665,6 @@ function MiddleSection() {
                   </p>
                 </div>
               ))}
-              <div 
-                className="border border-gray-200 rounded-lg p-3 bg-gray-50 cursor-pointer hover:border-gray-400 transition-colors"
-                onClick={() => setOptimizationResults([])}
-              >
-                <p className="text-gray-700">点击替换。这个方向对吗？还是从xxxxxxxxxx展开？</p>
-              </div>
             </div>
           ) : null}
         </div>

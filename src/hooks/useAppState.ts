@@ -73,7 +73,7 @@ export function useAppState() {
       isUser: true
     },
     {
-      text: '根据您的需求，为您提供以下内容选择:',
+      text: '',
       isUser: false
     }
   ])
@@ -161,7 +161,7 @@ export function useAppState() {
         
         // 添加系统消息
         setMessages(prev => [...prev, {
-          text: `根据DeepSeek模型和${selectedStyle}文风，为您提供以下剧情选择:`,
+          text: `${selectedModel}模型和${selectedStyle}文风`,
           isUser: false
         }]);
         return;
@@ -190,7 +190,7 @@ export function useAppState() {
         
         // 添加系统消息
         setMessages(prev => [...prev, {
-          text: `根据${selectedModel}模型和${selectedStyle}文风，为您提供以下剧情选择:`,
+          text: `${selectedModel}模型和${selectedStyle}文风`,
           isUser: false
         }]);
       }, 2000);

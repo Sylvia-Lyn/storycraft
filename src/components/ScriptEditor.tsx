@@ -26,7 +26,7 @@ function ContentArea() {
   
   // 编辑器引用
   const editorRef = useRef<EditorComponentRef>(null);
-  
+
   // 监听从中间操作台传来的优化文本
   useEffect(() => {
     const handleOptimizedText = (event: CustomEvent) => {
@@ -112,7 +112,7 @@ function ContentArea() {
     <div className="flex-1 overflow-hidden flex flex-col h-full p-3 bg-white">
       {/* 顶部标题和操作区 */}
       <div className="flex items-center justify-between mb-3">
-        <div className="font-bold text-lg">初稿编辑</div>
+          <div className="font-bold text-lg">初稿编辑</div>
         
         <div className="flex items-center space-x-2">
           <input
@@ -138,7 +138,7 @@ function ContentArea() {
           </button>
         </div>
       </div>
-      
+
       {/* Editor.js 编辑器 */}
       <div className="flex-1 overflow-hidden">
         <EditorComponent 
@@ -147,8 +147,8 @@ function ContentArea() {
           onChange={handleEditorChange}
           onSelect={handleTextSelection}
         />
-      </div>
-      
+        </div>
+
       {/* 选中文本操作区 - 我们保留这个功能，它在屏幕下方显示选中的文本信息 */}
       {selectedText && (
         <div className="mt-3 p-2 border border-gray-300 rounded bg-gray-50">
@@ -167,8 +167,8 @@ function ContentArea() {
           <div className="text-xs text-gray-600 mb-1 line-clamp-2">
             {selectedText.length > 100 ? selectedText.substring(0, 100) + "..." : selectedText}
           </div>
-        </div>
-      )}
+          </div>
+        )}
     </div>
   );
 }

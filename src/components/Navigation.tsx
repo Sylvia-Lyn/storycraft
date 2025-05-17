@@ -28,7 +28,7 @@ function Navigation({ tabs, defaultTab, onTabChange }: NavigationProps) {
     if (tab === '分幕') {
       navigate('/scenes');
     } else if (tab === '剧本') {
-      navigate('/'); // 剧本页面是根路径
+      navigate('/editor'); // 剧本页面改为/editor路径
     } else if (tab === '大纲') {
       navigate('/outline');
     } else if (tab === '角色') {

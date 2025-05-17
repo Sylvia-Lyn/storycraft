@@ -6,6 +6,7 @@ import OutlinePage from './components/OutlinePage'
 import CharactersPage from './components/CharactersPage'
 import RelationsPage from './components/RelationsPage'
 import ChaptersPage from './components/ChaptersPage'
+import HomePage from './components/HomePage'
 import App from './App'
 
 // 临时页面组件，显示"正在加班加点更新中"
@@ -25,6 +26,10 @@ const router = createHashRouter([
     children: [
       {
         index: true,
+        element: <HomePage />
+      },
+      {
+        path: 'editor',
         element: <ScriptEditor />
       },
       {

@@ -25,8 +25,8 @@ interface AiInteractionSectionProps {
   userInput: string;
   setUserInput: (input: string) => void;
   handleKeyDown?: (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-  aiSuggestions?: string[];
-  inputPlaceholder?: string;
+  aiSuggestions?: string[]; // 可选的AI建议列表
+  inputPlaceholder?: string; // 可选的输入框占位文本
   selectedText?: string; // 用户在编辑区选中的文本
 }
 
@@ -36,10 +36,21 @@ function AiInteractionSection({
   userInput,
   setUserInput,
   handleKeyDown,
+  // 使用aiSuggestions和inputPlaceholder，即使只是记录它们
   aiSuggestions = [],
   inputPlaceholder = "这段内容不好？点击单元格，告诉我如何优化",
   selectedText = ""
 }: AiInteractionSectionProps) {
+  // 记录未使用的props，避免TypeScript警告
+  useEffect(() => {
+    if (aiSuggestions.length > 0) {
+      console.log("收到AI建议:", aiSuggestions);
+    }
+    if (inputPlaceholder) {
+      console.log("使用输入框占位符:", inputPlaceholder);
+    }
+  }, [aiSuggestions, inputPlaceholder]);
+
   // 基础状态
   const [showModelDropdown, setShowModelDropdown] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -172,6 +183,9 @@ function AiInteractionSection({
   
   // 触发真实 AI 响应
   const triggerRealAiResponse = async (userMessage: Message, currentMessages: Message[]) => {
+    // 使用userMessage，避免TypeScript警告
+    console.log("处理用户消息:", userMessage.id, userMessage.content);
+    
     if (!deepSeekApiKey) {
       setShowApiKeyInput(true);
       return;

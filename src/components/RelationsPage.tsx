@@ -333,7 +333,7 @@ function RelationsPage() {
                 <input 
                   type="text" 
                   className="w-full border border-gray-300 rounded-md px-4 py-2 pr-10" 
-                  placeholder="角色关系不好？告诉我如何优化，如：xxxxxx" 
+                  placeholder="角色关系不好？告诉我如何优化，如" 
                 />
                 <Icon 
                   icon="ri:corner-down-right-fill" 
@@ -349,17 +349,13 @@ function RelationsPage() {
                 <div>
                   <div className="font-medium">第一本-第一幕:</div>
                   <p className="text-gray-700 ml-4">
-                    1. xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-                    xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-                    xxxxxxxxx
+                    1.赫连英是赫连部神女，获得萨满大巫预言"草原兴亡，在汝一人"
                   </p>
                 </div>
                 <div>
                   <div className="font-medium">第一本-第一幕:</div>
                   <p className="text-gray-700 ml-4">
-                    2. xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-                    xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-                    xxxxxxxxxxxxxxx
+                    2. 赫连英从小被宠爱但心怀大志，学习军事与治理
                   </p>
                 </div>
               </div>

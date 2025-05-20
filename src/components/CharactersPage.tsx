@@ -161,7 +161,7 @@ function CharactersPage() {
                   className="w-full border border-gray-300 rounded-md px-4 py-2 pr-10"
                 />
                 <button className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-                  C
+                  
                 </button>
               </div>
             </div>
@@ -170,7 +170,7 @@ function CharactersPage() {
             <div className="flex items-center space-x-4">
               <div className="w-20 text-right">角色形象</div>
               <div className="flex items-center space-x-2">
-                <span>xxxxx.jpg</span>
+                <span>角色形象.jpg</span>
                 <button className="border border-gray-300 rounded-md p-1">
                   <Icon icon="ri:image-add-line" className="w-5 h-5 text-gray-500" />
                 </button>
@@ -183,7 +183,7 @@ function CharactersPage() {
               <div className="relative flex-1 max-w-md">
                 <input 
                   type="text" 
-                  value="xxxx xxxxx" 
+                  value="女性成长,爱情被付出" 
                   className="w-full border border-gray-300 rounded-md px-4 py-2 pr-10"
                 />
                 <Icon 
@@ -288,7 +288,7 @@ function CharactersPage() {
               <input 
                 type="text" 
                 className="w-full border border-gray-300 rounded-md px-4 py-2 pr-10" 
-                placeholder="角色不好？告诉我如何优化，如：xxxxxx" 
+                placeholder="角色不好？告诉我如何优化，如：" 
               />
               <Icon 
                 icon="ri:corner-down-right-fill" 
@@ -319,24 +319,20 @@ function CharactersPage() {
         </div>
 
         <div className="mb-8">
-          <h3 className="font-medium mb-2">1. 赫连英：女，大巫预言的 "亡国公主"，蛇变为草原人众望所归的"草原之心"，落子果决而心志坚信，以鹰隼之眼洞察人心，以狼王之勇统御万众，一统北方建立大燕，要江山更要挚爱。</h3>
+          <h3 className="font-medium mb-2">1. 赫连英：女，我将永不臣服于失控的命运，自由地追逐繁星。</h3>
         </div>
 
         <div className="mb-8">
           <h3 className="font-bold mb-2">人物简介</h3>
           <p className="text-gray-700 mb-4">
-            xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-            xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-            xxxxxx
+          大巫预言的“亡国公主”，蜕变为草原人众望所归的“草原之心”，落子果决而心志脱俗，以鹰隼之眼洞察人心，以狼王之勇统御万众，一统北方建立大燕，要江山更要挚爱
           </p>
         </div>
 
         <div className="mb-8">
           <h3 className="font-bold mb-2">人物小传</h3>
           <p className="text-gray-700 mb-4">
-            xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-            xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-            xxxxxx
+          1. 只差一步就能永远在一起，却永远失去了你；跨越千山只差一步就能说出口的道歉和表白再也说不出来。被欺骗的忠犬至死都在等你回来。救了所有人却救不下自己最爱的人。一生在爱里自私，与爱情背道而驰的薄情人死于殉情。是到最后才知道他的付出远比你更重，是勃然醒悟却无可挽回。先爱上的是对方，放不下的是自己。你的行为决定了你是谁，而不是你的血统决定了你是谁。你每一次都险些要被权力异化，但你总是能够因为他而苏醒过来。你的保护欲差点变成了征服和独占欲，可是他让你明白什么才是你真正应该做的事。慕强的核心是对更好的追求。
           </p>
         </div>
 
@@ -349,17 +345,10 @@ function CharactersPage() {
           </div>
           <div className="space-y-4">
             <p className="text-gray-700">
-              1. xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-              xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-              xxxxxxxxxxxx
+              1. 苏飞卿：沙漠之狼爱上北国鹰王，中原来的小将军没能护住草原的小公主，京城的邪教头子和小侯爷相爱相杀，最后草原的女王带着宠信的汉臣一统草原逐鹿天下。他是你事业之外唯一的私心。
             </p>
             <p className="text-gray-700">
-              2. xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-              xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-              xxxxxxxxxxxxxxx
-            </p>
-            <p className="text-gray-700">
-              3. xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+              2. 雪鹰：赫连英在草原上捉住了一只雪鹰，雪鹰奋力反抗，终有一日逃脱，被苏飞卿一箭射中，掉在地上奄奄一息，却在你去拾取猎物的时候奋力逃脱。后来你每一次打猎的时候，雪鹰都会出现，袭击你，骚扰你，后来你发现了她越来越聪明，便总是给她备着食物，但是她来时便与她打闹，最后雪鹰习惯了与你如影随形，雪鹰至则公主至。
             </p>
           </div>
         </div>

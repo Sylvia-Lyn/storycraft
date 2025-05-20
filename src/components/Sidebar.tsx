@@ -54,7 +54,7 @@ const Sidebar = () => {
   const [works, setWorks] = useState<Work[]>([
     {
       id: 'work-1',
-      name: '《xxx》',
+      name: '《大纲》',
       views: {
         outline: true,      // 大纲视图
         characters: true,   // 角色剧本视图
@@ -64,7 +64,7 @@ const Sidebar = () => {
       characters: [
         {
           id: 'char-1',
-          name: '女1: xxx',
+          name: '女1',
           type: 'draft',
           scripts: [
             { id: 'script-1', name: '第一本' },
@@ -74,7 +74,7 @@ const Sidebar = () => {
         },
         {
           id: 'char-2',
-          name: '女2: xxx',
+          name: '女2',
           type: 'draft'
         }
       ]

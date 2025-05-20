@@ -920,7 +920,7 @@ function MiddleSection() {
               ? "正在生成内容..." 
               : workingMode === "conversation" 
                 ? "输入内容开始对话..." 
-                : "剧情不好？告诉我如何优化，如：xxxxxx"
+                : "剧情不好？告诉我如何优化，如"
             }
             className="w-full border border-gray-300 rounded-lg p-3 pr-10 text-gray-700 focus:border-black focus:ring-0 transition-colors"
                 value={feedbackText}

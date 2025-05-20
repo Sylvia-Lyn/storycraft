@@ -65,7 +65,7 @@ function SceneList() {
   };
 
   // 处理输入框回车事件
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && userInput.trim()) {
       generateSuggestions();
     }

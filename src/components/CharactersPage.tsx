@@ -56,9 +56,9 @@ function CharactersPage() {
           {/* 角色属性编辑区 */}
           <div className="space-y-4 mb-8">
             {/* 性别选择 */}
-            <div className="flex items-center space-x-4">
-              <div className="w-20 text-right">性别</div>
-              <div className="flex space-x-2">
+            <div className="flex items-center space-x-6">
+              <div className="w-24 text-right">性别</div>
+              <div className="flex space-x-4">
                 <label className="flex items-center space-x-1 cursor-pointer">
                   <input 
                     type="radio" 
@@ -203,7 +203,7 @@ function CharactersPage() {
                   className="w-full border border-gray-300 rounded-md px-4 py-2 pr-10"
                 />
                 <button className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-                  C
+                  
                 </button>
               </div>
             </div>

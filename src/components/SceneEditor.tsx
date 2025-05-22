@@ -1,263 +1,265 @@
-import { useState } from 'react'
-import { Icon } from '@iconify/react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Collapse, Input, Button, Spin } from 'antd'
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableContainer, 
+  TableHead, 
+  TableRow, 
+  Paper, 
+  Switch,
+  FormControlLabel
+} from '@mui/material'
+import { Icon } from '@iconify/react'
 import Sidebar from './Sidebar'
+import Navigation from './Navigation'
+import PromptDisplay from './PromptDisplay'
 import { useAppState, ScenarioOption } from '../hooks/useAppState'
 
-const { Panel } = Collapse
-const { TextArea } = Input
-
-// 分幕内容编辑区域组件
-function SceneContentArea() {
-  const { sceneId } = useParams()
-  const navigate = useNavigate()
-  const [isEditing, setIsEditing] = useState(false)
-  // const [previousContent, setPreviousContent] = useState('')
-  const [content, setContent] = useState(
-    "分幕内容：\n\n" +
-    "1. xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx xx\n\n" +
-    "2. xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx xx\n\n" +
-    "3. xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n\n" +
-    "4. xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx xxx\n\n"
-  )
-  
-  const [selectedCell, setSelectedCell] = useState<number | null>(null)
-  const [optimizationInput, setOptimizationInput] = useState('')
-  const [isGeneratingOptions, setIsGeneratingOptions] = useState(false)
-  const [scenarioOptions, setScenarioOptions] = useState<ScenarioOption[]>([])
-  const [activeKey, setActiveKey] = useState<string[]>(['1']) // 控制面板展开状态
-
-  const {
-    // 模型相关
-    selectedModel,
-    // 文风相关
-    selectedStyle,
-    // 剧情生成函数
-    generateScenarioOptions
-  } = useAppState();
-
-  // 生成剧情选项
-  const handleGenerateScenarioOptions = () => {
-    if (!optimizationInput.trim() || selectedCell === null) return;
-    
-    setIsGeneratingOptions(true);
-    
-    // 获取当前选中单元格的内容和前一个单元格的内容（如果有）
-    const contentParagraphs = content.split('\n\n');
-    const currentContent = contentParagraphs[selectedCell];
-    const previousParagraph = selectedCell > 0 ? contentParagraphs[selectedCell - 1] : '';
-    
-    // 调用useAppState中的generateScenarioOptions函数
-    generateScenarioOptions(previousParagraph, currentContent, '角色', optimizationInput);
-    
-    // 监听生成的选项（这里是模拟实现，实际项目中应该通过状态监听或回调）
-    setTimeout(() => {
-      // 从全局状态获取生成的选项
-      const options = [
-        {
-          id: '1',
-          text: `选项1 (使用${selectedModel}和${selectedStyle}文风): 你走进房间，发现桌上放着一封信。拆开后，你不敢相信自己的眼睛...`
-        },
-        {
-          id: '2',
-          text: `选项2 (使用${selectedModel}和${selectedStyle}文风): 你犹豫了一下，决定先不进入房间。直觉告诉你应该先确认周围环境...`
-        },
-        {
-          id: '3',
-          text: `选项3 (使用${selectedModel}和${selectedStyle}文风): 你深吸一口气，推开了房门。出乎意料的是，房间里空无一人，但窗户大开...`
-        }
-      ];
-      
-      setScenarioOptions(options);
-      setIsGeneratingOptions(false);
-    }, 2000);
-  };
-  
-  // 选择剧情选项
-  const selectScenario = (option: ScenarioOption) => {
-    if (selectedCell !== null) {
-      // 替换选中单元格的内容
-      const contentLines = content.split('\n\n');
-      // 移除选项前缀，如 "选项1 (使用claude37和标准文风): "
-      const cleanText = option.text.replace(/^选项\d+ \(使用.*文风\): /, '');
-      contentLines[selectedCell] = cleanText;
-      setContent(contentLines.join('\n\n'));
-      
-      // 重置状态
-      setSelectedCell(null);
-      setOptimizationInput('');
-      setScenarioOptions([]);
-    }
-  };
-
-  // 处理面板展开变化
-  const handleCollapseChange = (key: string | string[]) => {
-    setActiveKey(Array.isArray(key) ? key : [key]);
-  };
-
-  return (
-    <div className="flex-1 overflow-auto bg-white flex flex-col">
-      <div className="p-4 flex-none">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center">
-            <div className="font-bold text-lg mr-2">分幕 {sceneId || '1'}</div>
-            <div 
-              className="flex items-center text-gray-500 cursor-pointer"
-              onClick={() => navigate('/scenes')}
-            >
-              <span>返回列表</span>
-              <Icon icon="ri:arrow-right-s-line" className="ml-1" />
-            </div>
-          </div>
-        </div>
-
-        <div className="border border-gray-300 rounded p-4 mb-4">
-          <div className="flex justify-between items-center">
-            <span>分幕标题: {sceneId ? `分幕${sceneId}` : '分幕1'} - xxxxxxxxxxxxxxxxxxxxxxxxxxxxx</span>
-            <button 
-              className="text-blue-500 text-sm"
-              onClick={() => setIsEditing(!isEditing)}
-            >
-              {isEditing ? '完成编辑' : '修改内容'}
-            </button>
-          </div>
-        </div>
-      </div>
-      
-      {/* 使用 antd Collapse 组件创建垂直面板 */}
-      <Collapse 
-        className="flex-1 overflow-auto"
-        activeKey={activeKey}
-        onChange={handleCollapseChange}
-        bordered={false}
-      >
-        {/* 上面板：内容区域 */}
-        <Panel 
-          header={<div className="font-medium">分幕内容</div>} 
-          key="1"
-          className="overflow-auto"
-        >
-          <div className="overflow-auto pb-4">
-            {isEditing ? (
-              <div className="mb-4">
-                <TextArea
-                  className="w-full"
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  rows={20}
-                  style={{ lineHeight: '1.6' }}
-                />
-              </div>
-            ) : (
-              <div>
-                {content.split('\n\n').map((paragraph, index) => (
-                  <div 
-                    key={index}
-                    className={`p-4 mb-2 rounded cursor-pointer ${selectedCell === index ? 'bg-gray-100 border-2 border-black' : 'border border-gray-200 hover:border-gray-400'}`}
-                    onClick={() => {
-                      setSelectedCell(index);
-                      // 当选择单元格时自动展开底部面板
-                      if (!activeKey.includes('2')) {
-                        setActiveKey(['1', '2']);
-                      }
-                    }}
-                  >
-                    <p className="whitespace-pre-wrap">{paragraph}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </Panel>
-        
-        {/* 下面板：AI 生成区域 */}
-        <Panel 
-          header={
-            <div className="font-medium">
-              AI 辅助生成
-              {selectedCell !== null && <span className="ml-2 text-gray-500">（当前选中第 {selectedCell + 1} 段）</span>}
-            </div>
-          } 
-          key="2"
-          className="overflow-auto"
-        >
-          <div className="p-4 bg-white">
-            {selectedCell !== null ? (
-              <>
-                <div className="mb-3">
-                  <div className="font-medium mb-2">角色1和角色2在xxx发生了xxx而不是xxx</div>
-                  <p className="text-sm text-gray-500">
-                    使用 <span className="font-semibold">{selectedModel}</span> 模型和 
-                    <span className="font-semibold"> {selectedStyle}</span> 文风
-                  </p>
-                </div>
-                
-                {scenarioOptions.length > 0 ? (
-                  <div className="space-y-2 max-h-60 overflow-y-auto mb-4">
-                    <div className="text-sm text-gray-500 mb-2">请选择一个优化后的剧情：</div>
-                    {scenarioOptions.map(option => (
-                      <div 
-                        key={option.id}
-                        className="border border-gray-300 p-3 rounded-md cursor-pointer hover:border-gray-500 hover:bg-gray-50 transition-colors"
-                        onClick={() => selectScenario(option)}
-                      >
-                        <p>{option.text}</p>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="bg-gray-50 p-3 rounded-md mb-4 text-gray-500">
-                    <p>这段内容不好？请在输入框中告诉我如何优化，如：增加更多情感描写，减少对话...</p>
-                  </div>
-                )}
-                
-                <div className="flex items-center">
-                  <TextArea
-                    className="flex-1"
-                    placeholder="告诉我如何优化这段剧情..."
-                    value={optimizationInput}
-                    onChange={(e) => setOptimizationInput(e.target.value)}
-                    autoSize={{ minRows: 1, maxRows: 3 }}
-                  />
-                  <Button 
-                    type="primary"
-                    className="ml-3"
-                    onClick={handleGenerateScenarioOptions}
-                    disabled={!optimizationInput.trim() || isGeneratingOptions}
-                    icon={isGeneratingOptions ? <Spin size="small" /> : <Icon icon="ri:ai-generate" />}
-                  >
-                    生成
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <div className="text-center text-gray-500 py-8">
-                请先在上方选择一个段落进行编辑
-              </div>
-            )}
-          </div>
-        </Panel>
-      </Collapse>
-    </div>
-  )
+// 表格数据接口
+interface TableData {
+  id: string;
+  character: string;
+  timeline: string;
+  keyEvent: string;
+  emotionChange: string;
+  relationship: string;
+  characterEffect: string;
 }
+
+// 初始表格数据
+const initialTableData: TableData[] = [
+  {
+    id: '1',
+    character: '花间客',
+    timeline: '长歌xx年【背景】在你的婚宴之上见到你',
+    keyEvent: '花间客在张嘉敏的订婚宴之上见到曾经爱过的花间客（主线）\n张嘉敏失去了记忆（副线）\n张嘉敏因为和花间客接触而昏迷（发展）\n张嘉敏对花间客和自己过去的联系产生好奇（结局）',
+    emotionChange: '主线：恐惧，患得患失\n副线：悲伤，残缺\n发展：自虐的爽结局：悲剧的抛弃',
+    relationship: '1. 苏飞卿与父母：传统的将门子弟，父严母慈，备受期待\n2. 苏飞卿与太子：表兄弟关系，互相信任',
+    characterEffect: '这些情节共同构建了一个充满政治阴谋、战争风险和美丽情感的故事背景。\n1. 展现了苏飞卿年少轻狂却重情重义的性格\n2. 凸显了问题少女身份的神秘性和复杂性'
+  },
+  {
+    id: '2',
+    character: '张嘉敏',
+    timeline: '长歌xx年【背景】多年之后我在你的婚宴之上见到你',
+    keyEvent: '花间客在张嘉敏的订婚宴之上见到曾经爱过的花间客（主线）\n张嘉敏失去了记忆（副线）\n张嘉敏因为和花间客接触而昏迷（发展）\n张嘉敏对花间客和自己过去的联系产生好奇（结局）',
+    emotionChange: '主线：愧疚，迷失\n副线：痛苦，挣扎\n发展：混乱的迷失\n结局：解脱的释然',
+    relationship: '1. 张嘉敏与父母：被动接受家庭安排，尝试寻找自我\n2. 张嘉敏与未婚夫：礼节性关系，缺乏真感情',
+    characterEffect: '这些情节展示了张嘉敏内心的矛盾和挣扎：\n1. 表面温顺实则内心渴望自由\n2. 记忆缺失导致的身份认同危机'
+  },
+  {
+    id: '3',
+    character: '永安',
+    timeline: '长歌xx年【背景】',
+    keyEvent: '花间客在张嘉敏的订婚宴之上见到曾经爱过的花间客（主线）\n张嘉敏失去了记忆（副线）\n张嘉敏因为和花间客接触而昏迷（发展）\n张嘉敏对花间客和自己过去的联系产生好奇（结局）',
+    emotionChange: '主线：占有欲，控制欲\n副线：妒忌，恼怒\n发展：愤怒的报复\n结局：偏执的坚持',
+    relationship: '1. 永安与张嘉敏：表面呵护，实则控制\n2. 永安与家族：为家族利益牺牲个人情感，城府极深',
+    characterEffect: '永安的角色展现了：\n1. 外表彬彬有礼下隐藏的控制欲\n2. 对权力和地位的执着追求导致的扭曲人格'
+  },
+  {
+    id: '4',
+    character: '苏飞卿',
+    timeline: '长歌xx年【背景】',
+    keyEvent: '花间客在张嘉敏的订婚宴之上见到曾经爱过的花间客（主线）\n张嘉敏失去了记忆（副线）\n张嘉敏因为和花间客接触而昏迷（发展）\n张嘉敏对花间客和自己过去的联系产生好奇（结局）',
+    emotionChange: '主线：忠诚，责任感\n副线：矛盾，纠结\n发展：艰难的抉择\n结局：舍己的牺牲',
+    relationship: '1. 苏飞卿与张嘉敏：一见钟情，但碍于身份无法表达\n2. 苏飞卿与永安：表面友好，实则暗中较量',
+    characterEffect: '苏飞卿的角色塑造反映了：\n1. 在爱情与责任间的痛苦挣扎\n2. 忠义与个人幸福难以兼得的人生困境'
+  }
+];
 
 // 分幕编辑器主组件
 function SceneEditor() {
+  const { sceneId } = useParams();
+  const navigate = useNavigate();
+  const [isCharacterView, setIsCharacterView] = useState(false);
+  const [tableData, setTableData] = useState<TableData[]>(initialTableData);
+  const [activeTab, setActiveTab] = useState('分幕');
+  
+  // 处理表格数据更新
+  const handleUpdateTableData = (id: string, field: keyof TableData, value: string) => {
+    setTableData(prevData => 
+      prevData.map(row => 
+        row.id === id ? { ...row, [field]: value } : row
+      )
+    );
+  };
+
+  // 处理视图切换
+  const handleViewToggle = () => {
+    setIsCharacterView(!isCharacterView);
+  };
+
+  // 使用 useEffect 添加样式来隐藏全局输入框
+  useEffect(() => {
+    // 创建一个新的样式元素
+    const styleEl = document.createElement('style');
+    styleEl.innerHTML = `
+      /* 隐藏全局输入框 */
+      body > div:last-child > div:last-child {
+        display: none !important;
+      }
+      #root > div:last-child > div:last-child {
+        display: none !important;
+      }
+      [placeholder="输入内容开始对话，按回车发送..."] {
+        display: none !important;
+      }
+      [placeholder*="输入内容开始对话"] {
+        display: none !important;
+      }
+      .app > div:last-child > div:last-child {
+        display: none !important;
+      }
+    `;
+    document.head.appendChild(styleEl);
+
+    // 组件卸载时移除样式
+    return () => {
+      document.head.removeChild(styleEl);
+    };
+  }, []);
+
+  // 渲染角色视图表格
+  const renderCharacterTable = () => {
+    return (
+      <TableContainer component={Paper} sx={{ height: 'calc(100vh - 240px)', overflow: 'auto' }}>
+        <Table stickyHeader aria-label="character table">
+          <TableHead>
+            <TableRow>
+              <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5', minWidth: 100 }}>角色</TableCell>
+              <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5', minWidth: 150 }}>时间线</TableCell>
+              <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5', minWidth: 250 }}>关键事件</TableCell>
+              <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5', minWidth: 200 }}>情感变化</TableCell>
+              <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5', minWidth: 200 }}>人物关系</TableCell>
+              <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5', minWidth: 200 }}>人物塑造效果</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {tableData.map((row) => (
+              <TableRow key={row.id}>
+                <TableCell>
+                  <PromptDisplay 
+                    type="character" 
+                    content={row.character} 
+                    onEdit={(value: string) => handleUpdateTableData(row.id, 'character', value)}
+                  />
+                </TableCell>
+                <TableCell>
+                  <PromptDisplay 
+                    type="timeline" 
+                    content={row.timeline} 
+                    onEdit={(value: string) => handleUpdateTableData(row.id, 'timeline', value)}
+                  />
+                </TableCell>
+                <TableCell>
+                  <PromptDisplay 
+                    type="event" 
+                    content={row.keyEvent} 
+                    onEdit={(value: string) => handleUpdateTableData(row.id, 'keyEvent', value)}
+                  />
+                </TableCell>
+                <TableCell>
+                  <PromptDisplay 
+                    type="emotion" 
+                    content={row.emotionChange} 
+                    onEdit={(value: string) => handleUpdateTableData(row.id, 'emotionChange', value)}
+                  />
+                </TableCell>
+                <TableCell>
+                  <PromptDisplay 
+                    type="relationship" 
+                    content={row.relationship} 
+                    onEdit={(value: string) => handleUpdateTableData(row.id, 'relationship', value)}
+                  />
+                </TableCell>
+                <TableCell>
+                  <PromptDisplay 
+                    type="character-effect" 
+                    content={row.characterEffect} 
+                    onEdit={(value: string) => handleUpdateTableData(row.id, 'characterEffect', value)}
+                  />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    );
+  };
+
+  // 剧情视图内容
+  const renderStoryView = () => {
+    return (
+      <div className="p-4 overflow-auto h-full pb-20">
+        <div className="mb-4">
+          <div className="border border-gray-300 rounded p-4 mb-4">
+            <div className="flex justify-between items-center">
+              <span>分幕标题: {sceneId ? `分幕${sceneId}` : '分幕1'} - 花间客在订婚宴上重逢前爱人</span>
+              <button 
+                className="text-blue-500 text-sm"
+              >
+                修改内容
+              </button>
+            </div>
+          </div>
+
+          <div>
+            {tableData.map((row, index) => (
+              <div 
+                key={row.id}
+                className="p-4 mb-2 rounded cursor-pointer border border-gray-200 hover:border-gray-400"
+              >
+                <div className="font-medium mb-2">{row.character}：</div>
+                <p className="whitespace-pre-wrap text-sm">{row.keyEvent}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div className="flex h-screen bg-white">
+    <div className="flex h-screen bg-white scene-editor-container">
       {/* 左侧边栏 */}
       <Sidebar />
 
       {/* 右侧内容区域 */}
-      <SceneContentArea />
+      <div className="flex-1 flex flex-col h-screen">
+        {/* 顶部导航栏 */}
+        <div className="border-b border-gray-200 flex-shrink-0">
+          <Navigation 
+            tabs={['分幕', '剧本', '大纲', '角色', '关系', '章节']} 
+            defaultTab="分幕"
+            onTabChange={setActiveTab}
+          />
+        </div>
 
-      {/* 右侧空白区域用于图标 */}
-      <div className="w-[100px] bg-white flex flex-col items-center pt-8 gap-4">
+        {/* 视图切换 */}
+        <div className="flex justify-between items-center px-4 py-2 border-b border-gray-200 flex-shrink-0">
+          <div className="font-medium">
+            分幕 {sceneId || '1'}: 花间客在订婚宴上重逢前爱人
+          </div>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={isCharacterView}
+                onChange={handleViewToggle}
+                color="primary"
+              />
+            }
+            label={isCharacterView ? "角色视图" : "剧情视图"}
+          />
+        </div>
+
+        {/* 主内容区域 */}
+        <div className="flex-1 overflow-auto">
+          {isCharacterView ? renderCharacterTable() : renderStoryView()}
+        </div>
       </div>
     </div>
-  )
+  );
 }
 
-export default SceneEditor 
+export default SceneEditor; 

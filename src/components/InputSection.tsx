@@ -1,5 +1,6 @@
 import { Icon } from '@iconify/react'
 import { useRef, useState } from 'react'
+import PresetPrompts from './PresetPrompts'
 
 type InputSectionProps = {
   inputRef: React.RefObject<HTMLInputElement | null>
@@ -162,20 +163,7 @@ function InputSection({
                 <Icon icon="mdi:close" className="w-4 h-4" />
               </button>
             </div>
-            <div className="divide-y divide-gray-50">
-              {presetPrompts.map((prompt, index) => (
-                <div
-                  key={index}
-                  className="px-3 py-2.5 hover:bg-gray-50 cursor-pointer text-gray-700 transition-colors"
-                  onClick={() => usePresetPrompt(prompt)}
-                >
-                  <div className="flex items-center">
-                    <Icon icon="mdi:lightning-bolt" className="mr-2 text-gray-400 flex-shrink-0" />
-                    <span>{prompt}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <PresetPrompts prompts={presetPrompts} onUsePrompt={usePresetPrompt} />
           </div>
         )}
         

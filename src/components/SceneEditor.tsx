@@ -15,6 +15,7 @@ import { Icon } from '@iconify/react'
 import Sidebar from './Sidebar'
 import Navigation from './Navigation'
 import PromptDisplay from './PromptDisplay'
+import InputPanel from './InputPanel'
 import { useAppState, ScenarioOption } from '../hooks/useAppState'
 
 // 表格数据接口
@@ -75,6 +76,8 @@ function SceneEditor() {
   const [isCharacterView, setIsCharacterView] = useState(false);
   const [tableData, setTableData] = useState<TableData[]>(initialTableData);
   const [activeTab, setActiveTab] = useState('分幕');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [workingMode, setWorkingMode] = useState<'conversation' | 'optimization'>('conversation');
   
   // 处理表格数据更新
   const handleUpdateTableData = (id: string, field: keyof TableData, value: string) => {
@@ -88,6 +91,30 @@ function SceneEditor() {
   // 处理视图切换
   const handleViewToggle = () => {
     setIsCharacterView(!isCharacterView);
+  };
+
+  // 处理输入提交
+  const handleInputSubmit = (input: string) => {
+    console.log("提交输入:", input);
+    // 这里可以实现与AI交互的逻辑
+    setIsGenerating(true);
+    
+    // 模拟生成过程
+    setTimeout(() => {
+      setIsGenerating(false);
+      // 更新表格数据或显示优化结果
+    }, 2000);
+  };
+
+  // 处理预设Prompt选择
+  const handlePresetPromptSelect = (prompt: string) => {
+    if (prompt === 'SWITCH_TO_CONVERSATION') {
+      setWorkingMode('conversation');
+    } else if (prompt === 'SWITCH_TO_OPTIMIZATION') {
+      setWorkingMode('optimization');
+    } else {
+      console.log("选择预设Prompt:", prompt);
+    }
   };
 
   // 使用 useEffect 添加样式来隐藏全局输入框
@@ -123,7 +150,7 @@ function SceneEditor() {
   // 渲染角色视图表格
   const renderCharacterTable = () => {
     return (
-      <TableContainer component={Paper} sx={{ height: 'calc(100vh - 240px)', overflow: 'auto' }}>
+      <TableContainer component={Paper} sx={{ height: 'calc(100vh - 290px)', overflow: 'auto' }}>
         <Table stickyHeader aria-label="character table">
           <TableHead>
             <TableRow>
@@ -205,7 +232,7 @@ function SceneEditor() {
           </div>
 
           <div>
-            {tableData.map((row, index) => (
+            {tableData.map((row) => (
               <div 
                 key={row.id}
                 className="p-4 mb-2 rounded cursor-pointer border border-gray-200 hover:border-gray-400"
@@ -257,6 +284,22 @@ function SceneEditor() {
         <div className="flex-1 overflow-auto">
           {isCharacterView ? renderCharacterTable() : renderStoryView()}
         </div>
+
+        {/* 底部输入面板 */}
+        <InputPanel 
+          onSubmit={handleInputSubmit}
+          isGenerating={isGenerating}
+          workingMode={workingMode}
+          placeholderOverride="输入内容优化建议，如：希望花间客能更加犹豫不决..."
+          presetPrompts={[
+            '优化角色性格描写，让角色更加立体',
+            '调整情节节奏，使故事更加紧凑',
+            '增加场景描写，提升沉浸感',
+            '改进对话内容，突出角色个性',
+            '添加冲突元素，增强戏剧性'
+          ]}
+          onPresetPromptSelect={handlePresetPromptSelect}
+        />
       </div>
     </div>
   );

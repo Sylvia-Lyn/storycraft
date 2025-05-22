@@ -1,8 +1,12 @@
 import { useState } from 'react'
 import { Icon } from '@iconify/react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { Collapse, Input, Button, Spin } from 'antd'
 import Sidebar from './Sidebar'
 import { useAppState, ScenarioOption } from '../hooks/useAppState'
+
+const { Panel } = Collapse
+const { TextArea } = Input
 
 // 分幕内容编辑区域组件
 function SceneContentArea() {
@@ -22,6 +26,7 @@ function SceneContentArea() {
   const [optimizationInput, setOptimizationInput] = useState('')
   const [isGeneratingOptions, setIsGeneratingOptions] = useState(false)
   const [scenarioOptions, setScenarioOptions] = useState<ScenarioOption[]>([])
+  const [activeKey, setActiveKey] = useState<string[]>(['1']) // 控制面板展开状态
 
   const {
     // 模型相关
@@ -86,9 +91,14 @@ function SceneContentArea() {
     }
   };
 
+  // 处理面板展开变化
+  const handleCollapseChange = (key: string | string[]) => {
+    setActiveKey(Array.isArray(key) ? key : [key]);
+  };
+
   return (
-    <div className="flex-1 overflow-auto p-4 bg-white">
-      <div className="mb-4">
+    <div className="flex-1 overflow-auto bg-white flex flex-col">
+      <div className="p-4 flex-none">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center">
             <div className="font-bold text-lg mr-2">分幕 {sceneId || '1'}</div>
@@ -113,88 +123,122 @@ function SceneContentArea() {
             </button>
           </div>
         </div>
-
-        {isEditing ? (
-          <div className="mb-4">
-            <textarea
-              className="w-full border border-gray-300 rounded p-4"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              rows={20}
-              style={{ lineHeight: '1.6' }}
-            />
-          </div>
-        ) : (
-          <div className="mb-4">
-            {content.split('\n\n').map((paragraph, index) => (
-              <div 
-                key={index}
-                className={`p-4 mb-2 rounded cursor-pointer ${selectedCell === index ? 'bg-gray-100 border-2 border-black' : 'border border-gray-200 hover:border-gray-400'}`}
-                onClick={() => setSelectedCell(index)}
-              >
-                <p className="whitespace-pre-wrap">{paragraph}</p>
+      </div>
+      
+      {/* 使用 antd Collapse 组件创建垂直面板 */}
+      <Collapse 
+        className="flex-1 overflow-auto"
+        activeKey={activeKey}
+        onChange={handleCollapseChange}
+        bordered={false}
+      >
+        {/* 上面板：内容区域 */}
+        <Panel 
+          header={<div className="font-medium">分幕内容</div>} 
+          key="1"
+          className="overflow-auto"
+        >
+          <div className="overflow-auto pb-4">
+            {isEditing ? (
+              <div className="mb-4">
+                <TextArea
+                  className="w-full"
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  rows={20}
+                  style={{ lineHeight: '1.6' }}
+                />
               </div>
-            ))}
-          </div>
-        )}
-        
-        {/* 剧情优化部分 */}
-        {selectedCell !== null && (
-          <div className="bg-gray-50 p-4 rounded-lg mt-6 mb-4">
-            <div className="font-medium mb-2">修改第 {selectedCell + 1} 段剧情</div>
-            <p className="text-sm text-gray-600 mb-3">
-              使用 <span className="font-semibold">{selectedModel}</span> 模型和 
-              <span className="font-semibold"> {selectedStyle}</span> 文风
-            </p>
-            
-            <div className="mb-4">
-              <textarea
-                className="w-full border border-gray-300 rounded p-3 focus:outline-none focus:ring-1 focus:ring-gray-400"
-                placeholder="告诉我如何优化这段剧情，如：增加更多情感描写，减少对话..."
-                value={optimizationInput}
-                onChange={(e) => setOptimizationInput(e.target.value)}
-                rows={3}
-              />
-            </div>
-            
-            <div className="flex justify-end">
-              <button 
-                className="px-4 py-2 bg-black text-white rounded-md flex items-center disabled:bg-gray-300"
-                onClick={handleGenerateScenarioOptions}
-                disabled={!optimizationInput.trim() || isGeneratingOptions}
-              >
-                {isGeneratingOptions ? (
-                  <>
-                    <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    生成中...
-                  </>
-                ) : (
-                  <>
-                    <Icon icon="ri:ai-generate" className="mr-1" />
-                    生成优化选项
-                  </>
-                )}
-              </button>
-            </div>
-            
-            {/* 剧情选项 */}
-            {scenarioOptions.length > 0 && (
-              <div className="mt-4 space-y-3">
-                <div className="text-sm text-gray-500 mb-2">请选择一个优化后的剧情：</div>
-                {scenarioOptions.map(option => (
+            ) : (
+              <div>
+                {content.split('\n\n').map((paragraph, index) => (
                   <div 
-                    key={option.id}
-                    className="border border-gray-300 p-3 rounded-md cursor-pointer hover:border-gray-500 transition-colors"
-                    onClick={() => selectScenario(option)}
+                    key={index}
+                    className={`p-4 mb-2 rounded cursor-pointer ${selectedCell === index ? 'bg-gray-100 border-2 border-black' : 'border border-gray-200 hover:border-gray-400'}`}
+                    onClick={() => {
+                      setSelectedCell(index);
+                      // 当选择单元格时自动展开底部面板
+                      if (!activeKey.includes('2')) {
+                        setActiveKey(['1', '2']);
+                      }
+                    }}
                   >
-                    <p>{option.text}</p>
+                    <p className="whitespace-pre-wrap">{paragraph}</p>
                   </div>
                 ))}
               </div>
             )}
           </div>
-        )}
-      </div>
+        </Panel>
+        
+        {/* 下面板：AI 生成区域 */}
+        <Panel 
+          header={
+            <div className="font-medium">
+              AI 辅助生成
+              {selectedCell !== null && <span className="ml-2 text-gray-500">（当前选中第 {selectedCell + 1} 段）</span>}
+            </div>
+          } 
+          key="2"
+          className="overflow-auto"
+        >
+          <div className="p-4 bg-white">
+            {selectedCell !== null ? (
+              <>
+                <div className="mb-3">
+                  <div className="font-medium mb-2">角色1和角色2在xxx发生了xxx而不是xxx</div>
+                  <p className="text-sm text-gray-500">
+                    使用 <span className="font-semibold">{selectedModel}</span> 模型和 
+                    <span className="font-semibold"> {selectedStyle}</span> 文风
+                  </p>
+                </div>
+                
+                {scenarioOptions.length > 0 ? (
+                  <div className="space-y-2 max-h-60 overflow-y-auto mb-4">
+                    <div className="text-sm text-gray-500 mb-2">请选择一个优化后的剧情：</div>
+                    {scenarioOptions.map(option => (
+                      <div 
+                        key={option.id}
+                        className="border border-gray-300 p-3 rounded-md cursor-pointer hover:border-gray-500 hover:bg-gray-50 transition-colors"
+                        onClick={() => selectScenario(option)}
+                      >
+                        <p>{option.text}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="bg-gray-50 p-3 rounded-md mb-4 text-gray-500">
+                    <p>这段内容不好？请在输入框中告诉我如何优化，如：增加更多情感描写，减少对话...</p>
+                  </div>
+                )}
+                
+                <div className="flex items-center">
+                  <TextArea
+                    className="flex-1"
+                    placeholder="告诉我如何优化这段剧情..."
+                    value={optimizationInput}
+                    onChange={(e) => setOptimizationInput(e.target.value)}
+                    autoSize={{ minRows: 1, maxRows: 3 }}
+                  />
+                  <Button 
+                    type="primary"
+                    className="ml-3"
+                    onClick={handleGenerateScenarioOptions}
+                    disabled={!optimizationInput.trim() || isGeneratingOptions}
+                    icon={isGeneratingOptions ? <Spin size="small" /> : <Icon icon="ri:ai-generate" />}
+                  >
+                    生成
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <div className="text-center text-gray-500 py-8">
+                请先在上方选择一个段落进行编辑
+              </div>
+            )}
+          </div>
+        </Panel>
+      </Collapse>
     </div>
   )
 }

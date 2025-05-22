@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { 
   Table, 
   TableBody, 
@@ -11,12 +11,10 @@ import {
   Switch,
   FormControlLabel
 } from '@mui/material'
-import { Icon } from '@iconify/react'
 import Sidebar from './Sidebar'
 import Navigation from './Navigation'
 import PromptDisplay from './PromptDisplay'
 import InputPanel from './InputPanel'
-import { useAppState, ScenarioOption } from '../hooks/useAppState'
 
 // 表格数据接口
 interface TableData {
@@ -72,10 +70,8 @@ const initialTableData: TableData[] = [
 // 分幕编辑器主组件
 function SceneEditor() {
   const { sceneId } = useParams();
-  const navigate = useNavigate();
   const [isCharacterView, setIsCharacterView] = useState(false);
   const [tableData, setTableData] = useState<TableData[]>(initialTableData);
-  const [activeTab, setActiveTab] = useState('分幕');
   const [isGenerating, setIsGenerating] = useState(false);
   const [workingMode, setWorkingMode] = useState<'conversation' | 'optimization'>('conversation');
   
@@ -259,7 +255,7 @@ function SceneEditor() {
           <Navigation 
             tabs={['分幕', '剧本', '大纲', '角色', '关系', '章节']} 
             defaultTab="分幕"
-            onTabChange={setActiveTab}
+            onTabChange={() => {}}
           />
         </div>
 

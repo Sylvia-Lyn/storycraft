@@ -1,5 +1,4 @@
 import { Icon } from '@iconify/react'
-import { useRef, useState } from 'react'
 import PresetPrompts from './PresetPrompts'
 
 type InputSectionProps = {

@@ -1,5 +1,4 @@
 import { Icon } from '@iconify/react'
-import { useState } from 'react'
 
 type Message = {
   text: string;

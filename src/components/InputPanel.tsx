@@ -1,9 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Icon } from '@iconify/react'
 
-// 快捷短语生成函数类型
-type QuickPhrasesGenerator = (input: string) => string[];
-
 interface InputPanelProps {
   onSubmit: (input: string) => void;
   isGenerating?: boolean;
@@ -31,7 +28,7 @@ const InputPanel: React.FC<InputPanelProps> = ({
   const [showPresetPrompts, setShowPresetPrompts] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [showAutoComplete, setShowAutoComplete] = useState(false);
-  const [autoCompleteText, setAutoCompleteText] = useState('');
+  const [autoCompleteText] = useState('');
   const [inputSuggestions, setInputSuggestions] = useState<string[]>([]);
   const [suggestionCategory, setSuggestionCategory] = useState('');
   const [recentInputs, setRecentInputs] = useState<string[]>([]);

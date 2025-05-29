@@ -2,6 +2,72 @@ import { useState, useRef, useEffect } from 'react'
 import { Icon } from '@iconify/react'
 import { toast } from 'react-hot-toast'
 
+// 创建知识库模态窗口组件
+interface CreateKnowledgeModalProps {
+  isOpen: boolean
+  onClose: () => void
+  onConfirm: (name: string) => void
+}
+
+const CreateKnowledgeModal = ({ isOpen, onClose, onConfirm }: CreateKnowledgeModalProps) => {
+  const [knowledgeName, setKnowledgeName] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
+  
+  useEffect(() => {
+    if (isOpen && inputRef.current) {
+      inputRef.current.focus()
+      setKnowledgeName('')
+    }
+  }, [isOpen])
+  
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (knowledgeName.trim()) {
+      onConfirm(knowledgeName)
+      setKnowledgeName('')
+    }
+  }
+  
+  if (!isOpen) return null
+  
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-80 shadow-xl">
+        <h3 className="text-lg font-bold mb-4">创建知识库</h3>
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">知识库名称</label>
+            <input
+              ref={inputRef}
+              type="text"
+              value={knowledgeName}
+              onChange={(e) => setKnowledgeName(e.target.value)}
+              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="请输入知识库名称"
+            />
+          </div>
+          <div className="flex justify-end space-x-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            >
+              取消
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50"
+              disabled={!knowledgeName.trim()}
+            >
+              确定
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
 
 interface ExpandedItems {
   [key: string]: boolean
@@ -30,6 +96,13 @@ interface Work {
     hostManual: boolean
     materials: boolean
   }
+}
+
+interface KnowledgeItem {
+  id: string
+  name: string
+  documents?: number
+  ideas?: number
 }
 
 const Sidebar = () => {
@@ -83,9 +156,17 @@ const Sidebar = () => {
   
   const [editingWorkId, setEditingWorkId] = useState<string | null>(null)
   const [editingWorkName, setEditingWorkName] = useState('')
-  // const [knowledgeItems, setKnowledgeItems] = useState<KnowledgeItem[]>([])
-  // const [editingKnowledgeId, setEditingKnowledgeId] = useState<string | null>(null)
-  // const [editingKnowledgeName, setEditingKnowledgeName] = useState('')
+  const [knowledgeItems, setKnowledgeItems] = useState<KnowledgeItem[]>([
+    { id: 'knowledge-1', name: '测试', documents: 0, ideas: 0 },
+    { id: 'knowledge-2', name: '对话记录', documents: 0, ideas: 0 },
+    { id: 'knowledge-3', name: '角色剧本', documents: 6, ideas: 0 }
+  ])
+  const [showKnowledgeItems, setShowKnowledgeItems] = useState(true)
+  const [activeMenuId, setActiveMenuId] = useState<string | null>(null)
+  const [editingKnowledgeId, setEditingKnowledgeId] = useState<string | null>(null)
+  const [editingKnowledgeName, setEditingKnowledgeName] = useState('')
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const knowledgeEditInputRef = useRef<HTMLInputElement>(null)
   const editInputRef = useRef<HTMLInputElement>(null)
 
   // 处理展开/折叠功能
@@ -168,10 +249,26 @@ const Sidebar = () => {
     showToast()
   }
 
-  // 处理知识库添加
-  // const handleKnowledgeBaseAdd = () => {
-  //   showToast()
-  // }
+  // 处理知识库添加按钮点击
+  const handleKnowledgeBaseAddClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setIsCreateModalOpen(true)
+  }
+  
+  // 处理知识库创建确认
+  const handleKnowledgeBaseCreate = (name: string) => {
+    const newId = `knowledge-${knowledgeItems.length + 1}`
+    const newKnowledgeItem: KnowledgeItem = {
+      id: newId,
+      name: name,
+      documents: 0,
+      ideas: 0
+    }
+    setKnowledgeItems(prev => [...prev, newKnowledgeItem])
+    setShowKnowledgeItems(true)
+    setIsCreateModalOpen(false)
+    toast.success('知识库创建成功')
+  }
 
   // 处理工作流其他按钮点击
   const handleWorkflowOtherAction = (e: React.MouseEvent) => {
@@ -181,7 +278,59 @@ const Sidebar = () => {
 
   // 处理知识库项点击
   const handleKnowledgeItemClick = () => {
-    showToast()
+    setShowKnowledgeItems(!showKnowledgeItems)
+    setActiveMenuId(null)
+  }
+  
+  // 处理知识库项菜单点击
+  const handleKnowledgeMenuClick = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation()
+    setActiveMenuId(activeMenuId === id ? null : id)
+  }
+  
+  // 处理知识库项删除
+  const handleKnowledgeDelete = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation()
+    setKnowledgeItems(prev => prev.filter(item => item.id !== id))
+    setActiveMenuId(null)
+  }
+  
+  // 处理知识库项编辑
+  const handleKnowledgeEdit = (e: React.MouseEvent, item: KnowledgeItem) => {
+    e.stopPropagation()
+    setEditingKnowledgeId(item.id)
+    setEditingKnowledgeName(item.name)
+    setActiveMenuId(null)
+  }
+  
+  // 处理知识库名称编辑保存
+  const handleKnowledgeEditSave = () => {
+    if (editingKnowledgeId) {
+      setKnowledgeItems(prev => 
+        prev.map(item => 
+          item.id === editingKnowledgeId 
+            ? { ...item, name: editingKnowledgeName }
+            : item
+        )
+      )
+      setEditingKnowledgeId(null)
+      setEditingKnowledgeName('')
+    }
+  }
+  
+  // 处理知识库名称编辑取消
+  const handleKnowledgeEditCancel = () => {
+    setEditingKnowledgeId(null)
+    setEditingKnowledgeName('')
+  }
+  
+  // 处理知识库名称编辑按键
+  const handleKnowledgeEditKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleKnowledgeEditSave()
+    } else if (e.key === 'Escape') {
+      handleKnowledgeEditCancel()
+    }
   }
 
   // 处理脚本点击
@@ -194,6 +343,24 @@ const Sidebar = () => {
       editInputRef.current.focus()
     }
   }, [editingWorkId])
+  
+  useEffect(() => {
+    if (editingKnowledgeId && knowledgeEditInputRef.current) {
+      knowledgeEditInputRef.current.focus()
+    }
+  }, [editingKnowledgeId])
+  
+  // 点击外部关闭菜单
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setActiveMenuId(null)
+    }
+    
+    document.addEventListener('click', handleClickOutside)
+    return () => {
+      document.removeEventListener('click', handleClickOutside)
+    }
+  }, [])
 
   return (
     <div className="w-[280px] bg-white border-r border-gray-200 overflow-auto">
@@ -409,7 +576,7 @@ const Sidebar = () => {
             onClick={() => handleKnowledgeItemClick()}
           >
             <Icon 
-              icon="ri:arrow-right-s-line" 
+              icon={showKnowledgeItems ? "ri:arrow-down-s-line" : "ri:arrow-right-s-line"} 
               className="w-5 h-5 mr-1 text-gray-500"
             />
             知识库
@@ -417,12 +584,72 @@ const Sidebar = () => {
           <Icon 
             icon="ri:add-line" 
             className="w-5 h-5 text-gray-500 cursor-pointer"
-            onClick={(e) => {
-              e.stopPropagation()
-              showToast()
-            }}
+            onClick={handleKnowledgeBaseAddClick}
           />
         </div>
+        
+        {/* 知识库项目列表 */}
+        {showKnowledgeItems && (
+          <div className="space-y-2 ml-4">
+            {knowledgeItems.map(item => (
+              <div 
+                key={item.id} 
+                className="flex items-center p-2 hover:bg-gray-50 rounded-md cursor-pointer relative"
+                onClick={() => showToast()}
+              >
+                <div className="bg-blue-100 rounded-lg p-2 mr-3">
+                  <Icon icon="ri:file-text-line" className="w-5 h-5 text-blue-500" />
+                </div>
+                {editingKnowledgeId === item.id ? (
+                  <div className="flex-grow">
+                    <input
+                      ref={knowledgeEditInputRef}
+                      value={editingKnowledgeName}
+                      onChange={e => setEditingKnowledgeName(e.target.value)}
+                      onBlur={handleKnowledgeEditSave}
+                      onKeyDown={handleKnowledgeEditKeyPress}
+                      className="w-full border border-gray-300 rounded px-2 py-1"
+                    />
+                  </div>
+                ) : (
+                  <div className="flex-grow">
+                    <div className="font-medium">{item.name}</div>
+                    <div className="text-xs text-gray-500">
+                      {item.documents ?? 0} 文档 {(item.ideas && item.ideas > 0) ? `${item.ideas} 笔记 IDEAs` : ''}
+                    </div>
+                  </div>
+                )}
+                <div className="relative">
+                  <Icon 
+                    icon="ri:more-fill" 
+                    className="w-5 h-5 text-gray-400 cursor-pointer"
+                    onClick={(e) => handleKnowledgeMenuClick(e, item.id)}
+                  />
+                  {activeMenuId === item.id && (
+                    <div className="absolute right-0 top-6 bg-white shadow-lg rounded-md py-1 z-10 w-24">
+                      <div 
+                        className="px-3 py-2 hover:bg-gray-100 cursor-pointer flex items-center"
+                        onClick={(e) => handleKnowledgeEdit(e, item)}
+                      >
+                        <Icon icon="ri:edit-line" className="w-4 h-4 mr-2" />
+                        <span>修改</span>
+                      </div>
+                      <div 
+                        className="px-3 py-2 hover:bg-gray-100 cursor-pointer flex items-center text-red-500"
+                        onClick={(e) => handleKnowledgeDelete(e, item.id)}
+                      >
+                        <Icon icon="ri:delete-bin-line" className="w-4 h-4 mr-2" />
+                        <span>删除</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+            {/* 底部空白区域 */}
+            <div className="py-2"></div>
+          </div>
+        )}
         
         {/* 工作流部分 */}
         <div className="font-bold text-lg mt-6 mb-2 flex justify-between items-center hover:bg-gray-50 p-2 rounded-md">
@@ -448,6 +675,13 @@ const Sidebar = () => {
         
         <div className="text-gray-400 text-sm absolute bottom-4 left-4">Writer.AI @千帆叙梦</div>
       </div>
+      
+      {/* 创建知识库模态窗口 */}
+      <CreateKnowledgeModal 
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onConfirm={handleKnowledgeBaseCreate}
+      />
     </div>
   )
 }

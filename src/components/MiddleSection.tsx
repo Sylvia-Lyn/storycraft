@@ -1,11 +1,50 @@
 import { Icon } from '@iconify/react'
 import Navigation from './Navigation'
 import { useAppState } from '../hooks/useAppState'
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import InputSection from './InputSection'
 import ResultsSection from './ResultsSection'
-import MessageSection from './MessageSection'
+// MessageSection 组件已集成到 MiddleSection 中
 import { defaultPrompts } from './PresetPrompts'
+
+// 导入自定义 hooks
+import { useOptimizationResults } from '../hooks/useOptimizationResults'
+import { useMessageManagement } from '../hooks/useMessageManagement'
+import { useInputSuggestions } from '../hooks/useInputSuggestions'
+import { useAutoComplete } from '../hooks/useAutoComplete'
+import { useDraftContent } from '../hooks/useDraftContent'
+import { usePresetPrompts } from '../hooks/usePresetPrompts'
+
+// 预定义的一些常见建议模板
+const suggestionTemplates = {
+  '角色': [
+    '让角色性格更加鲜明，增加以下特点...',
+    '调整角色之间的关系，使冲突更加明显',
+    '增加角色的成长弧线，从内向变得更加自信'
+  ],
+  '情节': [
+    '增加一个意外转折，让主角面临更大的挑战',
+    '调整情节节奏，使高潮部分更加紧凑',
+    '增加一些伏笔，为后续发展做铺垫'
+  ],
+  '对白': [
+    '让对白更加简练，突出角色个性',
+    '增加潜台词，让对白层次更加丰富',
+    '调整对白节奏，增加停顿和交锋'
+  ],
+  '场景': [
+    '增加场景描写，突出氛围和情绪',
+    '调整场景转换，使故事流程更加流畅',
+    '在关键场景增加象征性元素'
+  ]
+};
+
+// 通用建议，当没有匹配到特定关键词时使用
+const generalSuggestions = [
+  '剧情节奏太慢，希望更加紧凑',
+  '角色动机不够清晰，需要调整',
+  '故事缺乏高潮，需要增加戏剧冲突'
+];
 
 // Middle Section Component
 function MiddleSection() {
@@ -26,104 +65,90 @@ function MiddleSection() {
     selectedStyle,
     
     // 消息相关
-    messages,
-    setMessages,
+    messages: initialMessages,
+    setMessages: setAppMessages,
   } = useAppState();
   
-  // 初稿相关状态
-  const [previousDraftContent, setPreviousDraftContent] = useState("");
-  const [currentDraftContent, setCurrentDraftContent] = useState("");
-  // const [selectedText, setSelectedText] = useState("");
+  // 基础状态
   const [feedbackText, setFeedbackText] = useState("");
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [optimizationResults, setOptimizationResults] = useState<Array<{id: string, text: string}>>([]);
-  
-  // 添加引用
-  const resultsContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   
-  // 添加输入建议相关状态
-  const [inputSuggestions, setInputSuggestions] = useState<string[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
+  // 工作模式
+  // 移除了工作模式状态
   
-  // 添加自动完成相关状态
-  const [recentInputs, setRecentInputs] = useState<string[]>([]);
-  const [showAutoComplete, setShowAutoComplete] = useState<boolean>(false);
-  const [autoCompleteText, setAutoCompleteText] = useState<string>('');
-  
-  // 添加缓存和快速响应相关状态
-  const [responseCache, setResponseCache] = useState<{[key: string]: Array<{id: string, text: string}>}>({});
+  // 快速响应
   const [quickResponses] = useState<Array<{id: string, text: string}>>([
     { id: "q1", text: "1. 建议让角色动机更加明确，增加角色内心的矛盾和挣扎，使角色更加立体。" },
     { id: "q2", text: "2. 情节可以更加紧凑，节奏感更强，增加一些意外转折来提高读者兴趣。" },
     { id: "q3", text: "3. 考虑增加更多环境描写和细节，让读者能够更好地沉浸在故事世界中。" }
   ]);
   
-  // 添加消息编辑与重新生成相关状态
-  const [editingMessageIndex, setEditingMessageIndex] = useState<number | null>(null);
-  const [editingMessageText, setEditingMessageText] = useState("");
-  const [regeneratingMessageIndex, setRegeneratingMessageIndex] = useState<number | null>(null);
-  const [showPresetPrompts, setShowPresetPrompts] = useState(false);
+  // 使用自定义 hooks
+  const {
+    previousDraftContent,
+    currentDraftContent,
+    clearDraftContent
+  } = useDraftContent();
   
-  // 预设的Prompt模板
-  const presetPrompts = defaultPrompts;
+  const {
+    isGenerating,
+    optimizationResults,
+    resultsContainerRef,
+    applyOptimizedText,
+    copyToClipboard,
+    generateOptimizedContent,
+    generateQuickContent
+  } = useOptimizationResults();
   
-  // 工作模式
-  const [workingMode, setWorkingMode] = useState<"conversation" | "optimization">("conversation");
+  const {
+    messages,
+    editingMessageIndex,
+    editingMessageText,
+    setEditingMessageText,
+    regeneratingMessageIndex,
+    startEditingMessage,
+    saveEditedMessage,
+    cancelEditingMessage,
+    deleteMessage,
+    clearHistory
+  } = useMessageManagement(initialMessages, generateOptimizedContent);
   
-  // 预定义的一些常见建议模板
-  const suggestionTemplates = {
-    '角色': [
-      '让角色性格更加鲜明，增加以下特点...',
-      '调整角色之间的关系，使冲突更加明显',
-      '增加角色的成长弧线，从内向变得更加自信'
-    ],
-    '情节': [
-      '增加一个意外转折，让主角面临更大的挑战',
-      '调整情节节奏，使高潮部分更加紧凑',
-      '增加一些伏笔，为后续发展做铺垫'
-    ],
-    '对白': [
-      '让对白更加简练，突出角色个性',
-      '增加潜台词，让对白层次更加丰富',
-      '调整对白节奏，增加停顿和交锋'
-    ],
-    '场景': [
-      '增加场景描写，突出氛围和情绪',
-      '调整场景转换，使故事流程更加流畅',
-      '在关键场景增加象征性元素'
-    ]
-  };
+  const {
+    inputSuggestions,
+    showSuggestions,
+    setShowSuggestions,
+    suggestionCategory,
+    getQuickPhrases,
+    selectSuggestion,
+    analyzeFeedbackForSuggestions
+  } = useInputSuggestions(suggestionTemplates, generalSuggestions);
   
-  // 通用建议，当没有匹配到特定关键词时使用
-  const generalSuggestions = [
-    '剧情节奏太慢，希望更加紧凑',
-    '角色动机不够清晰，需要调整',
-    '故事缺乏高潮，需要增加戏剧冲突'
-  ];
+  const {
+    recentInputs,
+    showAutoComplete,
+    setShowAutoComplete,
+    autoCompleteText,
+    updateRecentInputs,
+    acceptAutoComplete,
+    checkAutoComplete
+  } = useAutoComplete();
   
-  // 监听文本选择事件
+  const {
+    showPresetPrompts,
+    setShowPresetPrompts,
+    presetPrompts,
+    usePresetPrompt
+  } = usePresetPrompts(defaultPrompts);
+  
+  // 监听输入变化，生成建议
   useEffect(() => {
-    const handleDraftTextSelected = (event: CustomEvent) => {
-      if (event.detail && event.detail.text) {
-        // setSelectedText(event.detail.text);
-        // 可能还需要获取之前的内容和当前分幕内容
-        if (event.detail.previousContent) {
-          setPreviousDraftContent(event.detail.previousContent);
-        }
-        if (event.detail.currentContent) {
-          setCurrentDraftContent(event.detail.currentContent);
-        }
-      }
-    };
-    
-    // 注册自定义事件监听
-    window.addEventListener('draftTextSelected' as any, handleDraftTextSelected);
-    
-    return () => {
-      window.removeEventListener('draftTextSelected' as any, handleDraftTextSelected);
-    };
-  }, []);
+    analyzeFeedbackForSuggestions(feedbackText);
+  }, [feedbackText, analyzeFeedbackForSuggestions]);
+  
+  // 自动完成功能
+  useEffect(() => {
+    checkAutoComplete(feedbackText);
+  }, [feedbackText, checkAutoComplete]);
   
   // 使用useEffect监听键盘快捷键
   useEffect(() => {
@@ -148,7 +173,7 @@ function MiddleSection() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [optimizationResults]);
+  }, [optimizationResults, applyOptimizedText]);
   
   // 当结果变化时，确保结果区域可以被选择和复制
   useEffect(() => {
@@ -159,502 +184,58 @@ function MiddleSection() {
       // 当没有结果时，聚焦到输入框
       inputRef.current.focus();
     }
-  }, [optimizationResults.length]);
+  }, [optimizationResults.length, resultsContainerRef]);
   
-  // 监听输入变化，生成建议
-  useEffect(() => {
-    if (feedbackText.trim() === '') {
-      setShowSuggestions(false);
-      return;
-    }
-    
-    // 分析输入内容，匹配相关建议
-    const input = feedbackText.toLowerCase();
-    let matchedSuggestions: string[] = [];
-    let category = '';
-    
-    // 检查是否包含关键词，推荐相应建议
-    if (input.includes('角色') || input.includes('人物') || input.includes('性格')) {
-      matchedSuggestions = suggestionTemplates['角色'];
-      category = '角色相关建议';
-    } else if (input.includes('情节') || input.includes('剧情') || input.includes('故事')) {
-      matchedSuggestions = suggestionTemplates['情节'];
-      category = '情节相关建议';
-    } else if (input.includes('对白') || input.includes('台词') || input.includes('说话')) {
-      matchedSuggestions = suggestionTemplates['对白'];
-      category = '对白相关建议';
-    } else if (input.includes('场景') || input.includes('环境') || input.includes('背景')) {
-      matchedSuggestions = suggestionTemplates['场景'];
-      category = '场景相关建议';
-    } else if (input.length > 2) {
-      // 当输入超过2个字符，但没有匹配到特定模板时，显示通用建议
-      matchedSuggestions = generalSuggestions;
-      category = '通用建议';
-    }
-    
-    if (matchedSuggestions.length > 0) {
-      setInputSuggestions(matchedSuggestions);
-      setSuggestionCategory(category);
-      setShowSuggestions(true);
-    } else {
-      setShowSuggestions(false);
-    }
-  }, [feedbackText]);
-  
-  // 添加建议分类状态
-  const [suggestionCategory, setSuggestionCategory] = useState<string>('');
-  
-  // 根据输入内容动态生成常用快捷短语
-  const getQuickPhrases = useCallback((input: string): string[] => {
-    const phrases: string[] = [];
-    
-    // 添加一些与当前输入相关的快捷短语
-    if (input.includes('角色')) {
-      phrases.push('角色性格不够鲜明', '角色动机不明确', '角色缺乏成长');
-    } else if (input.includes('情节')) {
-      phrases.push('情节节奏太慢', '情节缺乏冲突', '情节转折不自然');
-    }
-    
-    // 如果没有特定匹配，返回通用快捷短语
-    if (phrases.length === 0 && input.length > 0) {
-      return ['加强戏剧冲突', '改善节奏', '增加悬念', '优化结构'];
-    }
-    
-    return phrases;
-  }, []);
-  
-  // 开始编辑消息
-  const startEditingMessage = (index: number) => {
-    setEditingMessageIndex(index);
-    setEditingMessageText(messages[index].text);
-  };
-  
-  // 保存编辑的消息
-  const saveEditedMessage = () => {
-    if (editingMessageIndex === null || !editingMessageText.trim()) return;
-    
-    const updatedMessages = [...messages];
-    updatedMessages[editingMessageIndex] = {
-      ...updatedMessages[editingMessageIndex],
-      text: editingMessageText
-    };
-    
-    setMessages(updatedMessages);
-    setEditingMessageIndex(null);
-    setEditingMessageText("");
-  };
-  
-  // 取消编辑消息
-  const cancelEditingMessage = () => {
-    setEditingMessageIndex(null);
-    setEditingMessageText("");
-  };
-  
-  // 删除消息
-  const deleteMessage = (index: number) => {
-    const updatedMessages = messages.filter((_, i) => i !== index);
-    setMessages(updatedMessages);
-  };
-  
-  // 重新生成AI回复
-  const regenerateAIMessage = async (index: number) => {
-    if (messages[index].isUser) return; // 只能重新生成AI消息
-    
-    setRegeneratingMessageIndex(index);
-    
-    // 查找前一条用户消息作为提示
-    let userPrompt = "";
-    for (let i = index - 1; i >= 0; i--) {
-      if (messages[i].isUser) {
-        userPrompt = messages[i].text;
-        break;
-      }
-    }
-    
-    if (!userPrompt) {
-      // 如果找不到用户消息，使用默认提示
-      userPrompt = "请继续故事发展";
-    }
-    
-    // 保存当前的feedbackText
-    const originalFeedback = feedbackText;
-    setFeedbackText(userPrompt);
-    
-    try {
-      await generateOptimizedContent(true, 0);
-      
-      // 如果生成成功，用第一个结果替换AI消息
-      if (optimizationResults.length > 0) {
-        const updatedMessages = [...messages];
-        updatedMessages[index] = {
-          ...updatedMessages[index],
-          text: optimizationResults[0].text.replace(/^\d+\.\s+/, '')
-        };
-        
-        setMessages(updatedMessages);
-        setOptimizationResults([]);
-      }
-    } catch (error) {
-      console.error("重新生成AI回复失败:", error);
-    } finally {
-      // 恢复原始的feedbackText
-      setFeedbackText(originalFeedback);
-      setRegeneratingMessageIndex(null);
-    }
-  };
-  
-  // 清空历史记录
-  const clearHistory = () => {
-    if (window.confirm("确定要清空所有对话历史吗？此操作不可撤销。")) {
-      setMessages([]);
-      setOptimizationResults([]);
-    }
-  };
-  
-  // 使用预设Prompt
-  const usePresetPrompt = (prompt: string) => {
-    setFeedbackText(prompt);
-    setShowPresetPrompts(false);
-    // 聚焦输入框
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
-  };
-  
-  // 切换工作模式
-  const changeWorkingMode = (mode: "conversation" | "optimization") => {
-    setWorkingMode(mode);
-  };
-  
-  // 更新最近输入
-  const updateRecentInputs = useCallback((input: string) => {
-    if (input.trim() === '') return;
-    
-    // 更新最近输入列表，保持最多5项，且不重复
-    setRecentInputs(prev => {
-      const filtered = prev.filter(item => item !== input);
-      return [input, ...filtered].slice(0, 5);
-    });
-  }, []);
-  
-  // 自动完成功能
-  useEffect(() => {
-    if (feedbackText.trim() === '') {
-      setShowAutoComplete(false);
-      return;
-    }
-    
-    // 检查是否有匹配的最近输入
-    const matchingInput = recentInputs.find(input => 
-      input.toLowerCase().startsWith(feedbackText.toLowerCase()) && 
-      input.length > feedbackText.length
+  // 重新生成AI回复的包装函数
+  const regenerateAIMessageWrapper = (index: number) => {
+    regenerateAIMessage(
+      index,
+      feedbackText,
+      setFeedbackText,
+      previousDraftContent,
+      currentDraftContent,
+      quickResponses,
+      updateRecentInputs,
+      setOptimizationResults
     );
-    
-    if (matchingInput) {
-      setAutoCompleteText(matchingInput);
-      setShowAutoComplete(true);
-    } else {
-      setShowAutoComplete(false);
-    }
-  }, [feedbackText, recentInputs]);
-  
-  // 选择自动完成的文本
-  const acceptAutoComplete = () => {
-    if (showAutoComplete && autoCompleteText) {
-      setFeedbackText(autoCompleteText);
-      setShowAutoComplete(false);
-      
-      // 聚焦输入框
-      if (inputRef.current) {
-        inputRef.current.focus();
-      }
-    }
   };
   
-  // 修改原有的生成函数，添加重试机制
-  const generateOptimizedContent = async (showLoading = true, retryCount = 0) => {
-    if (!feedbackText.trim()) {
-      return;
-    }
-    
-    // 最大重试次数
-    const MAX_RETRIES = 3;
-    
-    // 检查缓存
-    const cacheKey = feedbackText.trim().toLowerCase();
-    if (responseCache[cacheKey]) {
-      setOptimizationResults(responseCache[cacheKey]);
-      setIsGenerating(false);
-      return;
-    }
-    
-    // 保存到最近输入
-    updateRecentInputs(feedbackText);
-    
-    if (showLoading) {
-    setIsGenerating(true);
-    }
-    
-    console.log("开始生成优化内容，输入:", feedbackText);
-    
-    // 构建上下文和提示词
-    let prompt = '';
-    
-    // 如果有之前的内容，添加"接上文"
-    if (previousDraftContent) {
-      prompt += `接上文：${previousDraftContent}\n\n`;
-    }
-    
-    // 添加当前内容
-    if (currentDraftContent) {
-      prompt += `当前剧情：${currentDraftContent}\n\n`;
-    }
-    
-    // 添加用户输入
-    prompt += `用户反馈：${feedbackText}\n\n`;
-    
-    // 添加指令
-    prompt += `根据以上上下文，请提供三种不同的剧情优化方向，每个方向具有创意性和连贯性，符合角色设定和故事逻辑。`;
-    
-    try {
-      console.log(`调用DeepSeek API... 尝试 ${retryCount + 1}/${MAX_RETRIES + 1}`);
-      
-      // 调用DeepSeek API
-      const DEEPSEEK_API_KEY = 'sk-657e30eb77ba48e0834a0821dcd8279f';
-      
-      // 设置请求超时
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15秒超时
-      
-      const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
-        },
-        body: JSON.stringify({
-          model: "deepseek-chat",
-          messages: [
-            {
-              role: "system",
-              content: "你是一个专业的剧本顾问和编剧，擅长分析故事结构、角色发展并提供富有创意的剧情建议。你的回答应当简洁、具体、有创意，并且分为三个不同的选项。每个选项都应该以数字编号（1. 2. 3.）开头。"
-            },
-            {
-              role: "user",
-              content: prompt
-            }
-          ],
-          temperature: 0.8,
-          max_tokens: 2000,
-          top_p: 0.95
-        }),
-        signal: controller.signal
-      });
-      
-      // 清除超时
-      clearTimeout(timeoutId);
-      
-      if (!response.ok) {
-        throw new Error(`API调用失败: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      console.log("DeepSeek API返回:", data);
-      
-      // 解析API返回的内容，提取三个建议
-      const content = data.choices[0].message.content;
-      
-      // 解析内容，提取三个建议
-      // 这里的正则表达式可能需要根据实际返回格式调整
-      const suggestions = content
-        .split(/\n\s*\d+[\.\)]\s+/)
-        .filter((item: string) => item.trim().length > 0)
-        .slice(0, 3)  // 确保只有3个结果
-        .map((suggestion: string) => suggestion.trim());
-      
-      // 将提取的建议转换为选项格式
-      const results = suggestions.map((suggestion: string, i: number) => ({
-        id: String(i + 1),
-        text: `${i + 1}. ${suggestion}`
-      }));
-      
-      // 如果没有得到足够的建议，添加一些默认选项
-      while (results.length < 3) {
-        results.push({
-          id: String(results.length + 1),
-          text: `${results.length + 1}. 抱歉，我无法为您提供更多的建议。`
-        });
-      }
-      
-      console.log("格式化后的建议:", results);
-      
-      // 添加到缓存
-      setResponseCache(prev => ({
-        ...prev,
-        [cacheKey]: results
-      }));
-      
-      // 更新结果
-      setOptimizationResults(results);
-      
-    } catch (error: any) {
-      console.error('生成优化内容失败:', error);
-      
-      // 重试机制
-      if (retryCount < MAX_RETRIES && 
-          (error.name === 'AbortError' || // 超时错误
-           error.name === 'TypeError' || // 网络错误
-           (error.message && error.message.includes('network')))) { // 网络相关错误
-        
-        console.log(`网络错误，将在1秒后重试 (${retryCount + 1}/${MAX_RETRIES})`);
-        // 显示重试状态
-        setOptimizationResults([
-          { id: "retry", text: `网络连接不稳定，正在重试 (${retryCount + 1}/${MAX_RETRIES})...` }
-        ]);
-        
-        // 等待一段时间后重试
-        setTimeout(() => {
-          generateOptimizedContent(false, retryCount + 1);
-        }, 1000 * (retryCount + 1)); // 逐次增加重试间隔
-        
-        return;
-      }
-      
-      // 已经重试MAX_RETRIES次或非网络错误，显示错误信息
-      const fallbackResults = [
-        { id: "1", text: "1. 由于网络连接问题，无法获取建议。请检查您的网络连接后重试。" },
-        { id: "2", text: "2. 您也可以刷新页面或稍后再试。" },
-        { id: "3", text: "3. 如果问题持续存在，可能是API服务暂时不可用。" }
-      ];
-      
-      setOptimizationResults(fallbackResults);
-    } finally {
-      setIsGenerating(false);
-    }
+  // 选择建议的包装函数
+  const selectSuggestionWrapper = (suggestion: string) => {
+    selectSuggestion(suggestion, setFeedbackText, inputRef);
   };
   
-  // 快速生成内容而不等待API调用
-  const generateQuickContent = useCallback(() => {
-    if (!feedbackText.trim()) {
-      return;
-    }
-    
-    // 首先检查缓存
-    const cacheKey = feedbackText.trim().toLowerCase();
-    if (responseCache[cacheKey]) {
-      setOptimizationResults(responseCache[cacheKey]);
-      return;
-    }
-    
-    // 保存到最近输入
-    updateRecentInputs(feedbackText);
-    
-    // 对话模式直接添加消息
-    if (workingMode === "conversation") {
-      // 添加用户消息
-      setMessages(prevMessages => [
-        ...prevMessages, 
-        { text: feedbackText, isUser: true }
-      ]);
-      
-      // 立即显示AI正在输入的状态
-      setIsGenerating(true);
-      
-      // 延迟一小段时间模拟加载
-      setTimeout(async () => {
-        try {
-          // 直接使用优化内容生成函数处理对话
-          await generateOptimizedContent(false, 0);
-          
-          // 如果成功生成了回复
-          if (optimizationResults.length > 0) {
-            // 选择第一个回复作为AI回答
-            const aiReply = optimizationResults[0].text.replace(/^\d+\.\s+/, '');
-            
-            // 添加AI回复消息
-            setMessages(prevMessages => [
-              ...prevMessages, 
-              { text: aiReply, isUser: false }
-            ]);
-            
-            // 清空生成结果和输入
-            setOptimizationResults([]);
-            setFeedbackText("");
-          }
-        } catch (error) {
-          console.error("生成AI回复失败:", error);
-          
-          // 添加错误消息
-          setMessages(prevMessages => [
-            ...prevMessages, 
-            { text: "抱歉，生成回复时发生错误，请稍后重试。", isUser: false }
-          ]);
-        } finally {
-          setIsGenerating(false);
-        }
-      }, 300);
-      
-      return;
-    }
-    
-    // 优化模式显示选项
-    // 立即显示快速响应
-    setOptimizationResults(quickResponses);
-    
-    // 同时开始后台API调用
-    setIsGenerating(true);
-    
-    // 延迟一小段时间模拟加载
-    setTimeout(() => {
-      // 启动实际的API调用，带重试机制
-      generateOptimizedContent(false, 0);
-    }, 300);
-  }, [feedbackText, responseCache, quickResponses, workingMode]);
+  // 接受自动完成的包装函数
+  const acceptAutoCompleteWrapper = () => {
+    acceptAutoComplete(setFeedbackText, inputRef);
+  };
   
-  // 选择并应用优化结果
-  const applyOptimizedText = (optimizedText: string) => {
-    console.log("选择了回复:", optimizedText);
-    
-    // 在这里，我们不去除编号，保持原始格式
-    // 触发自定义事件，通知其他组件替换文本
-    const event = new CustomEvent('optimizedTextReady', {
-      detail: { text: optimizedText }
-    });
-    window.dispatchEvent(event);
-    
-    // 清空当前选择和结果
-    setPreviousDraftContent("");
-    setCurrentDraftContent("");
+  // 使用预设Prompt的包装函数
+  const usePresetPromptWrapper = (prompt: string) => {
+    usePresetPrompt(prompt, setFeedbackText, inputRef);
+  };
+  
+  // 生成内容的包装函数
+  const generateQuickContentWrapper = () => {
+    generateQuickContent(
+      feedbackText,
+      previousDraftContent,
+      currentDraftContent,
+      quickResponses,
+      updateRecentInputs,
+      setAppMessages,
+      setFeedbackText
+    );
+  };
+  
+  // 选择并应用优化结果的包装函数
+  const applyOptimizedTextWrapper = (text: string) => {
+    applyOptimizedText(text);
+    clearDraftContent();
     setFeedbackText("");
-    setOptimizationResults([]);
-    
-    console.log("回复已选择");
   };
   
-  // 使用useCallback包装复制函数以避免不必要的渲染
-  const copyToClipboard = useCallback((text: string) => {
-    // 移除编号前缀
-    const cleanText = text.replace(/^\d+\.\s+/, '');
-    navigator.clipboard.writeText(cleanText)
-      .then(() => {
-        console.log('文本已复制到剪贴板');
-        // 这里可以添加一个临时提示，表示复制成功
-      })
-      .catch(err => {
-        console.error('复制失败:', err);
-      });
-  }, []);
-  
-  // 选择建议并填充到输入框
-  const selectSuggestion = (suggestion: string) => {
-    setFeedbackText(suggestion);
-    setShowSuggestions(false);
-    // 聚焦输入框，以便用户可以立即按Enter发送
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
-  };
-  
+  // 自定义滚动条样式
   const customScrollbarStyle = `
     .custom-scrollbar::-webkit-scrollbar {
       width: 6px;
@@ -736,20 +317,96 @@ function MiddleSection() {
             </div>
           </div>
           
-          {/* 对话消息区域 - 使用MessageSection组件替换 */}
-          <MessageSection
-            messages={messages}
-            editingMessageIndex={editingMessageIndex}
-            editingMessageText={editingMessageText}
-            setEditingMessageText={setEditingMessageText}
-            startEditingMessage={startEditingMessage}
-            saveEditedMessage={saveEditedMessage}
-            cancelEditingMessage={cancelEditingMessage}
-            regenerateAIMessage={regenerateAIMessage}
-            deleteMessage={deleteMessage}
-            clearHistory={clearHistory}
-            regeneratingMessageIndex={regeneratingMessageIndex}
-          />
+          {/* 对话消息区域 */}
+          <div className="space-y-4 mb-6">
+            {messages.length > 0 ? (
+              <>
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="text-sm font-medium text-gray-500">对话历史</h3>
+                  <button 
+                    className="text-xs text-gray-500 hover:text-red-500 flex items-center gap-1"
+                    onClick={clearHistory}
+                  >
+                    <Icon icon="mdi:delete-outline" className="w-4 h-4" />
+                    <span>清空历史</span>
+                  </button>
+                </div>
+                {messages.map((message, index) => (
+                  <div key={index} className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}>
+                    {editingMessageIndex === index ? (
+                      <div className="w-full max-w-[80%] bg-white border border-gray-300 rounded-lg overflow-hidden">
+                        <textarea
+                          className="w-full p-3 focus:outline-none resize-none"
+                          value={editingMessageText}
+                          onChange={(e) => setEditingMessageText(e.target.value)}
+                          rows={3}
+                          autoFocus
+                        />
+                        <div className="flex justify-end p-2 bg-gray-50 border-t border-gray-200">
+                          <button 
+                            className="px-3 py-1 text-xs text-gray-600 hover:text-gray-800 mr-2"
+                            onClick={cancelEditingMessage}
+                          >
+                            取消
+                          </button>
+                          <button 
+                            className="px-3 py-1 text-xs bg-black text-white rounded-md"
+                            onClick={saveEditedMessage}
+                          >
+                            保存
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className={`${message.isUser ? 'bg-black text-white' : 'bg-white border border-gray-200'} rounded-lg px-4 py-3 relative max-w-[80%] group`}>
+                        <div className={message.isUser ? 'text-right' : ''}>
+                          {message.text}
+                        </div>
+                        {message.isUser && (
+                          <div className="absolute w-3 h-3 bg-black transform rotate-45 right-[-6px] top-1/2 -translate-y-1/2"></div>
+                        )}
+                        
+                        {/* 消息操作按钮 */}
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                          <button 
+                            className="p-1 bg-gray-100 rounded-md hover:bg-gray-200 text-gray-600"
+                            onClick={() => startEditingMessage(index)}
+                            title="编辑消息"
+                          >
+                            <Icon icon="mdi:pencil" className="w-3 h-3" />
+                          </button>
+                          
+                          {!message.isUser && (
+                            <button 
+                              className={`p-1 bg-gray-100 rounded-md hover:bg-gray-200 text-gray-600 ${regeneratingMessageIndex === index ? 'animate-spin' : ''}`}
+                              onClick={() => regenerateAIMessageWrapper(index)}
+                              disabled={regeneratingMessageIndex !== null}
+                              title="重新生成"
+                            >
+                              <Icon icon="mdi:refresh" className="w-3 h-3" />
+                            </button>
+                          )}
+                          
+                          <button 
+                            className="p-1 bg-gray-100 rounded-md hover:bg-gray-200 text-gray-600"
+                            onClick={() => deleteMessage(index)}
+                            title="删除消息"
+                          >
+                            <Icon icon="mdi:delete" className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </>
+            ) : (
+              <div className="text-center py-10 text-gray-500">
+                <p>暂无对话历史</p>
+                <p className="text-sm mt-1">输入内容开始对话</p>
+              </div>
+            )}
+          </div>
           
           {/* 生成内容区域 */}
           <ResultsSection
@@ -757,7 +414,7 @@ function MiddleSection() {
             selectedModel={selectedModel}
             optimizationResults={optimizationResults}
             resultsContainerRef={resultsContainerRef}
-            applyOptimizedText={applyOptimizedText}
+            applyOptimizedText={applyOptimizedTextWrapper}
             copyToClipboard={copyToClipboard}
           />
         </div>
@@ -769,27 +426,25 @@ function MiddleSection() {
         feedbackText={feedbackText}
         setFeedbackText={setFeedbackText}
         isGenerating={isGenerating}
-        workingMode={workingMode}
-        changeWorkingMode={changeWorkingMode}
         showPresetPrompts={showPresetPrompts}
         setShowPresetPrompts={setShowPresetPrompts}
         presetPrompts={presetPrompts}
-        usePresetPrompt={usePresetPrompt}
+        usePresetPrompt={usePresetPromptWrapper}
         showSuggestions={showSuggestions}
         setShowSuggestions={setShowSuggestions}
         suggestionCategory={suggestionCategory}
         inputSuggestions={inputSuggestions}
         getQuickPhrases={getQuickPhrases}
-        selectSuggestion={selectSuggestion}
+        selectSuggestion={selectSuggestionWrapper}
         showAutoComplete={showAutoComplete}
         setShowAutoComplete={setShowAutoComplete}
         autoCompleteText={autoCompleteText}
-        acceptAutoComplete={acceptAutoComplete}
+        acceptAutoComplete={acceptAutoCompleteWrapper}
         recentInputs={recentInputs}
-        generateQuickContent={generateQuickContent}
+        generateQuickContent={generateQuickContentWrapper}
       />
     </div>
   );
 }
 
-export default MiddleSection; 
+export default MiddleSection;

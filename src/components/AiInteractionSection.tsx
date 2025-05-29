@@ -68,7 +68,7 @@ function AiInteractionSection({
   
   // AI模型列表
   const models = [
-    'deepseekr1',
+    'deepseek-r1',
   ];
   
   // 预设的 Prompt 模板
@@ -107,10 +107,16 @@ function AiInteractionSection({
   
   // 初始化系统消息
   useEffect(() => {
-    // 从本地存储加载 API Key
-    const savedApiKey = localStorage.getItem('deepSeekApiKey');
-    if (savedApiKey) {
-      setDeepSeekApiKey(savedApiKey);
+    // 从环境变量获取 API Key
+    const envApiKey = import.meta.env.VITE_DEEPSEEK_API_KEY;
+    if (envApiKey) {
+      setDeepSeekApiKey(envApiKey);
+    } else {
+      // 如果环境变量中没有，则从本地存储加载
+      const savedApiKey = localStorage.getItem('deepSeekApiKey');
+      if (savedApiKey) {
+        setDeepSeekApiKey(savedApiKey);
+      }
     }
     
     // 初始化消息列表
@@ -162,7 +168,7 @@ function AiInteractionSection({
           'Authorization': `Bearer ${deepSeekApiKey}`
         },
         body: JSON.stringify({
-          model: "deepseek-chat",
+          model: "deepseek-r1",
           messages: messagesPayload,
           temperature: 0.7,
           max_tokens: 2000
@@ -613,6 +619,25 @@ function AiInteractionSection({
       
       {/* 底部输入区域 */}
       <div className="px-6 py-4 border-t border-gray-200">
+        {/* API Key 状态显示 */}
+        {deepSeekApiKey ? (
+          <div className="flex justify-end mb-2">
+            <span className="text-xs text-green-600 flex items-center">
+              <Icon icon="mdi:check-circle" className="w-3 h-3 mr-1" />
+              DeepSeek R1 已连接
+            </span>
+          </div>
+        ) : (
+          <div className="flex justify-end mb-2">
+            <button 
+              className="text-xs text-red-500 flex items-center"
+              onClick={() => setShowApiKeyInput(true)}
+            >
+              <Icon icon="mdi:alert-circle" className="w-3 h-3 mr-1" />
+              未连接 DeepSeek R1，点击设置 API Key
+            </button>
+          </div>
+        )}
         {/* 预设 Prompt 按钮 */}
         <div className="flex justify-end mb-2">
           <button

@@ -6,8 +6,6 @@ type InputSectionProps = {
   feedbackText: string
   setFeedbackText: (text: string) => void
   isGenerating: boolean
-  workingMode: "conversation" | "optimization"
-  changeWorkingMode: (mode: "conversation" | "optimization") => void
   showPresetPrompts: boolean
   setShowPresetPrompts: (show: boolean) => void
   presetPrompts: string[]
@@ -31,8 +29,6 @@ function InputSection({
   feedbackText,
   setFeedbackText,
   isGenerating,
-  workingMode,
-  changeWorkingMode,
   showPresetPrompts,
   setShowPresetPrompts,
   presetPrompts,
@@ -52,22 +48,7 @@ function InputSection({
 }: InputSectionProps) {
   return (
     <div className="px-4 py-3 border-t border-gray-200 bg-white">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <button
-            className={`px-3 py-1 text-xs rounded-full ${workingMode === "conversation" ? 'bg-black text-white' : 'bg-gray-100 text-gray-700'}`}
-            onClick={() => changeWorkingMode("conversation")}
-          >
-            对话模式
-          </button>
-          <button
-            className={`px-3 py-1 text-xs rounded-full ${workingMode === "optimization" ? 'bg-black text-white' : 'bg-gray-100 text-gray-700'}`}
-            onClick={() => changeWorkingMode("optimization")}
-          >
-            优化模式
-          </button>
-        </div>
-        
+      <div className="flex items-center justify-end mb-2">
         <button
           className="flex items-center gap-1 text-xs text-gray-600 hover:text-gray-900"
           onClick={() => setShowPresetPrompts(!showPresetPrompts)}
@@ -83,9 +64,7 @@ function InputSection({
               type="text"
           placeholder={isGenerating 
             ? "正在生成内容..." 
-            : workingMode === "conversation" 
-              ? "输入内容开始对话..." 
-              : "剧情不好？告诉我如何优化，如"
+            : "请输入内容..."
           }
           className="w-full border border-gray-300 rounded-lg p-3 pr-10 text-gray-700 focus:border-black focus:ring-0 transition-colors"
               value={feedbackText}

@@ -15,6 +15,13 @@ const KnowledgeUploadPage: React.FC = () => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [showCustomDialog, setShowCustomDialog] = useState(false);
+  const [analysisModel, setAnalysisModel] = useState('deepseek-R1');
+  const [relatedKnowledge, setRelatedKnowledge] = useState('大纲');
+  const [promptText, setPromptText] = useState('#你是一位深刺的小说创作专家，描述构建引人入胆、逸群畅达且层次分明的故事结构。请根据以下要求，为我生成一份完整的小说大纲，并特别设计出小说篇章的黄金三分详细大纲。\n【任务要求】\n立意整体小说大纲：\n - 采用"第一章 - 第一节"结构，简述故事的整体脉络和主要情节发展。\n - 描述故事背景、主要事件及结局（可为开放式回归结局）。\n\n - 主要目标：让主角在经历折后还远自小小澄湖，通过情感或行动上的爆发展示其坚韧力量，同时保留开放性问题。\n - 关键事件/高潮：设定一个决定性时刻，主角作出重大反击或遇见重大阻力。\n - 情感设置：在');
+  const [chunkMaxLength, setChunkMaxLength] = useState('1024');
+  const [chunkMinLength, setChunkMinLength] = useState('0');
+  const [addTitleToChunk, setAddTitleToChunk] = useState(true);
   
   // 获取知识库名称
   useEffect(() => {
@@ -109,8 +116,142 @@ const KnowledgeUploadPage: React.FC = () => {
     setSelectedFiles(prevFiles => prevFiles.filter((_, i) => i !== index));
   };
 
+  // 处理自定义对话框关闭
+  const handleCloseCustomDialog = () => {
+    setShowCustomDialog(false);
+  };
+
+  // 处理自定义对话框保存
+  const handleSaveCustomSettings = () => {
+    setShowCustomDialog(false);
+    // 这里可以添加保存设置的逻辑
+  };
+
   return (
     <div className="flex flex-col h-full bg-gray-50">
+      {/* 自定义对话框 */}
+      {showCustomDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+            <div className="flex justify-between items-center p-4 border-b border-gray-200">
+              <h3 className="text-lg font-medium text-gray-700">自定义</h3>
+              <button 
+                className="text-gray-400 hover:text-gray-600"
+                onClick={handleCloseCustomDialog}
+              >
+                <Icon icon="ri:close-line" className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+              <div className="mb-6">
+                <div className="grid grid-cols-2 gap-6 mb-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">分析模型</label>
+                    <div className="relative">
+                      <select
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 appearance-none focus:outline-none focus:ring-1 focus:ring-indigo-500 text-sm"
+                        value={analysisModel}
+                        onChange={(e) => setAnalysisModel(e.target.value)}
+                      >
+                        <option value="deepseek-R1">deepseek-R1</option>
+                        <option value="gpt-4">gpt-4</option>
+                        <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+                      </select>
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                        <Icon icon="ri:arrow-down-s-line" className="w-5 h-5 text-gray-400" />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">关联知识库</label>
+                    <div className="relative">
+                      <select
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 appearance-none focus:outline-none focus:ring-1 focus:ring-indigo-500 text-sm"
+                        value={relatedKnowledge}
+                        onChange={(e) => setRelatedKnowledge(e.target.value)}
+                      >
+                        <option value="大纲">大纲</option>
+                        <option value="角色设定">角色设定</option>
+                        <option value="世界观">世界观</option>
+                      </select>
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                        <Icon icon="ri:arrow-down-s-line" className="w-5 h-5 text-gray-400" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">拆解提示词</label>
+                  <textarea
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-sm h-32"
+                    value={promptText}
+                    onChange={(e) => setPromptText(e.target.value)}
+                  />
+                </div>
+                
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">分段最大长度 (当前知识库向量模型最大接收长度为8192tokens)</label>
+                  <div className="flex items-center">
+                    <input
+                      type="text"
+                      className="w-32 border border-gray-300 rounded-l-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-sm"
+                      value={chunkMaxLength}
+                      onChange={(e) => setChunkMaxLength(e.target.value)}
+                    />
+                    <div className="bg-gray-100 text-gray-500 px-3 py-2 rounded-r-md text-sm">tokens</div>
+                  </div>
+                </div>
+                
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">分段最小长度 ("分段最小长度"最大为"分段最大长度"的1/10)</label>
+                  <div className="flex items-center">
+                    <input
+                      type="text"
+                      className="w-32 border border-gray-300 rounded-l-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-sm"
+                      value={chunkMinLength}
+                      onChange={(e) => setChunkMinLength(e.target.value)}
+                    />
+                    <div className="bg-gray-100 text-gray-500 px-3 py-2 rounded-r-md text-sm">tokens</div>
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">文章标题</label>
+                  <div className="flex items-center">
+                    <label className="flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                        checked={addTitleToChunk}
+                        onChange={(e) => setAddTitleToChunk(e.target.checked)}
+                      />
+                      <span className="ml-2 text-sm text-gray-700">分段内容中添加文字标题</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex justify-end p-4 border-t border-gray-200 bg-gray-50">
+              <button
+                className="px-4 py-2 border border-gray-300 rounded-md text-sm text-gray-700 mr-2 hover:bg-gray-50"
+                onClick={handleCloseCustomDialog}
+              >
+                取消
+              </button>
+              <button
+                className="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm hover:bg-indigo-700"
+                onClick={handleSaveCustomSettings}
+              >
+                确定
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* 顶部导航 */}
       <div className="flex items-center p-4 border-b border-gray-200 bg-white">
         <button 
@@ -136,9 +277,9 @@ const KnowledgeUploadPage: React.FC = () => {
             <div className="flex items-center justify-center">
               <div className="flex items-center">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                  currentStep >= 1 ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600'
+                  currentStep > 1 ? 'bg-indigo-600 text-white' : currentStep === 1 ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600'
                 }`}>
-                  1
+                  {currentStep > 1 ? <Icon icon="ri:check-line" className="w-5 h-5" /> : '1'}
                 </div>
                 <div className="text-sm font-medium ml-2">上传</div>
               </div>
@@ -152,9 +293,9 @@ const KnowledgeUploadPage: React.FC = () => {
               
               <div className="flex items-center">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                  currentStep >= 2 ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600'
+                  currentStep > 2 ? 'bg-indigo-600 text-white' : currentStep === 2 ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600'
                 }`}>
-                  2
+                  {currentStep > 2 ? <Icon icon="ri:check-line" className="w-5 h-5" /> : '2'}
                 </div>
                 <div className="text-sm font-medium ml-2">分段&清洗</div>
               </div>
@@ -168,7 +309,7 @@ const KnowledgeUploadPage: React.FC = () => {
               
               <div className="flex items-center">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                  currentStep >= 3 ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600'
+                  currentStep === 3 ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600'
                 }`}>
                   3
                 </div>
@@ -396,16 +537,117 @@ const KnowledgeUploadPage: React.FC = () => {
             )}
             
             {currentStep === 2 && (
-              <div className="text-center py-12">
-                <h3 className="text-lg font-medium text-gray-700 mb-2">分段与清洗步骤</h3>
-                <p className="text-gray-500">在这里可以设置文档的分段和清洗规则</p>
+              <div className="py-6">
+                <h3 className="text-lg font-medium text-gray-700 mb-4">分段与清洗步骤</h3>
+                
+                <div className="mb-6">
+                  <div className="border border-gray-200 rounded-lg">
+                    <div className="p-4 border-b border-gray-200">
+                      <label className="flex items-center cursor-pointer" onClick={() => setShowCustomDialog(true)}>
+                        <input 
+                          type="radio" 
+                          name="processingType" 
+                          className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300"
+                          checked={true}
+                          readOnly
+                        />
+                        <span className="ml-2 text-base font-medium text-gray-700">自定义</span>
+                      </label>
+                      <p className="mt-1 ml-6 text-sm text-gray-500">
+                        优先按行数分段，超出设置的最大分段长度后，再按大分段划分并按段落长度处理
+                      </p>
+                    </div>
+                    
+                    <div className="p-4">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="text-sm font-medium text-gray-700">共 {selectedFiles.length} 个文档</div>
+                        <button type="button" className="text-sm text-indigo-600 hover:text-indigo-800">分段预览</button>
+                      </div>
+                      
+
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
             
             {currentStep === 3 && (
-              <div className="text-center py-12">
-                <h3 className="text-lg font-medium text-gray-700 mb-2">数据处理步骤</h3>
-                <p className="text-gray-500">在这里可以设置数据处理的相关参数</p>
+              <div className="py-6">
+                <h3 className="text-lg font-medium text-gray-700 mb-4">数据处理步骤</h3>
+                
+                <div className="mb-6">
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">向量模型</label>
+                      <select 
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-sm"
+                      >
+                        <option value="text-embedding-ada-002">text-embedding-ada-002</option>
+                        <option value="text2vec-base">text2vec-base</option>
+                        <option value="text2vec-large">text2vec-large</option>
+                      </select>
+                    </div>
+                    
+                    <div className="mb-4">
+                      <label className="flex items-center">
+                        <input 
+                          type="checkbox" 
+                          className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                          defaultChecked={true}
+                        />
+                        <span className="ml-2 text-sm text-gray-700">文本去重</span>
+                      </label>
+                    </div>
+                    
+                    <div className="mb-4">
+                      <label className="flex items-center">
+                        <input 
+                          type="checkbox" 
+                          className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                          defaultChecked={true}
+                        />
+                        <span className="ml-2 text-sm text-gray-700">文本清洗</span>
+                      </label>
+                      <p className="mt-1 ml-6 text-xs text-gray-500">
+                        删除多余空格、换行符、特殊符号等
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <label className="flex items-center">
+                        <input 
+                          type="checkbox" 
+                          className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                          defaultChecked={false}
+                        />
+                        <span className="ml-2 text-sm text-gray-700">智能分段</span>
+                      </label>
+                      <p className="mt-1 ml-6 text-xs text-gray-500">
+                        使用大模型对文本进行智能分段，根据语义划分段落
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-base font-medium text-gray-700">处理摘要</h4>
+                  </div>
+                  
+                  <div className="bg-gray-50 rounded-md p-4 mb-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-sm font-medium text-gray-700">文件总数：{selectedFiles.length}</div>
+                      <div className="text-sm text-gray-500">大小：{selectedFiles.reduce((total, file) => total + file.size, 0) / 1024 > 1024 ? 
+                        (selectedFiles.reduce((total, file) => total + file.size, 0) / 1024 / 1024).toFixed(2) + ' MB' : 
+                        (selectedFiles.reduce((total, file) => total + file.size, 0) / 1024).toFixed(2) + ' KB'}</div>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm text-gray-500">预计分段数：{Math.ceil(selectedFiles.reduce((total, file) => total + file.size, 0) / 2000)}</div>
+                      <div className="text-sm text-gray-500">预计向量数：{Math.ceil(selectedFiles.reduce((total, file) => total + file.size, 0) / 2000)}</div>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </div>

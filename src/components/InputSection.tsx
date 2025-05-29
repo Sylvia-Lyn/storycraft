@@ -1,15 +1,11 @@
 import { Icon } from '@iconify/react'
-import PresetPrompts from './PresetPrompts'
 
 type InputSectionProps = {
   inputRef: React.RefObject<HTMLInputElement | null>
   feedbackText: string
   setFeedbackText: (text: string) => void
   isGenerating: boolean
-  showPresetPrompts: boolean
-  setShowPresetPrompts: (show: boolean) => void
-  presetPrompts: string[]
-  usePresetPrompt: (prompt: string) => void
+
   showSuggestions: boolean
   setShowSuggestions: (show: boolean) => void
   suggestionCategory: string
@@ -29,10 +25,7 @@ function InputSection({
   feedbackText,
   setFeedbackText,
   isGenerating,
-  showPresetPrompts,
-  setShowPresetPrompts,
-  presetPrompts,
-  usePresetPrompt,
+
   showSuggestions,
   setShowSuggestions,
   suggestionCategory,
@@ -48,15 +41,7 @@ function InputSection({
 }: InputSectionProps) {
   return (
     <div className="px-4 py-3 border-t border-gray-200 bg-white">
-      <div className="flex items-center justify-end mb-2">
-        <button
-          className="flex items-center gap-1 text-xs text-gray-600 hover:text-gray-900"
-          onClick={() => setShowPresetPrompts(!showPresetPrompts)}
-        >
-          <Icon icon="mdi:lightning-bolt" className="w-4 h-4" />
-          <span>预设Prompt</span>
-        </button>
-      </div>
+
       
       <div className="relative">
             <input
@@ -64,7 +49,7 @@ function InputSection({
               type="text"
           placeholder={isGenerating 
             ? "正在生成内容..." 
-            : "请输入内容..."
+            : "输入自然语言描述，生成剧情创意..."
           }
           className="w-full border border-gray-300 rounded-lg p-3 pr-10 text-gray-700 focus:border-black focus:ring-0 transition-colors"
               value={feedbackText}
@@ -75,7 +60,7 @@ function InputSection({
             } else if (e.key === 'Escape') {
               setShowSuggestions(false);
               setShowAutoComplete(false);
-              setShowPresetPrompts(false);
+
             } else if (e.key === 'ArrowDown' && showSuggestions) {
               // 导航到建议列表
               const suggestionElements = document.querySelectorAll('.suggestion-item');
@@ -117,33 +102,31 @@ function InputSection({
           }}
           disabled={isGenerating} // 当正在生成内容时禁用输入框
         />
-        <button
-          className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${feedbackText.trim() && !isGenerating ? 'text-black' : 'text-gray-400'}`}
-          onClick={() => {
-            if (feedbackText.trim() && !isGenerating) {
-              generateQuickContent();
-            }
-          }}
-          disabled={isGenerating} // 当正在生成内容时禁用按钮
-        >
-          <Icon icon={isGenerating ? "mdi:loading" : "mdi:send"} className={isGenerating ? "animate-spin" : ""} />
-        </button>
+        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
+          {feedbackText.trim() && (
+            <button
+              className="text-gray-400 hover:text-gray-600"
+              onClick={() => setFeedbackText('')}
+              title="清除输入"
+            >
+              <Icon icon="mdi:close" className="w-4 h-4" />
+            </button>
+          )}
+          <button
+            className={`${feedbackText.trim() && !isGenerating ? 'text-black hover:text-gray-800' : 'text-gray-400'}`}
+            onClick={() => {
+              if (feedbackText.trim() && !isGenerating) {
+                generateQuickContent();
+              }
+            }}
+            disabled={isGenerating || !feedbackText.trim()} 
+            title="生成内容"
+          >
+            <Icon icon={isGenerating ? "mdi:loading" : "mdi:send"} className={isGenerating ? "animate-spin" : ""} />
+          </button>
+        </div>
         
-        {/* 预设Prompt下拉菜单 */}
-        {showPresetPrompts && (
-          <div className="absolute left-0 right-0 bottom-full mb-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 overflow-hidden max-h-60 overflow-y-auto">
-            <div className="px-3 py-2 text-xs text-gray-500 border-b border-gray-100 flex justify-between items-center">
-              <span>预设Prompt</span>
-              <button 
-                className="text-gray-400 hover:text-gray-600"
-                onClick={() => setShowPresetPrompts(false)}
-              >
-                <Icon icon="mdi:close" className="w-4 h-4" />
-              </button>
-            </div>
-            <PresetPrompts prompts={presetPrompts} onUsePrompt={usePresetPrompt} />
-          </div>
-        )}
+
         
         {/* 输入建议下拉框 */}
         {showSuggestions && (

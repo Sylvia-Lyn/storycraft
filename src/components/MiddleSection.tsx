@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from 'react'
 import InputSection from './InputSection'
 import ResultsSection from './ResultsSection'
 // MessageSection 组件已集成到 MiddleSection 中
-import { defaultPrompts } from './PresetPrompts'
+// 移除了 defaultPrompts 导入
 
 // 导入自定义 hooks
 import { useOptimizationResults } from '../hooks/useOptimizationResults'
@@ -13,7 +13,7 @@ import { useMessageManagement } from '../hooks/useMessageManagement'
 import { useInputSuggestions } from '../hooks/useInputSuggestions'
 import { useAutoComplete } from '../hooks/useAutoComplete'
 import { useDraftContent } from '../hooks/useDraftContent'
-import { usePresetPrompts } from '../hooks/usePresetPrompts'
+// 移除了 usePresetPrompts 导入
 
 // 预定义的一些常见建议模板
 const suggestionTemplates = {
@@ -133,13 +133,6 @@ function MiddleSection() {
     checkAutoComplete
   } = useAutoComplete();
   
-  const {
-    showPresetPrompts,
-    setShowPresetPrompts,
-    presetPrompts,
-    usePresetPrompt
-  } = usePresetPrompts(defaultPrompts);
-  
   // 监听输入变化，生成建议
   useEffect(() => {
     analyzeFeedbackForSuggestions(feedbackText);
@@ -210,10 +203,7 @@ function MiddleSection() {
     acceptAutoComplete(setFeedbackText, inputRef);
   };
   
-  // 使用预设Prompt的包装函数
-  const usePresetPromptWrapper = (prompt: string) => {
-    usePresetPrompt(prompt, setFeedbackText, inputRef);
-  };
+  // 移除了使用预设Prompt的包装函数
   
   // 生成内容的包装函数
   const generateQuickContentWrapper = () => {
@@ -426,10 +416,7 @@ function MiddleSection() {
         feedbackText={feedbackText}
         setFeedbackText={setFeedbackText}
         isGenerating={isGenerating}
-        showPresetPrompts={showPresetPrompts}
-        setShowPresetPrompts={setShowPresetPrompts}
-        presetPrompts={presetPrompts}
-        usePresetPrompt={usePresetPromptWrapper}
+
         showSuggestions={showSuggestions}
         setShowSuggestions={setShowSuggestions}
         suggestionCategory={suggestionCategory}

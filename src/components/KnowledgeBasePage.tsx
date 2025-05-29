@@ -1,0 +1,282 @@
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Icon } from '@iconify/react';
+
+interface KnowledgeFile {
+  id: string;
+  name: string;
+  type: string;
+  size: number;
+  uploadTime: string;
+  updateTime: string;
+}
+
+const KnowledgeBasePage: React.FC = () => {
+  const { knowledgeId } = useParams<{ knowledgeId: string }>();
+  const navigate = useNavigate();
+  const [knowledgeBase, setKnowledgeBase] = useState<{ id: string; name: string } | null>(null);
+  const [files, setFiles] = useState<KnowledgeFile[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // 模拟加载知识库数据
+  useEffect(() => {
+    // 在实际应用中，这里应该从API获取数据
+    const loadData = async () => {
+      setIsLoading(true);
+      try {
+        // 模拟API调用延迟
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // 模拟知识库数据
+        if (knowledgeId === 'knowledge-1') {
+          setKnowledgeBase({ id: 'knowledge-1', name: '测试' });
+        } else if (knowledgeId === 'knowledge-2') {
+          setKnowledgeBase({ id: 'knowledge-2', name: '对话记录' });
+        } else if (knowledgeId === 'knowledge-3') {
+          setKnowledgeBase({ id: 'knowledge-3', name: '角色剧本' });
+        }
+        
+        // 模拟文件数据
+        setFiles([]);
+      } catch (error) {
+        console.error('加载知识库数据失败:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadData();
+  }, [knowledgeId]);
+
+  // 处理搜索
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    // 实际应用中这里应该调用搜索API
+    console.log('搜索:', searchQuery);
+  };
+
+  // 处理文件上传
+  const handleFileUpload = () => {
+    // 实际应用中这里应该打开文件选择对话框并处理上传
+    console.log('上传文件');
+  };
+
+  // 处理返回
+  const handleGoBack = () => {
+    navigate(-1);
+  };
+
+  // 计算分页数据
+  const totalPages = Math.ceil(files.length / itemsPerPage);
+  const paginatedFiles = files.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  return (
+    <div className="flex flex-col h-full bg-gray-50">
+      {/* 顶部导航 */}
+      <div className="flex items-center p-4 border-b border-gray-200 bg-white">
+        <button 
+          className="text-gray-600 hover:text-gray-900 mr-4"
+          onClick={handleGoBack}
+        >
+          <Icon icon="mdi:arrow-left" className="w-5 h-5" />
+        </button>
+        <div className="flex items-center">
+          <span className="text-gray-500 mr-2">知识库</span>
+          <Icon icon="mdi:chevron-right" className="w-4 h-4 text-gray-400" />
+          <span className="font-medium ml-2">{knowledgeBase?.name || '加载中...'}</span>
+        </div>
+      </div>
+
+      {/* 主内容区域 */}
+      <div className="flex-grow p-4 overflow-auto">
+        {isLoading ? (
+          <div className="flex justify-center items-center h-full">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+          </div>
+        ) : (
+          <div className="bg-white rounded-lg shadow">
+            {/* 工具栏 */}
+            <div className="flex justify-between items-center p-4 border-b border-gray-200">
+              <form onSubmit={handleSearch} className="relative flex-grow max-w-md">
+                <input
+                  type="text"
+                  placeholder="请输入文件名"
+                  className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                <button type="submit" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                  <Icon icon="mdi:magnify" className="w-5 h-5" />
+                </button>
+              </form>
+              
+              <div className="flex items-center space-x-2">
+                <button 
+                  className="flex items-center px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-md text-gray-700"
+                  onClick={() => {}}
+                >
+                  <Icon icon="mdi:refresh" className="w-5 h-5 mr-1" />
+                  <span>刷新</span>
+                </button>
+                <button 
+                  className="flex items-center px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded-md text-white"
+                  onClick={handleFileUpload}
+                >
+                  <Icon icon="mdi:plus" className="w-5 h-5 mr-1" />
+                  <span>添加</span>
+                </button>
+              </div>
+            </div>
+            
+            {/* 文件表格 */}
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <div className="flex items-center">
+                        <input type="checkbox" className="mr-2" />
+                        文件名
+                      </div>
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <div className="flex items-center">
+                        文件类型
+                        <Icon icon="mdi:unfold-more-horizontal" className="w-4 h-4 ml-1" />
+                      </div>
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <div className="flex items-center">
+                        数据标签
+                      </div>
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <div className="flex items-center">
+                        数据大小
+                        <Icon icon="mdi:unfold-more-horizontal" className="w-4 h-4 ml-1" />
+                      </div>
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <div className="flex items-center">
+                        访问次数
+                        <Icon icon="mdi:unfold-more-horizontal" className="w-4 h-4 ml-1" />
+                      </div>
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <div className="flex items-center">
+                        上传时间
+                        <Icon icon="mdi:unfold-more-horizontal" className="w-4 h-4 ml-1" />
+                      </div>
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <div className="flex items-center">
+                        更新时间
+                        <Icon icon="mdi:unfold-more-horizontal" className="w-4 h-4 ml-1" />
+                      </div>
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      操作
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {paginatedFiles.length > 0 ? (
+                    paginatedFiles.map((file) => (
+                      <tr key={file.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <input type="checkbox" className="mr-2" />
+                            <span className="text-sm text-gray-900">{file.name}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{file.type}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">-</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{file.size} KB</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">0</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{file.uploadTime}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{file.updateTime}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <div className="flex items-center space-x-2">
+                            <button className="text-blue-600 hover:text-blue-800">
+                              <Icon icon="mdi:eye" className="w-5 h-5" />
+                            </button>
+                            <button className="text-green-600 hover:text-green-800">
+                              <Icon icon="mdi:download" className="w-5 h-5" />
+                            </button>
+                            <button className="text-red-600 hover:text-red-800">
+                              <Icon icon="mdi:delete" className="w-5 h-5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={8} className="px-6 py-16 text-center text-gray-500">
+                        没有数据
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+            
+            {/* 分页控制 */}
+            <div className="flex items-center justify-between px-6 py-4 bg-white border-t border-gray-200">
+              <div className="text-sm text-gray-700">
+                共 <span className="font-medium">{files.length}</span> 条数据
+              </div>
+              
+              <div className="flex items-center">
+                <button 
+                  className="px-3 py-1 rounded-md mr-2 text-gray-600 hover:bg-gray-100"
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                >
+                  上一页
+                </button>
+                
+                <div className="flex items-center bg-gray-100 rounded-md overflow-hidden">
+                  <button 
+                    className={`w-8 h-8 flex items-center justify-center ${currentPage === 1 ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-200'}`}
+                  >
+                    1
+                  </button>
+                </div>
+                
+                <button 
+                  className="px-3 py-1 rounded-md ml-2 text-gray-600 hover:bg-gray-100"
+                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage === totalPages || totalPages === 0}
+                >
+                  下一页
+                </button>
+                
+                <div className="ml-4 flex items-center">
+                  <span className="text-sm text-gray-700 mr-2">每页显示:</span>
+                  <select 
+                    className="border border-gray-300 rounded-md px-2 py-1 text-sm"
+                    value={itemsPerPage}
+                    onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                  >
+                    <option value={10}>10</option>
+                    <option value={20}>20</option>
+                    <option value={50}>50</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default KnowledgeBasePage;

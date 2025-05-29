@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Icon } from '@iconify/react'
 import { toast } from 'react-hot-toast'
+import { useNavigate } from 'react-router-dom'
 
 // 创建知识库模态窗口组件
 interface CreateKnowledgeModalProps {
@@ -106,6 +107,7 @@ interface KnowledgeItem {
 }
 
 const Sidebar = () => {
+  const navigate = useNavigate();
   // 尝试获取navigate，如果不在Router上下文中则使用一个空函数
   // let navigate;
   // try {
@@ -280,6 +282,11 @@ const Sidebar = () => {
   const handleKnowledgeItemClick = () => {
     setShowKnowledgeItems(!showKnowledgeItems)
     setActiveMenuId(null)
+  }
+  
+  // 处理知识库项目点击，导航到知识库详情页面
+  const handleKnowledgeItemDetailClick = (knowledgeId: string) => {
+    navigate(`/knowledge/${knowledgeId}`)
   }
   
   // 处理知识库项菜单点击
@@ -594,8 +601,8 @@ const Sidebar = () => {
             {knowledgeItems.map(item => (
               <div 
                 key={item.id} 
-                className="flex items-center p-2 hover:bg-gray-50 rounded-md cursor-pointer relative"
-                onClick={() => showToast()}
+                className="flex items-center justify-between px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                onClick={() => handleKnowledgeItemDetailClick(item.id)}
               >
                 <div className="bg-blue-100 rounded-lg p-2 mr-3">
                   <Icon icon="ri:file-text-line" className="w-5 h-5 text-blue-500" />

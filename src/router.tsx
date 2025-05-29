@@ -8,6 +8,7 @@ import RelationsPage from './components/RelationsPage'
 import ChaptersPage from './components/ChaptersPage'
 import HomePage from './components/HomePage'
 import KnowledgeBasePage from './components/KnowledgeBasePage'
+import KnowledgeUploadPage from './components/KnowledgeUploadPage'
 import App from './App'
 
 // 临时页面组件，显示"正在加班加点更新中"
@@ -60,6 +61,10 @@ const router = createHashRouter([
       {
         path: 'knowledge/:knowledgeId',
         element: <KnowledgeBasePage />
+      },
+      {
+        path: 'knowledge/:knowledgeId/upload',
+        element: <KnowledgeUploadPage />
       }
     ]
   }

@@ -60,8 +60,8 @@ const KnowledgeBasePage: React.FC = () => {
 
   // 处理文件上传
   const handleFileUpload = () => {
-    // 实际应用中这里应该打开文件选择对话框并处理上传
-    console.log('上传文件');
+    // 导航到文件上传页面
+    navigate(`/knowledge/${knowledgeId}/upload`);
   };
 
   // 处理返回

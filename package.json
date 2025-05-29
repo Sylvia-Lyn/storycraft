@@ -37,6 +37,9 @@
   "devDependencies": {
     "@eslint/js": "^9.22.0",
     "@iconify-json/ri": "^1.2.5",
+    "@types/cors": "^2.8.18",
+    "@types/express": "^5.0.2",
+    "@types/node": "^22.15.24",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
     "@vitejs/plugin-react": "^4.3.4",

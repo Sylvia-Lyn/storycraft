@@ -16,6 +16,7 @@ const KnowledgeUploadPage: React.FC = () => {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [showCustomDialog, setShowCustomDialog] = useState(false);
+  const [showSegmentPreviewDialog, setShowSegmentPreviewDialog] = useState(false);
   const [analysisModel, setAnalysisModel] = useState('deepseek-R1');
   const [relatedKnowledge, setRelatedKnowledge] = useState('大纲');
   const [promptText, setPromptText] = useState('#你是一位深刺的小说创作专家，描述构建引人入胆、逸群畅达且层次分明的故事结构。请根据以下要求，为我生成一份完整的小说大纲，并特别设计出小说篇章的黄金三分详细大纲。\n【任务要求】\n立意整体小说大纲：\n - 采用"第一章 - 第一节"结构，简述故事的整体脉络和主要情节发展。\n - 描述故事背景、主要事件及结局（可为开放式回归结局）。\n\n - 主要目标：让主角在经历折后还远自小小澄湖，通过情感或行动上的爆发展示其坚韧力量，同时保留开放性问题。\n - 关键事件/高潮：设定一个决定性时刻，主角作出重大反击或遇见重大阻力。\n - 情感设置：在');
@@ -125,6 +126,16 @@ const KnowledgeUploadPage: React.FC = () => {
   const handleSaveCustomSettings = () => {
     setShowCustomDialog(false);
     // 这里可以添加保存设置的逻辑
+  };
+
+  // 处理分段预览对话框关闭
+  const handleCloseSegmentPreviewDialog = () => {
+    setShowSegmentPreviewDialog(false);
+  };
+
+  // 处理分段预览对话框打开
+  const handleOpenSegmentPreviewDialog = () => {
+    setShowSegmentPreviewDialog(true);
   };
 
   return (

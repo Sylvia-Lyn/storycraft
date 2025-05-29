@@ -93,6 +93,7 @@ function MiddleSection() {
   const {
     isGenerating,
     optimizationResults,
+    setOptimizationResults,
     resultsContainerRef,
     applyOptimizedText,
     copyToClipboard,
@@ -110,6 +111,7 @@ function MiddleSection() {
     saveEditedMessage,
     cancelEditingMessage,
     deleteMessage,
+    regenerateAIMessage,
     clearHistory
   } = useMessageManagement(initialMessages, generateOptimizedContent);
   
@@ -195,12 +197,12 @@ function MiddleSection() {
   
   // 选择建议的包装函数
   const selectSuggestionWrapper = (suggestion: string) => {
-    selectSuggestion(suggestion, setFeedbackText, inputRef);
+    selectSuggestion(suggestion, setFeedbackText, inputRef as React.RefObject<HTMLInputElement>);
   };
   
   // 接受自动完成的包装函数
   const acceptAutoCompleteWrapper = () => {
-    acceptAutoComplete(setFeedbackText, inputRef);
+    acceptAutoComplete(setFeedbackText, inputRef as React.RefObject<HTMLInputElement>);
   };
   
   // 移除了使用预设Prompt的包装函数

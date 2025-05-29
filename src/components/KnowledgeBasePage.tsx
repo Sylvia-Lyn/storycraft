@@ -102,33 +102,31 @@ const KnowledgeBasePage: React.FC = () => {
         ) : (
           <div className="bg-white rounded-lg shadow">
             {/* 工具栏 */}
-            <div className="flex justify-between items-center p-4 border-b border-gray-200">
-              <form onSubmit={handleSearch} className="relative flex-grow max-w-md">
-                <input
-                  type="text"
-                  placeholder="请输入文件名"
-                  className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                <button type="submit" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                  <Icon icon="mdi:magnify" className="w-5 h-5" />
-                </button>
-              </form>
+            <div className="flex justify-between items-center p-4 border-b border-gray-200 bg-gray-50">
+              <div className="text-base font-medium text-gray-700">
+                {knowledgeBase?.name || '加载中...'}
+              </div>
               
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-3">
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="请输入文件名"
+                    className="w-60 border border-gray-200 rounded-md pl-3 pr-9 py-1.5 focus:outline-none focus:border-gray-300 text-sm bg-white shadow-sm"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSearch(e)}
+                  />
+                  <div className="absolute right-2.5 top-1/2 transform -translate-y-1/2 text-gray-400">
+                    <Icon icon="ri:search-line" className="w-4 h-4" />
+                  </div>
+                </div>
+                
                 <button 
-                  className="flex items-center px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-md text-gray-700"
-                  onClick={() => {}}
-                >
-                  <Icon icon="mdi:refresh" className="w-5 h-5 mr-1" />
-                  <span>刷新</span>
-                </button>
-                <button 
-                  className="flex items-center px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded-md text-white"
+                  className="flex items-center px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 rounded-md text-white text-sm shadow-sm"
                   onClick={handleFileUpload}
                 >
-                  <Icon icon="mdi:plus" className="w-5 h-5 mr-1" />
+                  <Icon icon="ri:add-line" className="w-4 h-4 mr-1" />
                   <span>添加</span>
                 </button>
               </div>

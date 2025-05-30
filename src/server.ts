@@ -11,18 +11,7 @@ app.use(express.json());
 // 获取所有作品
 app.get('/api/works', async (_req, res) => {
   try {
-    const works = await prisma.work.findMany({
-      include: {
-        characters: {
-          include: {
-            scripts: true,
-          },
-        },
-      },
-      orderBy: {
-        updatedAt: 'desc',
-      },
-    });
+    const works = await prisma.work.findMany();
     res.json(works);
   } catch (error) {
     console.error('Error fetching works:', error);
@@ -35,18 +24,7 @@ app.get('/api/works/:workId/scripts', async (req, res) => {
   const { workId } = req.params;
   
   try {
-    const scripts = await prisma.characterScript.findMany({
-      where: { workId },
-      orderBy: { updatedAt: 'desc' },
-      include: {
-        character: {
-          select: {
-            name: true,
-            type: true,
-          },
-        },
-      },
-    });
+    const scripts = await prisma.characterScript.findMany();
     res.json(scripts);
   } catch (error) {
     console.error('Error fetching scripts:', error);
@@ -59,17 +37,7 @@ app.get('/api/scripts/:scriptId', async (req, res) => {
   const { scriptId } = req.params;
   
   try {
-    const script = await prisma.characterScript.findUnique({
-      where: { id: scriptId },
-      include: {
-        character: {
-          select: {
-            name: true,
-            type: true,
-          },
-        },
-      },
-    });
+    const script = await prisma.characterScript.findUnique();
 
     if (!script) {
       res.status(404).json({ error: 'Script not found' });
@@ -89,10 +57,7 @@ app.put('/api/scripts/:scriptId', async (req, res) => {
   const { content } = req.body;
   
   try {
-    const updatedScript = await prisma.characterScript.update({
-      where: { id: scriptId },
-      data: { content },
-    });
+    const updatedScript = await prisma.characterScript.update();
     res.json(updatedScript);
   } catch (error) {
     console.error('Error updating script:', error);
@@ -105,9 +70,7 @@ app.delete('/api/scripts/:scriptId', async (req, res) => {
   const { scriptId } = req.params;
   
   try {
-    await prisma.characterScript.delete({
-      where: { id: scriptId },
-    });
+    await prisma.characterScript.delete();
     res.status(204).end();
   } catch (error) {
     console.error('Error deleting script:', error);
@@ -120,16 +83,7 @@ app.get('/api/scripts/:scriptId/download', async (req, res) => {
   const { scriptId } = req.params;
   
   try {
-    const script = await prisma.characterScript.findUnique({
-      where: { id: scriptId },
-      include: {
-        character: {
-          select: {
-            name: true,
-          },
-        },
-      },
-    });
+    const script = await prisma.characterScript.findUnique();
 
     if (!script) {
       res.status(404).json({ error: 'Script not found' });

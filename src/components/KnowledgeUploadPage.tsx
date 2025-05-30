@@ -16,7 +16,7 @@ const KnowledgeUploadPage: React.FC = () => {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [showCustomDialog, setShowCustomDialog] = useState(false);
-  const [showSegmentPreviewDialog, setShowSegmentPreviewDialog] = useState(false);
+  const [showParagraphPreviewDialog, setShowParagraphPreviewDialog] = useState(false);
   const [analysisModel, setAnalysisModel] = useState('deepseek-R1');
   const [relatedKnowledge, setRelatedKnowledge] = useState('大纲');
   const [promptText, setPromptText] = useState('#你是一位深刺的小说创作专家，描述构建引人入胆、逸群畅达且层次分明的故事结构。请根据以下要求，为我生成一份完整的小说大纲，并特别设计出小说篇章的黄金三分详细大纲。\n【任务要求】\n立意整体小说大纲：\n - 采用"第一章 - 第一节"结构，简述故事的整体脉络和主要情节发展。\n - 描述故事背景、主要事件及结局（可为开放式回归结局）。\n\n - 主要目标：让主角在经历折后还远自小小澄湖，通过情感或行动上的爆发展示其坚韧力量，同时保留开放性问题。\n - 关键事件/高潮：设定一个决定性时刻，主角作出重大反击或遇见重大阻力。\n - 情感设置：在');
@@ -128,18 +128,79 @@ const KnowledgeUploadPage: React.FC = () => {
     // 这里可以添加保存设置的逻辑
   };
 
-  // 处理分段预览对话框关闭
-  const handleCloseSegmentPreviewDialog = () => {
-    setShowSegmentPreviewDialog(false);
-  };
-
   // 处理分段预览对话框打开
-  const handleOpenSegmentPreviewDialog = () => {
-    setShowSegmentPreviewDialog(true);
+  const handleOpenParagraphPreviewDialog = () => {
+    setShowParagraphPreviewDialog(true);
   };
 
+  // 处理分段预览对话框关闭
+  const handleCloseParagraphPreviewDialog = () => {
+    setShowParagraphPreviewDialog(false);
+  };
+
+  // 示例分段数据
+  const [paragraphData, setParagraphData] = useState([
+    {
+      id: 1,
+      title: "分段1",
+      content: "蒋伯驾_纯图版.docx:HINC 流故事 HNG weHeADtonHE EouAToRAFTER LISTENNGthELsf AND TALELY cAyroNEse sono oFTHE MLLEnLM ( A )影 想 流 哐 到 一 级 : 照 楼 有 人 跪 , 有 人 喊 窝 成 侵 探索 花 世 界 我 一 千 翻 大 不 了 大 家 一 起 玩 完 WE HEAD TO THEEQUATOR AFTER LISTENINO THE LAST AND STALELY CANTONESE SONG OP THE MILLENNIUM. 第五幕 大屠杀结束了，每个人心上的伤疤却远远没有愈合。 你将2000年的那场屠杀最痛苦的经历全部埋藏在心底。 你忍视、逃避，否定现实，可记忆就在那里。 那些回忆在深夜里敲响你的窗户，进入你的梦境，给你看那棵盘上蓬汉的战局、温暖的笑容和一声声拉近城话，还有那双值得信任的眼 睛。 能忘记的是记忆，忘记不了的，",
+      tokens: 268,
+      words: 463
+    },
+    {
+      id: 2,
+      title: "分段2",
+      content: "蒋伯驾_纯图版.docx:莱诺家族和穆家支持的延迟军队虽然落败，但他们还是挣到了一笔可观的战争财，并开始计划对下一个地区的侵袭。 他们为了策密两家联系，甚至提前了婚宏课和伯纳德的联姻。 没想到的是，两人结婚后没多久，伯纳德竟然在2001年5月21日死于非命。 一年后，一个叫做怒河的杀手组织横空出世， 据说所有成员都是2000年布鲁诺大屠杀的幸存者，有很强的复仇执念，目标是剿灭所有策划大屠杀的大人们。 真中有两位成员尤为出名，一位是怒河的顶级杀手，杀人于无形。 还有一位，负责怒河的情报网，听说那位情报官如今已经脱离怒河，建立了属于自己的情报组织。 但依然为怒河提供情报，与其相辅相成。 有人怀疑过，是怒河杀了伯纳德，但怒河成立于伯纳德死亡之后。 至此，到底是",
+      tokens: 304,
+      words: 372
+    }
+  ]);
+  
   return (
     <div className="flex flex-col h-full bg-gray-50">
+      {/* 分段预览对话框 */}
+      {showParagraphPreviewDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+            <div className="flex justify-between items-center p-4 border-b border-gray-200">
+              <h3 className="text-lg font-medium text-gray-700">分段预览</h3>
+              <button 
+                className="text-gray-400 hover:text-gray-600"
+                onClick={handleCloseParagraphPreviewDialog}
+              >
+                <Icon icon="ri:close-line" className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+              {paragraphData.map((paragraph, index) => (
+                <div key={paragraph.id} className="mb-8">
+                  <h4 className="text-base font-medium text-gray-700 mb-2">分段{paragraph.id}:</h4>
+                  <div className="bg-gray-50 border border-gray-200 rounded-md p-4 mb-2">
+                    <textarea
+                      className="w-full min-h-[150px] whitespace-pre-wrap text-sm text-gray-700 bg-transparent border-none focus:outline-none resize-none"
+                      value={paragraph.content}
+                      onChange={(e) => {
+                        const newParagraphData = [...paragraphData];
+                        newParagraphData[index].content = e.target.value;
+                        // 简单计算tokens和字数（实际应用中可能需要更复杂的计算方法）
+                        newParagraphData[index].tokens = Math.round(e.target.value.length * 0.6);
+                        newParagraphData[index].words = Math.round(e.target.value.length * 1.1);
+                        setParagraphData(newParagraphData);
+                      }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-xs text-gray-500">
+                    <span>Tokens:{paragraph.tokens}</span>
+                    <span>字数: {paragraph.words}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* 自定义对话框 */}
       {showCustomDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
@@ -572,7 +633,11 @@ const KnowledgeUploadPage: React.FC = () => {
                     <div className="p-4">
                       <div className="flex items-center justify-between mb-4">
                         <div className="text-sm font-medium text-gray-700">共 {selectedFiles.length} 个文档</div>
-                        <button type="button" className="text-sm text-indigo-600 hover:text-indigo-800">分段预览</button>
+                        <button 
+                          type="button" 
+                          className="text-sm text-indigo-600 hover:text-indigo-800"
+                          onClick={handleOpenParagraphPreviewDialog}
+                        >分段预览</button>
                       </div>
                       
 
@@ -625,14 +690,22 @@ const KnowledgeUploadPage: React.FC = () => {
                     </div>
                     
                     <div>
-                      <label className="flex items-center">
-                        <input 
-                          type="checkbox" 
-                          className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                          defaultChecked={false}
-                        />
-                        <span className="ml-2 text-sm text-gray-700">智能分段</span>
-                      </label>
+                      <div className="flex items-center justify-between">
+                        <label className="flex items-center">
+                          <input 
+                            type="checkbox" 
+                            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                            defaultChecked={false}
+                          />
+                          <span className="ml-2 text-sm text-gray-700">智能分段</span>
+                        </label>
+                        <button
+                          className="px-3 py-1 bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs rounded-md"
+                          onClick={handleOpenParagraphPreviewDialog}
+                        >
+                          分段预览
+                        </button>
+                      </div>
                       <p className="mt-1 ml-6 text-xs text-gray-500">
                         使用大模型对文本进行智能分段，根据语义划分段落
                       </p>

@@ -71,7 +71,7 @@ function MiddleSection() {
   
   // 基础状态
   const [feedbackText, setFeedbackText] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null) as React.RefObject<HTMLInputElement>;
   
   // 工作模式
   // 移除了工作模式状态
@@ -93,6 +93,7 @@ function MiddleSection() {
   const {
     isGenerating,
     optimizationResults,
+    setOptimizationResults,
     resultsContainerRef,
     applyOptimizedText,
     copyToClipboard,
@@ -150,6 +151,7 @@ function MiddleSection() {
       
       // 当按下Escape键时，如果有结果显示，则返回输入状态
       if (e.key === 'Escape' && optimizationResults.length > 0) {
+        // 清空优化结果
         setOptimizationResults([]);
       }
       
@@ -179,18 +181,30 @@ function MiddleSection() {
     }
   }, [optimizationResults.length, resultsContainerRef]);
   
-  // 重新生成AI回复的包装函数
+  // 重新生成AI回复的包裹函数
   const regenerateAIMessageWrapper = (index: number) => {
-    regenerateAIMessage(
-      index,
-      feedbackText,
-      setFeedbackText,
-      previousDraftContent,
-      currentDraftContent,
-      quickResponses,
-      updateRecentInputs,
-      setOptimizationResults
-    );
+    // 直接使用消息管理hook中的方法
+    if (messages[index] && !messages[index].isUser) {
+      // 找到前一条用户消息作为提示
+      let userPrompt = "";
+      for (let i = index - 1; i >= 0; i--) {
+        if (messages[i].isUser) {
+          userPrompt = messages[i].text;
+          break;
+        }
+      }
+      
+      // 生成新的回复
+      generateOptimizedContent(
+        userPrompt,
+        previousDraftContent,
+        currentDraftContent,
+        quickResponses,
+        updateRecentInputs,
+        true,
+        0
+      );
+    }
   };
   
   // 选择建议的包装函数

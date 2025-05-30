@@ -1,4 +1,4 @@
-import React from 'react';
+
 import Navigation from './Navigation';
 import Sidebar from './Sidebar';
 import CharacterSelector from './CharacterSelector';

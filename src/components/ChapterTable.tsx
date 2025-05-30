@@ -1,5 +1,3 @@
-import React from 'react';
-
 // 简单表格行数据接口
 type SimpleChapterRow = {
   id: string;

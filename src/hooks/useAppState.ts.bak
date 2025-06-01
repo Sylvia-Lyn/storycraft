@@ -300,32 +300,6 @@ export function useAppState() {
       return;
     }
     
-    setIsOptimizing(true);
-    
-    try {
-      // 如果选择了DeepSeek或Gemini模型
-      if (selectedModel === 'deepseekr1' || selectedModel === 'Gemini') {
-        const prompt = `请使用${selectedStyle}文风来优化以下文本，使其更加生动、有趣、具有文学性，同时保持原文的意思不变：\n\n${text}`;
-        
-        // 调用相应的API
-        const response = selectedModel === 'deepseekr1' 
-          ? await generateDeepSeekContent(prompt)
-          : await generateDeepSeekContent(prompt); // 暂时使用相同API，后续可以替换为Gemini的API
-        
-        const result = {
-          id: Date.now().toString(),
-          text: response
-        };
-        
-        setOptimizedResults(prev => [...prev, result]);
-        setIsOptimizing(false);
-        return;
-      }
-      
-      // 其他模型的模拟逻辑不变
-      setTimeout(() => {
-        const optimizedText = `【${selectedModel}优化结果】这是一段使用${selectedStyle}文风优化的文本示例。它不仅保留了原文的核心内容，还增加了更多的细节描写和情感表达，使故事更加生动。\n\n${text}\n\n这里是延伸和丰富后的内容...`;
-        
         const result = {
           id: Date.now().toString(),
           text: optimizedText
@@ -373,23 +347,20 @@ export function useAppState() {
       setOptimizationText('');
       
       try {
-        // 如果选择了DeepSeek或Gemini模型，直接调用API
-        if (selectedModel === 'deepseekr1' || selectedModel === 'Gemini') {
+        // 如果选择了DeepSeek模型，直接调用API
+        if (selectedModel === 'deepseekr1') {
           setMessages(prev => [...prev, {
-            text: `${selectedModel}正在思考中...`,
+            text: "DeepSeek正在思考中...",
             isUser: false
           }]);
           
-          // 调用相应的API
-          const response = selectedModel === 'deepseekr1' 
-            ? await generateDeepSeekContent(inputValue)
-            : await generateDeepSeekContent(inputValue); // 暂时使用相同API，后续可以替换为Gemini的API
+          const deepseekResponse = await generateDeepSeekContent(inputValue);
           
           // 更新最后一条消息为实际响应
           setMessages(prev => {
             const updatedMessages = [...prev];
             updatedMessages[updatedMessages.length - 1] = {
-              text: response,
+              text: deepseekResponse,
               isUser: false
             };
             return updatedMessages;

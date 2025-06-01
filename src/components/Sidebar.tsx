@@ -159,9 +159,7 @@ const Sidebar = () => {
   const [editingWorkId, setEditingWorkId] = useState<string | null>(null)
   const [editingWorkName, setEditingWorkName] = useState('')
   const [knowledgeItems, setKnowledgeItems] = useState<KnowledgeItem[]>([
-    { id: 'knowledge-1', name: '测试', documents: 0, ideas: 0 },
-    { id: 'knowledge-2', name: '对话记录', documents: 0, ideas: 0 },
-    { id: 'knowledge-3', name: '角色剧本', documents: 6, ideas: 0 }
+    { id: 'knowledge-1', name: '测试知识库', documents: 6, ideas: 0 }
   ])
   const [showKnowledgeItems, setShowKnowledgeItems] = useState(true)
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null)

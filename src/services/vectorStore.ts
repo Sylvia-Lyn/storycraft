@@ -101,4 +101,50 @@ export class VectorStore {
             throw error;
         }
     }
+    
+    async setActiveCollection(collectionName: string): Promise<void> {
+        try {
+            this.collectionName = collectionName;
+            await this.initialize();
+        } catch (error) {
+            console.error('设置活动集合失败:', error);
+            throw error;
+        }
+    }
+    
+    async listCollections(): Promise<string[]> {
+        try {
+            const collections = await this.client.getCollections();
+            return collections.collections.map((collection: any) => collection.name);
+        } catch (error) {
+            console.error('获取集合列表失败:', error);
+            return [];
+        }
+    }
+    
+    async getDocumentStats(fileName: string): Promise<any | null> {
+        try {
+            // 简单实现，实际应用中可能需要从元数据中获取
+            return {
+                fileName,
+                fileSize: 0,
+                totalChunks: 0,
+                processingTime: Date.now(),
+                status: 'completed'
+            };
+        } catch (error) {
+            console.error('获取文档统计信息失败:', error);
+            return null;
+        }
+    }
+    
+    async listDocuments(): Promise<string[]> {
+        try {
+            // 简单实现，实际应用中可能需要查询所有文档
+            return [];
+        } catch (error) {
+            console.error('获取文档列表失败:', error);
+            return [];
+        }
+    }
 } 

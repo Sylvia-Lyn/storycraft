@@ -29,7 +29,7 @@ export class QAGenerator {
 
     async generateAnswer(
         query: string,
-        context: string[],
+        context: any[],
         config: QAGeneratorConfig
     ): Promise<QAResponse> {
         try {
@@ -78,9 +78,12 @@ export class QAGenerator {
         }
     }
 
-    private buildPrompt(query: string, context: string[]): string {
+    private buildPrompt(query: string, context: any[]): string {
         const contextText = context
-            .map((text, index) => `[${index + 1}] ${text}`)
+            .map((doc, index) => {
+                const text = doc.payload?.text || (typeof doc === 'string' ? doc : '');
+                return `[${index + 1}] ${text}`;
+            })
             .join('\n\n');
 
         return `基于以下参考内容回答问题：

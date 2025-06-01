@@ -1,7 +1,7 @@
 import { Icon } from '@iconify/react'
 
 type InputSectionProps = {
-  inputRef: React.RefObject<HTMLInputElement | null>
+  inputRef: React.RefObject<HTMLInputElement> | React.LegacyRef<HTMLInputElement>
   feedbackText: string
   setFeedbackText: (text: string) => void
   isGenerating: boolean
@@ -176,7 +176,11 @@ function InputSection({
                     } else if (e.key === 'ArrowUp') {
                       const prev = document.querySelectorAll('.suggestion-item')[index - 1] as HTMLElement;
                       if (prev) prev.focus();
-                      else if (inputRef.current) inputRef.current.focus();
+                      else {
+                        // 安全地访问inputRef
+                        const input = document.querySelector('input[type="text"]') as HTMLInputElement;
+                        if (input) input.focus();
+                      }
                       e.preventDefault();
                     }
                   }}

@@ -10,7 +10,7 @@ type ResultsSectionProps = {
   isGenerating: boolean
   selectedModel: string
   optimizationResults: ResultOption[]
-  resultsContainerRef: RefObject<HTMLDivElement | null>
+  resultsContainerRef: RefObject<HTMLDivElement> | React.LegacyRef<HTMLDivElement>
   applyOptimizedText: (text: string) => void
   copyToClipboard: (text: string) => void
 }

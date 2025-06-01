@@ -31,7 +31,15 @@ export class DocumentProcessor {
         pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
     }
 
-    async processDocument(file: File): Promise<ProcessedDocument> {
+    async processDocument(file: File, options?: { chunkSize?: number; overlapSize?: number }): Promise<ProcessedDocument> {
+        // 如果提供了选项，临时覆盖默认设置
+        const originalChunkSize = this.chunkSize;
+        const originalOverlap = this.chunkOverlap;
+        
+        if (options) {
+            if (options.chunkSize) this.chunkSize = options.chunkSize;
+            if (options.overlapSize) this.chunkOverlap = options.overlapSize;
+        }
         try {
             // 1. 转换文档为文本
             const text = await this.convertDocument(file);
@@ -56,6 +64,12 @@ export class DocumentProcessor {
         } catch (error) {
             console.error('文档处理失败:', error);
             throw error;
+        } finally {
+            // 恢复原始设置
+            if (options) {
+                this.chunkSize = originalChunkSize;
+                this.chunkOverlap = originalOverlap;
+            }
         }
     }
 

@@ -66,9 +66,9 @@ export class ChatService {
                 timestamp: Date.now(),
                 references: relevantDocs.map((doc, index) => ({
                     id: index + 1,
-                    text: doc.text,
+                    text: doc.payload?.text || '未知内容',
                     score: doc.score,
-                    source: doc.source
+                    source: doc.payload?.metadata?.source || '未知来源'
                 }))
             };
 

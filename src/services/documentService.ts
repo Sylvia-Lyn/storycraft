@@ -42,18 +42,30 @@ export class DocumentService {
             });
 
             // 3. 生成向量
-            const vectors = await this.embeddingManager.embedDocuments(textChunks);
+            // 将ProcessedDocument转换为字符串数组
+            const textArray = textChunks.chunks || [];
+            const vectors = await this.embeddingManager.embedDocuments(textArray);
 
             // 4. 存储到向量数据库
-            await this.vectorStore.storeVectors(vectors, {
-                fileName: file.name,
-                chunks: textChunks
-            });
+            // 创建向量文档数组
+            const vectorDocs = textArray.map((text, index) => ({
+                id: `${file.name}-${index}`,
+                vector: vectors[index],
+                payload: {
+                    text,
+                    metadata: {
+                        source: file.name,
+                        index
+                    }
+                }
+            }));
+            
+            await this.vectorStore.storeVectors(vectorDocs);
 
             return {
                 fileName: file.name,
                 fileSize: file.size,
-                totalChunks: textChunks.length,
+                totalChunks: textArray.length,
                 processingTime: Date.now(),
                 status: 'completed'
             };

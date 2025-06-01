@@ -4,7 +4,7 @@ export class EmbeddingManager {
     private openai: OpenAI;
     private model: string;
 
-    constructor(apiKey: string, apiBase: string, model: string = 'text-embedding-3-small') {
+    constructor(apiKey: string = '', apiBase: string = '', model: string = 'text-embedding-3-small') {
         this.openai = new OpenAI({
             apiKey,
             baseURL: apiBase

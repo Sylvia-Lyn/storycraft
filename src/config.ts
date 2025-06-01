@@ -1,6 +1,8 @@
 interface Config {
     DEEPSEEK_API_KEY: string;
     DEEPSEEK_API_BASE: string;
+    GEMINI_API_KEY: string;
+    GEMINI_API_BASE: string;
     QDRANT_URL: string;
     QDRANT_API_KEY: string;
     EMBEDDING_MODEL: string;
@@ -21,6 +23,8 @@ interface Config {
 const config: Config = {
     DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY || 'sk-657e30eb77ba48e0834a0821dcd8279f',
     DEEPSEEK_API_BASE: process.env.DEEPSEEK_API_BASE || 'https://api.deepseek.com/v1',
+    GEMINI_API_KEY: process.env.GEMINI_API_KEY || 'AIzaSyAnRJ43bZcGRlT02TzgH2L8SfsEtVLr8ns',
+    GEMINI_API_BASE: process.env.GEMINI_API_BASE || 'https://generativelanguage.googleapis.com',
     QDRANT_URL: process.env.QDRANT_URL || 'https://eb24099c-54e1-4fd9-9a66-1a0dcc65d895.eu-west-2-0.aws.cloud.qdrant.io',
     QDRANT_API_KEY: process.env.QDRANT_API_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3MiOiJtIn0.L7WJflCWFN1-XanTthshcDqXFjD8usge2Hwfli8YYJY',
     EMBEDDING_MODEL: 'all-MiniLM-L6-v2',
@@ -41,6 +45,7 @@ const config: Config = {
 export function validateConfig(): boolean {
     const requiredFields: (keyof Config)[] = [
         'DEEPSEEK_API_KEY',
+        'GEMINI_API_KEY',
         'QDRANT_URL',
         'QDRANT_API_KEY'
     ];

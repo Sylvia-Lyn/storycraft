@@ -4,10 +4,11 @@ import { Icon } from '@iconify/react'
 interface InputPanelProps {
   onSubmit: (input: string) => void;
   isGenerating?: boolean;
-  workingMode?: 'conversation' | 'optimization';
+  workingMode?: 'conversation' | 'optimization' | 'result';
   placeholderOverride?: string;
   presetPrompts?: string[];
   onPresetPromptSelect?: (prompt: string) => void;
+  generatedResponse?: string;
 }
 
 const InputPanel: React.FC<InputPanelProps> = ({
@@ -22,7 +23,8 @@ const InputPanel: React.FC<InputPanelProps> = ({
     '调整情节节奏，增加高潮部分的紧凑感',
     '为这个情节添加一个意外转折'
   ],
-  onPresetPromptSelect
+  onPresetPromptSelect,
+  generatedResponse = ''
 }) => {
   const [inputText, setInputText] = useState('');
   const [showPresetPrompts, setShowPresetPrompts] = useState(false);
@@ -41,6 +43,10 @@ const InputPanel: React.FC<InputPanelProps> = ({
     
     if (isGenerating) {
       return "正在生成内容...";
+    }
+    
+    if (workingMode === "result") {
+      return "对生成结果有什么看法？";
     }
     
     return workingMode === "conversation" 
@@ -178,7 +184,22 @@ const InputPanel: React.FC<InputPanelProps> = ({
   }, [inputText]);
 
   return (
-    <div className="px-4 py-3 border-t border-gray-200 bg-white">
+    <div className="border-t border-gray-200 p-3 bg-white relative">
+      {/* 生成结果显示区域 */}
+      {workingMode === 'result' && generatedResponse && (
+        <div className="mb-3 p-3 bg-gray-50 rounded-lg max-h-[300px] overflow-y-auto">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm font-medium text-gray-700">生成结果</span>
+            <button 
+              className="text-gray-400 hover:text-gray-600"
+              onClick={() => onPresetPromptSelect && onPresetPromptSelect('SWITCH_TO_CONVERSATION')}
+            >
+              <Icon icon="mdi:close" className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="text-sm whitespace-pre-wrap">{generatedResponse}</div>
+        </div>
+      )}
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <button

@@ -9,12 +9,16 @@ import {
   TableRow, 
   Paper, 
   Switch,
-  FormControlLabel
+  FormControlLabel,
+  Menu,
+  MenuItem
 } from '@mui/material'
+import { Icon } from '@iconify/react'
 import Sidebar from './Sidebar'
 import Navigation from './Navigation'
 import PromptDisplay from './PromptDisplay'
 import InputPanel from './InputPanel'
+import { generateSceneContent, polishContent } from '../services/geminiService'
 
 // 表格数据接口
 interface TableData {
@@ -70,10 +74,14 @@ const initialTableData: TableData[] = [
 // 分幕编辑器主组件
 function SceneEditor() {
   const { sceneId } = useParams();
+  const [isPolishing, setIsPolishing] = useState(false);
+  const [plotMenuAnchorEl, setPlotMenuAnchorEl] = useState<null | HTMLElement>(null);
+  const plotMenuOpen = Boolean(plotMenuAnchorEl);
   const [isCharacterView, setIsCharacterView] = useState(false);
   const [tableData, setTableData] = useState<TableData[]>(initialTableData);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [workingMode, setWorkingMode] = useState<'conversation' | 'optimization'>('conversation');
+  const [workingMode, setWorkingMode] = useState<'conversation' | 'optimization' | 'result'>('conversation');
+  const [generatedResponse, setGeneratedResponse] = useState<string>('');
   
   // 处理表格数据更新
   const handleUpdateTableData = (id: string, field: keyof TableData, value: string) => {
@@ -90,27 +98,103 @@ function SceneEditor() {
   };
 
   // 处理输入提交
-  const handleInputSubmit = (input: string) => {
-    console.log("提交输入:", input);
-    // 这里可以实现与AI交互的逻辑
+  const handleInputSubmit = async (input: string) => {
     setIsGenerating(true);
     
-    // 模拟生成过程
-    setTimeout(() => {
+    try {
+      // 使用Gemini API生成内容
+      const response = await generateSceneContent(input);
+      setGeneratedResponse(response);
+    } catch (error) {
+      console.error('生成内容失败:', error);
+      setGeneratedResponse('抱歉，生成内容时发生错误。请稍后再试。');
+    } finally {
       setIsGenerating(false);
-      // 更新表格数据或显示优化结果
-    }, 2000);
+      setWorkingMode('result');
+    }
   };
 
   // 处理预设Prompt选择
-  const handlePresetPromptSelect = (prompt: string) => {
-    if (prompt === 'SWITCH_TO_CONVERSATION') {
-      setWorkingMode('conversation');
-    } else if (prompt === 'SWITCH_TO_OPTIMIZATION') {
-      setWorkingMode('optimization');
-    } else {
-      console.log("选择预设Prompt:", prompt);
+  const handlePresetPromptSelect = async (prompt: string) => {
+    setIsGenerating(true);
+    
+    try {
+      // 使用Gemini API生成内容
+      const response = await generateSceneContent(prompt);
+      setGeneratedResponse(response);
+    } catch (error) {
+      console.error('生成内容失败:', error);
+      setGeneratedResponse('抱歉，生成内容时发生错误。请稍后再试。');
+    } finally {
+      setIsGenerating(false);
+      setWorkingMode('result');
     }
+  };
+  
+  // 处理润色功能
+  const handlePolish = async () => {
+    setIsPolishing(true);
+    
+    try {
+      // 获取当前选中的内容或整个场景内容
+      const contentToPolish = tableData.map(row => 
+        `${row.character}：\n${row.keyEvent}`
+      ).join('\n\n');
+      
+      // 使用Gemini API润色内容
+      const polishedContent = await polishContent(contentToPolish);
+      
+      // 显示润色结果
+      setGeneratedResponse(polishedContent);
+      setWorkingMode('result');
+    } catch (error) {
+      console.error('润色内容失败:', error);
+      setGeneratedResponse('抱歉，润色内容时发生错误。请稍后再试。');
+    } finally {
+      setIsPolishing(false);
+    }
+  };
+  
+  // 处理修改剧情菜单打开
+  const handlePlotMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setPlotMenuAnchorEl(event.currentTarget);
+  };
+  
+  // 处理修改剧情菜单关闭
+  const handlePlotMenuClose = () => {
+    setPlotMenuAnchorEl(null);
+  };
+  
+  // 处理修改剧情
+  const handleModifyPlot = async () => {
+    setPlotMenuAnchorEl(null);
+    setIsGenerating(true);
+    
+    try {
+      // 获取当前场景内容
+      const currentPlot = tableData.map(row => 
+        `${row.character}：\n${row.keyEvent}`
+      ).join('\n\n');
+      
+      // 使用Gemini API生成修改建议
+      const prompt = `请分析以下剧情，并提供修改建议，使其更加引人入胜：\n\n${currentPlot}`;
+      const response = await generateSceneContent(prompt);
+      
+      setGeneratedResponse(response);
+      setWorkingMode('result');
+    } catch (error) {
+      console.error('生成修改建议失败:', error);
+      setGeneratedResponse('抱歉，生成修改建议时发生错误。请稍后再试。');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+  
+  // 处理选择剧情
+  const handleSelectPlot = () => {
+    setPlotMenuAnchorEl(null);
+    // 这里可以实现选择剧情的逻辑
+    alert('选择剧情功能即将上线');
   };
 
   // 使用 useEffect 添加样式来隐藏全局输入框
@@ -219,11 +303,31 @@ function SceneEditor() {
           <div className="border border-gray-300 rounded p-4 mb-4">
             <div className="flex justify-between items-center">
               <span>分幕标题: {sceneId ? `分幕${sceneId}` : '分幕1'} - 花间客在订婚宴上重逢前爱人</span>
-              <button 
-                className="text-blue-500 text-sm"
-              >
-                修改内容
-              </button>
+              <div className="flex items-center space-x-2">
+                <button 
+                  className="px-3 py-1 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm rounded-md flex items-center"
+                  onClick={handlePlotMenuOpen}
+                >
+                  <span>修改剧情</span>
+                  <Icon icon="mdi:chevron-down" className="ml-1 w-4 h-4" />
+                </button>
+                <Menu
+                  anchorEl={plotMenuAnchorEl}
+                  open={plotMenuOpen}
+                  onClose={handlePlotMenuClose}
+                >
+                  <MenuItem onClick={handleModifyPlot}>修改剧情</MenuItem>
+                  <MenuItem onClick={handleSelectPlot}>选择剧情</MenuItem>
+                </Menu>
+                
+                <button 
+                  className="px-3 py-1 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm rounded-md flex items-center"
+                  onClick={handlePolish}
+                  disabled={isPolishing}
+                >
+                  {isPolishing ? '润色中...' : '进入润色'}
+                </button>
+              </div>
             </div>
           </div>
 
@@ -261,8 +365,8 @@ function SceneEditor() {
 
         {/* 视图切换 */}
         <div className="flex justify-between items-center px-4 py-2 border-b border-gray-200 flex-shrink-0">
-          <div className="font-medium">
-            分幕 {sceneId || '1'}: 花间客在订婚宴上重逢前爱人
+          <div className="font-medium flex items-center">
+            <span>分幕 {sceneId || '1'}: 花间客在订婚宴上重逢前爱人</span>
           </div>
           <FormControlLabel
             control={
@@ -295,6 +399,7 @@ function SceneEditor() {
             '添加冲突元素，增强戏剧性'
           ]}
           onPresetPromptSelect={handlePresetPromptSelect}
+          generatedResponse={generatedResponse}
         />
       </div>
     </div>

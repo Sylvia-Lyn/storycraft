@@ -244,23 +244,29 @@ const KnowledgeUploadPage: React.FC = () => {
   
   // 处理拖放文件
   const handleDrop = (e: React.DragEvent) => {
+    console.log('拖放事件被触发');
     e.preventDefault();
     setIsDragging(false);
     
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      console.log('拖放的文件数量:', e.dataTransfer.files.length);
       const files = Array.from(e.dataTransfer.files);
+      
       const validFiles = files.filter(file => {
         const fileType = file.name.split('.').pop()?.toLowerCase();
-        // 只接受PDF、DOCX和DOC文件
-        return ['pdf', 'doc', 'docx'].includes(fileType || '');
+        const isValid = ['pdf', 'doc', 'docx'].includes(fileType || '');
+        console.log('拖放文件:', file.name, '类型:', fileType, '是否有效:', isValid);
+        return isValid;
       });
       
+      console.log('有效的拖放文件数量:', validFiles.length);
       if (validFiles.length > 0) {
         handleFilesSelected(validFiles);
       } else {
-        // 可以在这里添加提示，告诉用户只支持PDF、DOCX和DOC文件
-        console.warn('只支持PDF、DOCX和DOC文件');
+        console.log('没有有效的拖放文件');
       }
+    } else {
+      console.log('拖放事件中没有文件');
     }
   };
   
@@ -281,41 +287,49 @@ const KnowledgeUploadPage: React.FC = () => {
   
   // 处理点击上传
   const handleClickUpload = () => {
+    console.log('点击上传按钮');
     fileInputRef.current?.click();
   };
   
   // 处理文件选择
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('文件输入框变化事件被触发');
     if (e.target.files && e.target.files.length > 0) {
+      console.log('文件输入框中有文件，数量:', e.target.files.length);
       const files = Array.from(e.target.files);
       handleFilesSelected(files);
+    } else {
+      console.log('文件输入框中没有文件');
     }
   };
   
   // 处理选中的文件
   const handleFilesSelected = (files: File[]) => {
-    // 过滤只支持PDF、DOCX和DOC文件
+    console.log('文件选择函数被调用，选择的文件数量:', files.length);
+    
     const supportedFiles = files.filter(file => {
       const fileType = file.name.split('.').pop()?.toLowerCase();
-      return ['pdf', 'docx', 'doc'].includes(fileType || '');
+      const isSupported = ['pdf', 'docx', 'doc'].includes(fileType || '');
+      console.log('文件:', file.name, '类型:', fileType, '是否支持:', isSupported);
+      return isSupported;
     });
     
-    // 限制最多10个文件
+    console.log('支持的文件数量:', supportedFiles.length);
     const newFiles = supportedFiles.slice(0, 10);
+    
     setSelectedFiles(prevFiles => {
       const combined = [...prevFiles, ...newFiles];
-      return combined.slice(0, 10); // 确保总数不超过10个
+      const result = combined.slice(0, 10);
+      console.log('更新后的文件列表:', result.map(f => f.name));
+      return result;
     });
     
     // 如果有不支持的文件类型被过滤掉，显示提示
     if (supportedFiles.length < files.length) {
       console.warn('有不支持的文件类型被过滤掉，只支持PDF、DOCX和DOC文件');
-      // 这里可以添加一个提示UI
     }
-    
-    // 移除自动进入下一步的逻辑，用户需要点击下一步按钮
   };
-  
+
   // 删除选中的文件
   const handleRemoveFile = (index: number) => {
     setSelectedFiles(prevFiles => prevFiles.filter((_, i) => i !== index));

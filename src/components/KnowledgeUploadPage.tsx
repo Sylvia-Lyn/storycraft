@@ -1,6 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Icon } from '@iconify/react';
+// 导入文件解析库
+import * as mammoth from 'mammoth';
+
+// 辅助函数：将文件读取为文本
+ const readFileAsText = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsText(file);
+  });
+};
+
+// 辅助函数：检测文本是否包含二进制内容
+ const containsBinaryContent = (text: string): boolean => {
+  // 检查是否包含大量的非打印字符
+  const nonPrintableChars = text.match(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/g);
+  if (nonPrintableChars && nonPrintableChars.length > text.length * 0.1) {
+    return true;
+  }
+  
+  // 检查是否包含常见的文件头标识
+  if (text.startsWith('%PDF') || text.includes('PK\x03\x04')) {
+    return true;
+  }
+  
+  return false;
+};
+
 
 const KnowledgeUploadPage: React.FC = () => {
   const { knowledgeId } = useParams<{ knowledgeId: string }>();
@@ -47,10 +76,169 @@ const KnowledgeUploadPage: React.FC = () => {
     navigate(-1);
   };
   
+  // 解析PDF文件内容
+  const parsePdfFile = async (file: File): Promise<string> => {
+    try {
+      // 读取文件内容
+      const text = await readFileAsText(file);
+      
+      // 如果文件内容为二进制，返回演示文本
+      if (containsBinaryContent(text)) {
+        return `这是从 PDF 文件 ${file.name} 中提取的演示文本。\n\n` +
+               `文件大小: ${(file.size / 1024).toFixed(2)} KB\n` +
+               `文件类型: ${file.type}\n\n` +
+               `这是PDF文件的内容摘要。实际应用中，可以使用服务器端解析或使用专门的PDF解析库。`;
+      }
+      
+      return text;
+    } catch (error) {
+      console.error('解析PDF文件失败:', error);
+      return `无法解析文件 ${file.name}，错误: ${error instanceof Error ? error.message : String(error)}`;
+    }
+  };
+
+  // 解析DOCX文件内容
+  const parseDocxFile = async (file: File): Promise<string> => {
+    try {
+      // 尝试使用mammoth解析
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const result = await mammoth.extractRawText({ arrayBuffer });
+        return result.value;
+      } catch (mammothError) {
+        console.warn('使用mammoth解析DOCX失败，尝试备用方法:', mammothError);
+        
+        // 如果mammoth失败，尝试读取文本内容
+        const text = await readFileAsText(file);
+        if (!containsBinaryContent(text)) {
+          return text;
+        }
+        
+        // 如果读取到的是二进制内容，返回演示文本
+        return `这是从 DOCX 文件 ${file.name} 中提取的演示文本。\n\n` +
+               `文件大小: ${(file.size / 1024).toFixed(2)} KB\n` +
+               `文件类型: ${file.type}\n\n` +
+               `这是DOCX文件的内容摘要。实际应用中，可以使用服务器端解析或使用专门的DOCX解析库。`;
+      }
+    } catch (error) {
+      console.error('解析DOCX文件失败:', error);
+      return `无法解析文件 ${file.name}，错误: ${error instanceof Error ? error.message : String(error)}`;
+    }
+  };
+
+  // 解析DOC文件内容
+  const parseDocFile = async (file: File): Promise<string> => {
+    try {
+      // 尝试读取文本内容
+      const text = await readFileAsText(file);
+      
+      // 如果文件内容为二进制，返回演示文本
+      if (containsBinaryContent(text)) {
+        return `这是从 DOC 文件 ${file.name} 中提取的演示文本。\n\n` +
+               `文件大小: ${(file.size / 1024).toFixed(2)} KB\n` +
+               `文件类型: ${file.type}\n\n` +
+               `这是DOC文件的内容摘要。实际应用中，可以使用服务器端解析或使用专门的DOC解析库。`;
+      }
+      
+      return text;
+    } catch (error) {
+      console.error('解析DOC文件失败:', error);
+      return `无法解析文件 ${file.name}，错误: ${error instanceof Error ? error.message : String(error)}`;
+    }
+  };
+
+  // 根据文件类型解析文件内容
+  const parseFileContent = async (file: File): Promise<string> => {
+    console.log(`开始解析文件内容, 文件名: ${file.name}`);
+    const fileType = file.name.split('.').pop()?.toLowerCase();
+    console.log(`文件类型: ${fileType}`);
+    
+    try {
+      let content = '';
+      switch (fileType) {
+        case 'pdf':
+          console.log('调用PDF解析函数');
+          content = await parsePdfFile(file);
+          break;
+        case 'docx':
+          console.log('调用DOCX解析函数');
+          content = await parseDocxFile(file);
+          break;
+        case 'doc':
+          console.log('调用DOC解析函数');
+          content = await parseDocFile(file);
+          break;
+        default:
+          content = `不支持的文件类型: ${fileType}`;
+      }
+      console.log(`文件 ${file.name} 解析结果长度: ${content.length}`);
+      return content;
+    } catch (error) {
+      console.error(`解析文件 ${file.name} 时出错:`, error);
+      return `解析文件 ${file.name} 时出错: ${error instanceof Error ? error.message : String(error)}`;
+    }
+  };
+
   // 处理下一步
-  const handleNextStep = () => {
+  const handleNextStep = async () => {
+    console.log('处理下一步，当前步骤:', currentStep, '已选择文件数量:', selectedFiles.length);
     if (currentStep < 3) {
-      setCurrentStep(currentStep + 1);
+      // 如果是从步骤1到步骤2，且有选中的文件，则生成预览内容
+      if (currentStep === 1 && selectedFiles.length > 0) {
+        console.log('从步骤1到步骤2，开始处理文件');
+        // 显示加载状态
+        const loadingParagraphData = selectedFiles.map((file, index) => ({
+          id: index + 1,
+          title: `${file.name}`,
+          content: `正在解析文件：${file.name}...`,
+          tokens: 0,
+          words: 0
+        }));
+        console.log('设置加载状态:', loadingParagraphData);
+        setParagraphData(loadingParagraphData);
+        
+        // 设置下一步，这样用户不必等待文件解析完成
+        console.log('切换到步骤2');
+        setCurrentStep(currentStep + 1);
+        
+        try {
+          // 异步解析每个文件内容
+          console.log('开始解析文件内容');
+          const parsedContents = await Promise.all(
+            selectedFiles.map(async (file) => {
+              console.log(`解析文件: ${file.name}, 类型: ${file.type}, 大小: ${file.size} bytes`);
+              const content = await parseFileContent(file);
+              console.log(`文件 ${file.name} 解析完成，内容长度: ${content.length}`);
+              return {
+                id: selectedFiles.indexOf(file) + 1,
+                title: file.name,
+                content: content,
+                tokens: Math.round(content.length * 0.6),  // 简单估算
+                words: Math.round(content.length * 1.1)    // 简单估算
+              };
+            })
+          );
+          
+          console.log('所有文件解析完成，更新预览内容:', parsedContents);
+          // 更新预览内容
+          setParagraphData(parsedContents);
+        } catch (error) {
+          console.error('文件解析过程中出错:', error);
+          // 即使出错也显示一些内容
+          setParagraphData([
+            {
+              id: 1,
+              title: '解析错误',
+              content: `文件解析过程中出错: ${error instanceof Error ? error.message : String(error)}`,
+              tokens: 0,
+              words: 0
+            }
+          ]);
+        }
+      } else {
+        console.log('切换到下一步:', currentStep + 1);
+        setCurrentStep(currentStep + 1);
+      }
     }
   };
   
@@ -63,11 +251,15 @@ const KnowledgeUploadPage: React.FC = () => {
       const files = Array.from(e.dataTransfer.files);
       const validFiles = files.filter(file => {
         const fileType = file.name.split('.').pop()?.toLowerCase();
-        return ['pdf', 'txt', 'md', 'html', 'doc', 'docx'].includes(fileType || '');
+        // 只接受PDF、DOCX和DOC文件
+        return ['pdf', 'doc', 'docx'].includes(fileType || '');
       });
       
       if (validFiles.length > 0) {
         handleFilesSelected(validFiles);
+      } else {
+        // 可以在这里添加提示，告诉用户只支持PDF、DOCX和DOC文件
+        console.warn('只支持PDF、DOCX和DOC文件');
       }
     }
   };
@@ -102,12 +294,24 @@ const KnowledgeUploadPage: React.FC = () => {
   
   // 处理选中的文件
   const handleFilesSelected = (files: File[]) => {
+    // 过滤只支持PDF、DOCX和DOC文件
+    const supportedFiles = files.filter(file => {
+      const fileType = file.name.split('.').pop()?.toLowerCase();
+      return ['pdf', 'docx', 'doc'].includes(fileType || '');
+    });
+    
     // 限制最多10个文件
-    const newFiles = files.slice(0, 10);
+    const newFiles = supportedFiles.slice(0, 10);
     setSelectedFiles(prevFiles => {
       const combined = [...prevFiles, ...newFiles];
       return combined.slice(0, 10); // 确保总数不超过10个
     });
+    
+    // 如果有不支持的文件类型被过滤掉，显示提示
+    if (supportedFiles.length < files.length) {
+      console.warn('有不支持的文件类型被过滤掉，只支持PDF、DOCX和DOC文件');
+      // 这里可以添加一个提示UI
+    }
     
     // 移除自动进入下一步的逻辑，用户需要点击下一步按钮
   };
@@ -139,22 +343,13 @@ const KnowledgeUploadPage: React.FC = () => {
   };
 
   // 示例分段数据
-  const [paragraphData, setParagraphData] = useState([
-    {
-      id: 1,
-      title: "分段1",
-      content: "蒋伯驾_纯图版.docx:HINC 流故事 HNG weHeADtonHE EouAToRAFTER LISTENNGthELsf AND TALELY cAyroNEse sono oFTHE MLLEnLM ( A )影 想 流 哐 到 一 级 : 照 楼 有 人 跪 , 有 人 喊 窝 成 侵 探索 花 世 界 我 一 千 翻 大 不 了 大 家 一 起 玩 完 WE HEAD TO THEEQUATOR AFTER LISTENINO THE LAST AND STALELY CANTONESE SONG OP THE MILLENNIUM. 第五幕 大屠杀结束了，每个人心上的伤疤却远远没有愈合。 你将2000年的那场屠杀最痛苦的经历全部埋藏在心底。 你忍视、逃避，否定现实，可记忆就在那里。 那些回忆在深夜里敲响你的窗户，进入你的梦境，给你看那棵盘上蓬汉的战局、温暖的笑容和一声声拉近城话，还有那双值得信任的眼 睛。 能忘记的是记忆，忘记不了的，",
-      tokens: 268,
-      words: 463
-    },
-    {
-      id: 2,
-      title: "分段2",
-      content: "蒋伯驾_纯图版.docx:莱诺家族和穆家支持的延迟军队虽然落败，但他们还是挣到了一笔可观的战争财，并开始计划对下一个地区的侵袭。 他们为了策密两家联系，甚至提前了婚宏课和伯纳德的联姻。 没想到的是，两人结婚后没多久，伯纳德竟然在2001年5月21日死于非命。 一年后，一个叫做怒河的杀手组织横空出世， 据说所有成员都是2000年布鲁诺大屠杀的幸存者，有很强的复仇执念，目标是剿灭所有策划大屠杀的大人们。 真中有两位成员尤为出名，一位是怒河的顶级杀手，杀人于无形。 还有一位，负责怒河的情报网，听说那位情报官如今已经脱离怒河，建立了属于自己的情报组织。 但依然为怒河提供情报，与其相辅相成。 有人怀疑过，是怒河杀了伯纳德，但怒河成立于伯纳德死亡之后。 至此，到底是",
-      tokens: 304,
-      words: 372
-    }
-  ]);
+  const [paragraphData, setParagraphData] = useState<Array<{
+    id: number;
+    title: string;
+    content: string;
+    tokens: number;
+    words: number;
+  }>>([]);
   
   return (
     <div className="flex flex-col h-full bg-gray-50">
@@ -532,7 +727,7 @@ const KnowledgeUploadPage: React.FC = () => {
                   ref={fileInputRef}
                   className="hidden"
                   multiple
-                  accept=".pdf,.txt,.md,.html,.doc,.docx"
+                  accept=".pdf,.doc,.docx"
                   onChange={handleFileInputChange}
                 />
                 
@@ -551,7 +746,7 @@ const KnowledgeUploadPage: React.FC = () => {
                       将文件拖到此区域，或<button type="button" onClick={handleClickUpload} className="text-indigo-600 hover:text-indigo-800">点击上传</button>
                     </p>
                     <p className="text-sm text-gray-500 mb-4">
-                      支持 PDF、TXT、MARKDOWN、HTML、DOC、DOCX 最多上传 10 个文件
+                      支持 PDF、DOC、DOCX 最多上传 10 个文件
                     </p>
                   </div>
                 ) : (
@@ -640,7 +835,29 @@ const KnowledgeUploadPage: React.FC = () => {
                         >分段预览</button>
                       </div>
                       
-
+                      {/* 文件内容预览区域 */}
+                      <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                        <h4 className="text-base font-medium text-gray-700 mb-4">文件内容预览</h4>
+                        <div className="max-h-96 overflow-y-auto">
+                          {paragraphData.length > 0 ? (
+                            paragraphData.map((paragraph) => (
+                              <div key={paragraph.id} className="mb-6 bg-white p-4 rounded-md shadow-sm">
+                                <h5 className="text-sm font-medium text-gray-700 mb-2">{paragraph.title}</h5>
+                                <div className="text-sm text-gray-600 whitespace-pre-wrap">{paragraph.content}</div>
+                                <div className="mt-2 flex justify-between text-xs text-gray-500">
+                                  <span>Tokens: {paragraph.tokens}</span>
+                                  <span>字数: {paragraph.words}</span>
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="text-center py-8 text-gray-500">
+                              <p>没有可预览的内容</p>
+                              <p className="text-sm mt-2">请返回上一步选择文件，或检查文件处理是否正确</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>

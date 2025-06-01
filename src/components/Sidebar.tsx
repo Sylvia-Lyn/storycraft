@@ -1,9 +1,8 @@
-import { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { Icon } from '@iconify/react'
-import { toast } from 'react-hot-toast'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'react-hot-toast'
 
-// 创建知识库模态窗口组件
 interface CreateKnowledgeModalProps {
   isOpen: boolean
   onClose: () => void
@@ -108,16 +107,6 @@ interface KnowledgeItem {
 
 const Sidebar = () => {
   const navigate = useNavigate();
-  // 尝试获取navigate，如果不在Router上下文中则使用一个空函数
-  // let navigate;
-  // try {
-  //   navigate = useNavigate();
-  // } catch (e) {
-  //   navigate = (path: string) => {
-  //     console.warn('Navigation attempted outside Router context:', path);
-  //     window.location.href = path; // 降级为直接跳转
-  //   };
-  // }
   
   const [expandedItems, setExpandedItems] = useState<ExpandedItems>({
     works: true,  // 默认展开作品集
@@ -155,12 +144,23 @@ const Sidebar = () => {
       ]
     }
   ])
-  
-  const [editingWorkId, setEditingWorkId] = useState<string | null>(null)
-  const [editingWorkName, setEditingWorkName] = useState('')
-  const [knowledgeItems, setKnowledgeItems] = useState<KnowledgeItem[]>([
-    { id: 'knowledge-1', name: '测试知识库', documents: 6, ideas: 0 }
-  ])
+  // 从本地存储加载知识库数据
+  const loadKnowledgeItems = (): KnowledgeItem[] => {
+    try {
+      const savedItems = localStorage.getItem('knowledgeItems')
+      if (savedItems) {
+        return JSON.parse(savedItems)
+      }
+    } catch (error) {
+      console.error('加载知识库数据失败:', error)
+    }
+    // 如果没有保存的数据，返回默认测试数据
+    return [
+      { id: 'knowledge-1', name: '测试知识库', documents: 6, ideas: 0 }
+    ]
+  }
+
+  const [knowledgeItems, setKnowledgeItems] = useState<KnowledgeItem[]>(loadKnowledgeItems())
   const [showKnowledgeItems, setShowKnowledgeItems] = useState(true)
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null)
   const [editingKnowledgeId, setEditingKnowledgeId] = useState<string | null>(null)
@@ -168,10 +168,13 @@ const Sidebar = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const knowledgeEditInputRef = useRef<HTMLInputElement>(null)
   const editInputRef = useRef<HTMLInputElement>(null)
+  
+  const [editingWorkId, setEditingWorkId] = useState<string | null>(null)
+  const [editingWorkName, setEditingWorkName] = useState('')
 
   // 处理展开/折叠功能
   const toggleExpand = (key: string) => {
-    setExpandedItems(prev => ({
+    setExpandedItems((prev: Record<string, boolean>) => ({
       ...prev,
       [key]: !prev[key]
     }))
@@ -264,7 +267,19 @@ const Sidebar = () => {
       documents: 0,
       ideas: 0
     }
-    setKnowledgeItems(prev => [...prev, newKnowledgeItem])
+    const updatedItems = [...knowledgeItems, newKnowledgeItem];
+    setKnowledgeItems(updatedItems)
+  
+    // 保存到本地存储
+    try {
+      localStorage.setItem('knowledgeItems', JSON.stringify(updatedItems))
+      console.log('知识库保存成功:', updatedItems)
+    } catch (error) {
+      console.error('保存知识库失败:', error)
+      toast.error('知识库保存失败，请重试')
+      return
+    }
+  
     setShowKnowledgeItems(true)
     setIsCreateModalOpen(false)
     toast.success('知识库创建成功')
@@ -277,7 +292,8 @@ const Sidebar = () => {
   }
 
   // 处理知识库项点击
-  const handleKnowledgeItemClick = () => {
+  const handleKnowledgeItemClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
     setShowKnowledgeItems(!showKnowledgeItems)
     setActiveMenuId(null)
   }
@@ -285,50 +301,71 @@ const Sidebar = () => {
   // 处理知识库项目点击，导航到知识库详情页面
   const handleKnowledgeItemDetailClick = (knowledgeId: string) => {
     navigate(`/knowledge/${knowledgeId}`)
+    toast(`正在跳转到知识库: ${knowledgeId}`)
   }
   
   // 处理知识库项菜单点击
   const handleKnowledgeMenuClick = (e: React.MouseEvent, id: string) => {
     e.stopPropagation()
-    setActiveMenuId(activeMenuId === id ? null : id)
+    setActiveMenuId(id === activeMenuId ? null : id)
+    setEditingKnowledgeId(null)
+    setEditingKnowledgeName('')
   }
   
-  // 处理知识库项删除
-  const handleKnowledgeDelete = (e: React.MouseEvent, id: string) => {
-    e.stopPropagation()
-    setKnowledgeItems(prev => prev.filter(item => item.id !== id))
-    setActiveMenuId(null)
-  }
-  
-  // 处理知识库项编辑
+  // 处理知识库编辑
   const handleKnowledgeEdit = (e: React.MouseEvent, item: KnowledgeItem) => {
     e.stopPropagation()
     setEditingKnowledgeId(item.id)
     setEditingKnowledgeName(item.name)
     setActiveMenuId(null)
   }
-  
-  // 处理知识库名称编辑保存
+
+  // 处理知识库编辑保存
   const handleKnowledgeEditSave = () => {
-    if (editingKnowledgeId) {
-      setKnowledgeItems(prev => 
-        prev.map(item => 
-          item.id === editingKnowledgeId 
-            ? { ...item, name: editingKnowledgeName }
-            : item
-        )
+    if (editingKnowledgeId && editingKnowledgeName.trim()) {
+      const updatedItems = knowledgeItems.map(item => 
+        item.id === editingKnowledgeId 
+          ? { ...item, name: editingKnowledgeName.trim() } 
+          : item
       )
-      setEditingKnowledgeId(null)
-      setEditingKnowledgeName('')
+      setKnowledgeItems(updatedItems)
+      
+      // 保存到本地存储
+      try {
+        localStorage.setItem('knowledgeItems', JSON.stringify(updatedItems))
+        toast.success('知识库已更新')
+      } catch (error) {
+        console.error('保存知识库失败:', error)
+        toast.error('知识库更新失败，请重试')
+      }
     }
+    setEditingKnowledgeId(null)
+    setEditingKnowledgeName('')
   }
-  
-  // 处理知识库名称编辑取消
+
+  // 处理知识库编辑取消
   const handleKnowledgeEditCancel = () => {
     setEditingKnowledgeId(null)
     setEditingKnowledgeName('')
   }
-  
+
+  // 处理知识库删除
+  const handleKnowledgeDelete = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation()
+    const updatedItems = knowledgeItems.filter(item => item.id !== id)
+    setKnowledgeItems(updatedItems)
+    setActiveMenuId(null)
+    
+    // 保存到本地存储
+    try {
+      localStorage.setItem('knowledgeItems', JSON.stringify(updatedItems))
+      toast.success('知识库已删除')
+    } catch (error) {
+      console.error('保存知识库失败:', error)
+      toast.error('知识库删除失败，请重试')
+    }
+  }
+
   // 处理知识库名称编辑按键
   const handleKnowledgeEditKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -578,7 +615,7 @@ const Sidebar = () => {
         <div className="font-bold text-lg mt-6 mb-2 flex justify-between items-center hover:bg-gray-50 p-2 rounded-md">
           <span 
             className="cursor-pointer flex items-center" 
-            onClick={() => handleKnowledgeItemClick()}
+            onClick={(e) => handleKnowledgeItemClick(e)}
           >
             <Icon 
               icon={showKnowledgeItems ? "ri:arrow-down-s-line" : "ri:arrow-right-s-line"} 

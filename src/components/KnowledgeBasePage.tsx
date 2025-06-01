@@ -21,7 +21,7 @@ const KnowledgeBasePage: React.FC = () => {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 模拟加载知识库数据
+  // 加载知识库数据
   useEffect(() => {
     // 在实际应用中，这里应该从API获取数据
     const loadData = async () => {
@@ -32,15 +32,72 @@ const KnowledgeBasePage: React.FC = () => {
         
         // 模拟知识库数据
         if (knowledgeId === 'knowledge-1') {
-          setKnowledgeBase({ id: 'knowledge-1', name: '测试' });
+          setKnowledgeBase({ id: 'knowledge-1', name: '测试知识库' });
         } else if (knowledgeId === 'knowledge-2') {
           setKnowledgeBase({ id: 'knowledge-2', name: '对话记录' });
         } else if (knowledgeId === 'knowledge-3') {
           setKnowledgeBase({ id: 'knowledge-3', name: '角色剧本' });
+        } else {
+          // 从 localStorage 获取知识库数据
+          try {
+            interface KnowledgeBaseItem {
+              id: string;
+              name: string;
+            }
+            const knowledgeItems: KnowledgeBaseItem[] = JSON.parse(localStorage.getItem('knowledgeItems') || '[]');
+            const currentKnowledge = knowledgeItems.find((item: KnowledgeBaseItem) => item.id === knowledgeId);
+            if (currentKnowledge) {
+              setKnowledgeBase({ id: currentKnowledge.id, name: currentKnowledge.name });
+            }
+          } catch (e) {
+            console.error('获取知识库信息失败:', e);
+          }
         }
         
-        // 模拟文件数据
-        setFiles([]);
+        // 尝试从 localStorage 加载用户上传的文件
+        const uploadedFilesKey = `uploadedFiles_${knowledgeId}`;
+        const uploadedFilesJson = localStorage.getItem(uploadedFilesKey);
+        
+        if (uploadedFilesJson) {
+          try {
+            const uploadedFiles = JSON.parse(uploadedFilesJson);
+            if (Array.isArray(uploadedFiles) && uploadedFiles.length > 0) {
+              setFiles(uploadedFiles);
+              return; // 如果有用户上传的文件，就不显示示例文件
+            }
+          } catch (e) {
+            console.error('解析上传文件数据失败:', e);
+          }
+        }
+        
+        // 如果没有用户上传的文件，显示示例文件
+        const demoFiles = [
+          {
+            id: '1',
+            name: '示例文档1.pdf',
+            type: 'PDF',
+            size: 1024,
+            uploadTime: '2025-06-01 10:30',
+            updateTime: '2025-06-01 10:30'
+          },
+          {
+            id: '2',
+            name: '示例文档2.docx',
+            type: 'Word',
+            size: 512,
+            uploadTime: '2025-06-01 11:15',
+            updateTime: '2025-06-01 11:15'
+          },
+          {
+            id: '3',
+            name: '参考资料.txt',
+            type: '文本',
+            size: 128,
+            uploadTime: '2025-06-01 12:00',
+            updateTime: '2025-06-01 12:00'
+          }
+        ];
+        setFiles(demoFiles);
       } catch (error) {
         console.error('加载知识库数据失败:', error);
       } finally {

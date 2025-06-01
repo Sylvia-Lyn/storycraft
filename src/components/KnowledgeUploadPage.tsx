@@ -235,6 +235,31 @@ const KnowledgeUploadPage: React.FC = () => {
             }
           ]);
         }
+      } else if (currentStep === 2) {
+        // 从步骤2到步骤3，保存文件信息到localStorage
+        try {
+          // 准备要保存的文件信息
+          const fileInfoToSave = selectedFiles.map((file, index) => ({
+            id: String(index + 1),
+            name: file.name,
+            type: file.type.includes('pdf') ? 'PDF' : 
+                  file.type.includes('word') || file.type.includes('docx') ? 'Word' : 
+                  file.type.includes('text') || file.name.endsWith('.txt') ? '文本' : '其他',
+            size: Math.round(file.size / 1024), // 转换为KB
+            uploadTime: new Date().toLocaleString(),
+            updateTime: new Date().toLocaleString()
+          }));
+          
+          // 保存到localStorage
+          const uploadedFilesKey = `uploadedFiles_${knowledgeId}`;
+          localStorage.setItem(uploadedFilesKey, JSON.stringify(fileInfoToSave));
+          console.log('文件信息已保存到localStorage:', fileInfoToSave);
+        } catch (error) {
+          console.error('保存文件信息失败:', error);
+        }
+        
+        console.log('切换到步骤3');
+        setCurrentStep(currentStep + 1);
       } else {
         console.log('切换到下一步:', currentStep + 1);
         setCurrentStep(currentStep + 1);

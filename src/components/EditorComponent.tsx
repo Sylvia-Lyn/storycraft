@@ -74,28 +74,47 @@ const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({ 
       placeholder: '开始输入内容...',
       onChange: async () => {
         if (editorRef.current) {
-          const savedData = await editorRef.current.save();
-          
-          // 将当前状态添加到历史记录中
-          if (JSON.stringify(savedData) !== JSON.stringify(lastSavedData)) {
-            // 如果当前不在历史记录的最后，则清除当前位置之后的所有历史
-            if (currentHistoryIndex < editorHistory.length - 1) {
-              setEditorHistory(prev => prev.slice(0, currentHistoryIndex + 1));
+          try {
+            const savedData = await editorRef.current.save();
+            
+            // 只有当内容确实发生变化时才添加到历史记录
+            const currentContent = JSON.stringify(savedData);
+            const lastContent = editorHistory.length > 0 ? 
+              JSON.stringify(editorHistory[currentHistoryIndex]) : '';
+              
+            if (currentContent !== lastContent) {
+              // 如果当前不在历史记录的最后，则清除当前位置之后的所有历史
+              if (currentHistoryIndex < editorHistory.length - 1) {
+                setEditorHistory(prev => prev.slice(0, currentHistoryIndex + 1));
+              }
+              
+              // 添加新的历史记录
+              setEditorHistory(prev => [...prev, savedData]);
+              setCurrentHistoryIndex(prev => prev + 1);
+              
+              console.log('添加历史记录:', savedData);
             }
             
-            // 添加新的历史记录
-            setEditorHistory(prev => [...prev, savedData]);
-            setCurrentHistoryIndex(prev => prev + 1);
-          }
-          
-          if (onChange) {
-            onChange(savedData);
+            if (onChange) {
+              onChange(savedData);
+            }
+          } catch (error) {
+            console.error('保存编辑器内容时出错:', error);
           }
         }
       }
     });
     
     editorRef.current = editor;
+    
+    // 初始化时保存初始状态到历史记录
+    editor.isReady.then(() => {
+      editor.save().then(initialSavedData => {
+        setEditorHistory([initialSavedData]);
+        setCurrentHistoryIndex(0);
+        console.log('初始化历史记录:', initialSavedData);
+      });
+    });
     
     return () => {
       if (editorRef.current && editorRef.current.destroy) {
@@ -298,16 +317,26 @@ const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({ 
   // 撤销操作
   const handleUndo = async () => {
     if (currentHistoryIndex > 0 && editorRef.current) {
-      const prevHistoryIndex = currentHistoryIndex - 1;
-      const prevData = editorHistory[prevHistoryIndex];
-      
-      // 更新编辑器内容
-      await editorRef.current.render(prevData);
-      
-      // 更新历史索引
-      setCurrentHistoryIndex(prevHistoryIndex);
-      
-      toast.success('已撤销上一步操作');
+      try {
+        const prevHistoryIndex = currentHistoryIndex - 1;
+        const prevData = editorHistory[prevHistoryIndex];
+        
+        console.log('撤销到历史记录:', prevHistoryIndex, prevData);
+        
+        // 清空当前编辑器
+        await editorRef.current.clear();
+        
+        // 重新渲染上一个状态的内容
+        await editorRef.current.render(prevData);
+        
+        // 更新历史索引
+        setCurrentHistoryIndex(prevHistoryIndex);
+        
+        toast.success('已撤销上一步操作');
+      } catch (error) {
+        console.error('撤销操作失败:', error);
+        toast.error('撤销失败，请重试');
+      }
     } else {
       toast.error('没有可撤销的操作');
     }

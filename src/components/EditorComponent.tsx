@@ -472,12 +472,6 @@ const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({ 
         </button>
         
         <div className="flex-1"></div>
-        
-        {selection.text && (
-          <div className="text-xs text-gray-500">
-            已选中 {selection.text.length} 个字符
-          </div>
-        )}
       </div>
       
       {/* 编辑器容器 */}

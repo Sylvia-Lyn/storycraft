@@ -285,9 +285,9 @@ function MiddleSection() {
             onTabChange={setSelectedTab}
           />
           
-          {/* 顶部选择器区域 - 按照设计图排列 */}
-          <div className="flex items-center gap-4 mb-6 mt-4">
-            {/* AI模型选择区域 */}
+          {/* 顶部选择器区域 - 固定模型在左，文风在右 */}
+          <div className="flex items-center justify-between mb-6 mt-4">
+            {/* AI模型选择区域 - 左侧固定 */}
             <div className="relative">
               <div 
                 className="flex items-center px-4 py-2 bg-gray-100 rounded-md cursor-pointer"
@@ -315,7 +315,7 @@ function MiddleSection() {
               )}
             </div>
 
-            {/* 文风显示 */}
+            {/* 文风显示 - 右侧固定 */}
             <div className="flex items-center px-4 py-2 bg-gray-50 rounded-md">
               <span className="text-gray-700">文风: {selectedStyle}</span>
             </div>

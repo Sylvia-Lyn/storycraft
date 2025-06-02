@@ -53,6 +53,7 @@ function OutlineContent() {
               <div className="relative flex-1">
                 <select className="appearance-none border border-gray-300 rounded-md px-4 py-2 pr-8 bg-white focus:outline-none w-full">
                   <option>deepseekr1</option>
+                  <option>Gemini</option>
                 </select>
                 <Icon 
                   icon="ri:arrow-down-s-line"

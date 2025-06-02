@@ -9,6 +9,7 @@ import ChaptersPage from './components/ChaptersPage'
 import HomePage from './components/HomePage'
 import KnowledgeBasePage from './components/KnowledgeBasePage'
 import KnowledgeUploadPage from './components/KnowledgeUploadPage'
+import OptimizingFeatureWrapper from './components/OptimizingFeatureWrapper'
 import App from './App'
 
 // 临时页面组件，显示"正在加班加点更新中"
@@ -48,15 +49,27 @@ const router = createHashRouter([
       },
       {
         path: 'chapters',
-        element: <ChaptersPage />
+        element: (
+          <OptimizingFeatureWrapper targetPaths={['chapters']} redirectTo="editor">
+            <ChaptersPage />
+          </OptimizingFeatureWrapper>
+        )
       },
       {
         path: 'scenes',
-        element: <SceneList />
+        element: (
+          <OptimizingFeatureWrapper targetPaths={['scenes']} redirectTo="editor">
+            <SceneList />
+          </OptimizingFeatureWrapper>
+        )
       },
       {
         path: 'scenes/:sceneId',
-        element: <SceneEditor />
+        element: (
+          <OptimizingFeatureWrapper targetPaths={['scenes']} redirectTo="editor">
+            <SceneEditor />
+          </OptimizingFeatureWrapper>
+        )
       },
       {
         path: 'knowledge/:knowledgeId',

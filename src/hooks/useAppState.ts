@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { generateDeepSeekContent } from '../services/deepseekService'
+import { generateGeminiContent } from '../services/geminiService'
 
 export interface Message {
   text: string;
@@ -115,12 +116,12 @@ export function useAppState() {
     console.log('Using model:', selectedModel, 'with style:', selectedStyle);
     
     try {
-      // 如果选择了DeepSeek模型
+      // 根据选择的模型调用相应的API
       if (selectedModel === 'deepseekr1' || selectedModel === 'Gemini') {
         // 调用相应的API
         const response = selectedModel === 'deepseekr1' 
           ? await generateDeepSeekContent(prompt)
-          : await generateDeepSeekContent(prompt); // 暂时使用相同API，后续可以替换为Gemini的API
+          : await generateGeminiContent(prompt); // 使用Gemini API
         
         // 直接将AI响应添加到消息中，而不解析为选项
         setMessages(prev => [...prev, {
@@ -265,14 +266,14 @@ export function useAppState() {
     setIsOptimizing(true);
     
     try {
-      // 如果选择了DeepSeek或Gemini模型
+      // 根据选择的模型调用相应的API
       if (selectedModel === 'deepseekr1' || selectedModel === 'Gemini') {
         const prompt = `请使用${selectedStyle}文风来优化以下文本，使其更加生动、有趣、具有文学性，同时保持原文的意思不变：\n\n${text}`;
         
         // 调用相应的API
         const response = selectedModel === 'deepseekr1' 
           ? await generateDeepSeekContent(prompt)
-          : await generateDeepSeekContent(prompt); // 暂时使用相同API，后续可以替换为Gemini的API
+          : await generateGeminiContent(prompt); // 使用Gemini API
         
         const result = {
           id: Date.now().toString(),

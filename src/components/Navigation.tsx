@@ -35,7 +35,7 @@ function Navigation({ tabs, defaultTab, onTabChange }: NavigationProps) {
     setSelectedTab(tab);
     
     // 根据不同标签执行不同的路由导航
-    if (tab === '分幕') {
+    if (tab === '分幕' || tab === '章节') {
       // 显示"功能正在优化中"的弹窗，而不是导航
       showOptimizingPopup();
       // 仍然调用onTabChange以更新UI状态
@@ -49,8 +49,6 @@ function Navigation({ tabs, defaultTab, onTabChange }: NavigationProps) {
       navigate('/characters');
     } else if (tab === '关系') {
       navigate('/relations');
-    } else if (tab === '章节') {
-      navigate('/chapters');
     }
     
     onTabChange(tab);

@@ -5,6 +5,8 @@ import List from '@editorjs/list';
 import Paragraph from '@editorjs/paragraph';
 import Marker from '@editorjs/marker';
 import { Icon } from '@iconify/react';
+import { useAppState } from '../hooks/useAppState';
+import { toast } from 'react-hot-toast';
 
 interface EditorComponentProps {
   initialData?: any;
@@ -17,10 +19,15 @@ export interface EditorComponentRef {
 }
 
 const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({ initialData, onChange, onSelect }, ref) => {
+  const appState = useAppState();
   const editorRef = useRef<EditorJS | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [selection, setSelection] = useState<{text: string, range: Range | null}>({text: '', range: null});
   const [showTemplates, setShowTemplates] = useState(false);
+  const [editorHistory, setEditorHistory] = useState<any[]>([]);
+  const [currentHistoryIndex, setCurrentHistoryIndex] = useState(-1);
+  const [isSaving, setIsSaving] = useState(false);
+  const [lastSavedData, setLastSavedData] = useState<any>(null);
   
   // 预设的模板句式
   const templateSentences = [
@@ -66,9 +73,24 @@ const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({ 
       data: initialData || { blocks: [{ type: 'paragraph', data: { text: '' } }] },
       placeholder: '开始输入内容...',
       onChange: async () => {
-        if (onChange && editorRef.current) {
+        if (editorRef.current) {
           const savedData = await editorRef.current.save();
-          onChange(savedData);
+          
+          // 将当前状态添加到历史记录中
+          if (JSON.stringify(savedData) !== JSON.stringify(lastSavedData)) {
+            // 如果当前不在历史记录的最后，则清除当前位置之后的所有历史
+            if (currentHistoryIndex < editorHistory.length - 1) {
+              setEditorHistory(prev => prev.slice(0, currentHistoryIndex + 1));
+            }
+            
+            // 添加新的历史记录
+            setEditorHistory(prev => [...prev, savedData]);
+            setCurrentHistoryIndex(prev => prev + 1);
+          }
+          
+          if (onChange) {
+            onChange(savedData);
+          }
         }
       }
     });
@@ -149,21 +171,36 @@ const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({ 
     }
   };
   
-  // 设置选中文本为高亮
+  // 将选中文本设置为 Capilot 的上文
   const highlightSelection = () => {
     if (!selection.range || !selection.text) return;
     
-    const range = selection.range;
     const selectedText = selection.text;
     
-    // 包装选中文本为高亮 HTML
-    const highlightedText = `<mark>${selectedText}</mark>`;
+    // 将选中的文本传递给 Capilot 作为上文
+    appState.setSelectedDraftText(selectedText);
     
-    // 插入高亮文本
-    range.deleteContents();
-    const highlightNode = document.createElement('span');
-    highlightNode.innerHTML = highlightedText;
-    range.insertNode(highlightNode);
+    // 可选：显示一个临时的高亮效果，表示文本已被选中为上文
+    const range = selection.range;
+    const originalContents = range.extractContents();
+    const tempHighlightNode = document.createElement('span');
+    tempHighlightNode.className = 'bg-yellow-100 transition-colors duration-500';
+    tempHighlightNode.appendChild(originalContents);
+    range.insertNode(tempHighlightNode);
+    
+    // 显示提示信息
+    toast.success('已将选中文本设置为 Capilot 上文');
+    
+    // 2秒后移除高亮效果
+    setTimeout(() => {
+      if (tempHighlightNode.parentNode) {
+        const parent = tempHighlightNode.parentNode;
+        while (tempHighlightNode.firstChild) {
+          parent.insertBefore(tempHighlightNode.firstChild, tempHighlightNode);
+        }
+        parent.removeChild(tempHighlightNode);
+      }
+    }, 2000);
   };
   
   // 清除所有格式
@@ -239,6 +276,48 @@ const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({ 
   // 删除批注
   const deleteAnnotation = (id: string) => {
     setAnnotations(annotations.filter(annotation => annotation.id !== id));
+  };
+
+  // 撤销操作
+  const handleUndo = async () => {
+    if (currentHistoryIndex > 0 && editorRef.current) {
+      const prevHistoryIndex = currentHistoryIndex - 1;
+      const prevData = editorHistory[prevHistoryIndex];
+      
+      // 更新编辑器内容
+      await editorRef.current.render(prevData);
+      
+      // 更新历史索引
+      setCurrentHistoryIndex(prevHistoryIndex);
+      
+      toast.success('已撤销上一步操作');
+    } else {
+      toast.error('没有可撤销的操作');
+    }
+  };
+  
+  // 保存操作
+  const handleSave = async () => {
+    if (!editorRef.current) return;
+    
+    try {
+      setIsSaving(true);
+      const savedData = await editorRef.current.save();
+      
+      // 这里可以添加实际的保存逻辑，例如发送到服务器
+      // 模拟保存操作
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // 更新最后保存的数据
+      setLastSavedData(savedData);
+      
+      toast.success('内容已保存');
+    } catch (error) {
+      console.error('保存失败:', error);
+      toast.error('保存失败，请重试');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // 暴露API方法给父组件
@@ -328,30 +407,22 @@ const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({ 
         
         <button 
           className="p-1.5 hover:bg-gray-200 rounded text-gray-600 flex items-center text-sm"
-          onClick={addAnnotation}
-          title="添加批注"
-          disabled={!selection.text}
+          onClick={handleUndo}
+          title="撤销"
+          disabled={currentHistoryIndex <= 0}
         >
-          <Icon icon="mdi:comment-text-outline" className="mr-1" />
-          <span>添加批注</span>
+          <Icon icon="mdi:undo" className="mr-1" />
+          <span>撤销</span>
         </button>
         
         <button 
           className="p-1.5 hover:bg-gray-200 rounded text-gray-600 flex items-center text-sm"
-          onClick={clearFormat}
-          title="清除所有格式"
+          onClick={handleSave}
+          title="保存"
+          disabled={isSaving}
         >
-          <Icon icon="mdi:format-clear" className="mr-1" />
-          <span>清除格式</span>
-        </button>
-        
-        <button 
-          className="p-1.5 hover:bg-gray-200 rounded text-gray-600 flex items-center text-sm"
-          onClick={() => setShowAnnotations(!showAnnotations)}
-          title={showAnnotations ? "隐藏批注" : "显示批注"}
-        >
-          <Icon icon={showAnnotations ? "mdi:eye-outline" : "mdi:eye-off-outline"} className="mr-1" />
-          <span>{showAnnotations ? "隐藏批注" : "显示批注"}</span>
+          <Icon icon="mdi:content-save-outline" className="mr-1" />
+          <span>{isSaving ? '保存中...' : '保存'}</span>
         </button>
         
         <div className="flex-1"></div>

@@ -69,11 +69,7 @@ export function useAppState() {
   const [optimizationText, setOptimizationText] = useState('')
   const [messages, setMessages] = useState<Message[]>([
     {
-      text: '角色1和角色2在不同场景下的互动',
-      isUser: true
-    },
-    {
-      text: '',
+      text: '暂无对话历史',
       isUser: false
     }
   ])
@@ -126,47 +122,13 @@ export function useAppState() {
           ? await generateDeepSeekContent(prompt)
           : await generateDeepSeekContent(prompt); // 暂时使用相同API，后续可以替换为Gemini的API
         
-        // 解析响应为三个选项
-        const lines = response.split('\n');
-        const options = [];
-        
-        let currentOption = { id: '', text: '' };
-        for (const line of lines) {
-          if (line.startsWith('选项') || line.startsWith('Option')) {
-            if (currentOption.id) {
-              options.push(currentOption);
-              if (options.length >= 3) break;
-            }
-            currentOption = { 
-              id: options.length + 1 + '', 
-              text: line
-            };
-          } else if (currentOption.id && line.trim()) {
-            currentOption.text += ' ' + line.trim();
-          }
-        }
-        
-        // 如果还有最后一个选项没添加
-        if (currentOption.id && options.length < 3) {
-          options.push(currentOption);
-        }
-        
-        // 如果选项少于3个，补充到3个
-        while (options.length < 3) {
-          options.push({
-            id: (options.length + 1) + '',
-            text: `选项${options.length + 1}: DeepSeek生成的额外选项...`
-          });
-        }
-        
-        setScenarioOptions(options);
-        setGeneratingScenarios(false);
-        
-        // 添加系统消息
+        // 直接将AI响应添加到消息中，而不解析为选项
         setMessages(prev => [...prev, {
-          text: `${selectedModel}模型和${selectedStyle}文风`,
+          text: response,
           isUser: false
         }]);
+        
+        setGeneratingScenarios(false);
         return;
       }
       
@@ -363,7 +325,33 @@ export function useAppState() {
     if (e.key === 'Enter' && (e.currentTarget as HTMLInputElement).value) {
       const inputValue = (e.currentTarget as HTMLInputElement).value;
       
-      // 添加用户消息
+      // 检查是否为数字输入，并且当前有剧情选项
+      if (/^\d+$/.test(inputValue) && scenarioOptions.length > 0) {
+        const optionIndex = parseInt(inputValue) - 1; // 转换为基于0的索引
+        
+        // 检查是否有对应的选项
+        if (optionIndex >= 0 && optionIndex < scenarioOptions.length) {
+          const selectedOption = scenarioOptions[optionIndex];
+          
+          // 添加用户选择消息
+          setMessages(prev => [...prev, {
+            text: `我选择了选项${inputValue}: ${selectedOption.text}`,
+            isUser: true
+          }]);
+          
+          // 设置选中的剧情
+          setSelectedScenario(selectedOption.id);
+          
+          // 清空选项，准备下一轮生成
+          setScenarioOptions([]);
+          
+          // 清空输入框
+          setOptimizationText('');
+          return;
+        }
+      }
+      
+      // 如果不是选择选项，则正常处理用户输入
       setMessages(prev => [...prev, {
         text: inputValue,
         isUser: true
@@ -380,10 +368,13 @@ export function useAppState() {
             isUser: false
           }]);
           
+          // 构建提示词，包含用户输入和文风
+          const prompt = `使用${selectedStyle}文风，基于以下用户输入生成内容：\n${inputValue}`;
+          
           // 调用相应的API
           const response = selectedModel === 'deepseekr1' 
-            ? await generateDeepSeekContent(inputValue)
-            : await generateDeepSeekContent(inputValue); // 暂时使用相同API，后续可以替换为Gemini的API
+            ? await generateDeepSeekContent(prompt)
+            : await generateDeepSeekContent(prompt); // 暂时使用相同API，后续可以替换为Gemini的API
           
           // 更新最后一条消息为实际响应
           setMessages(prev => {

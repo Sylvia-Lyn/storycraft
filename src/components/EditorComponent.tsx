@@ -127,6 +127,23 @@ const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({ 
     };
   }, [onSelect]);
   
+  // 监听键盘快捷键
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // 检测 Command+Z (Mac) 或 Ctrl+Z (Windows/Linux)
+      if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
+        e.preventDefault(); // 阻止默认的浏览器撤销行为
+        handleUndo();
+      }
+    };
+    
+    document.addEventListener('keydown', handleKeyDown);
+    
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [currentHistoryIndex, editorHistory]);
+  
   // 插入模板句式
   const insertTemplate = async (template: string) => {
     if (!editorRef.current) return;

@@ -118,7 +118,7 @@ const Sidebar = () => {
   const [works, setWorks] = useState<Work[]>([
     {
       id: 'work-1',
-      name: '《大纲》',
+      name: '大纲',
       views: {
         outline: true,      // 大纲视图
         characters: true,   // 角色剧本视图
@@ -508,7 +508,7 @@ const Sidebar = () => {
                                     className="w-5 h-5 mr-2 text-gray-500 cursor-pointer"
                                     onClick={() => toggleExpand(char.id)}
                                   />
-                                  <span className="flex-grow cursor-pointer">{char.name}</span>
+                                  <span className="flex-grow cursor-pointer">{char.name.includes(':') ? char.name : `${char.name}: xxx`}</span>
                                   <Icon 
                                     icon="ri:download-line" 
                                     className="w-5 h-5 ml-2 text-gray-500 cursor-pointer"
@@ -534,7 +534,7 @@ const Sidebar = () => {
                                           className="flex-grow cursor-pointer"
                                           onClick={() => handleScriptClick()}
                                         >
-                                          {script.name}
+                                          第{script.name}本
                                         </span>
                                         <Icon 
                                           icon="ri:download-line" 

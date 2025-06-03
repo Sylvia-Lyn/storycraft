@@ -102,18 +102,28 @@ export function useAppState() {
     // 构建提示词
     let prompt = '';
     
-    if (previousContent) {
-      prompt += `接上文：\n${previousContent}\n`;
-    }
-    
-    prompt += `以「${characterName}」的第二人称视角，使用${selectedStyle}文风，要求符合逻辑、不能有超现实内容，并输出三种可能性的结果，继续展开以下剧情：\n`;
-    
-    if (currentContent) {
-      prompt += `${currentContent}\n`;
+    if (previousContent || currentContent) {
+      prompt += `接上文，「分幕剧情」`;
     }
     
     if (userInput) {
-      prompt += `补充：${userInput}`;
+      prompt += `，补充：「${userInput}」`;
+    }
+    
+    // 如果文风不为空，添加文风参考
+    if (selectedStyle && selectedStyle !== '简洁') {
+      prompt += `\n（参考「知识库-${selectedStyle}」的叙事节奏和内容风格）`;
+    }
+    
+    prompt += `\n要求符合逻辑、不能有超现实内容，并输出三种可能性的结果：`;
+    
+    // 添加当前内容作为上下文
+    if (previousContent) {
+      prompt += `\n\n上文内容：\n${previousContent}`;
+    }
+    
+    if (currentContent) {
+      prompt += `\n\n当前剧情：\n${currentContent}`;
     }
     
     console.log('Generating scenarios with prompt:', prompt);

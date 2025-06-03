@@ -53,7 +53,11 @@ export function useAppState() {
   
   // 模型选择状态管理
   const [showModelDropdown, setShowModelDropdown] = useState(false)
-  const [selectedModel, setSelectedModel] = useState('deepseekr1')
+  // 从localStorage中读取保存的模型选择，如果没有则默认为deepseekr1
+  const [selectedModel, setSelectedModel] = useState(() => {
+    const savedModel = localStorage.getItem('selectedModel');
+    return savedModel && ['deepseekr1', 'Gemini'].includes(savedModel) ? savedModel : 'deepseekr1';
+  })
   const models = ['deepseekr1', 'Gemini']
   
   // 文风相关状态管理
@@ -173,18 +177,18 @@ export function useAppState() {
   };
   
   // 生成分幕剧情总结
-  const generateSceneSummaries = (
+  const generateSceneSummaries = async (
     content: string,
     characterName: string = '主角'
   ) => {
     if (!content || content.trim().length === 0) {
       alert("请先输入初稿内容");
-      return;
+      return [];
     }
 
     if (content.length > 50000) {
       alert("初稿内容不能超过5万字");
-      return;
+      return [];
     }
     
     // 将文本分成多个段落，每段2000-5000字
@@ -231,27 +235,47 @@ export function useAppState() {
       currentPos += cutPosition;
     }
     
-    // 模拟API调用，根据提示词生成场景总结
-    // 实际项目中应该调用后端API
-    const generatedScenes = segments.map((segment, index) => {
-      // 构建分幕剧情总结的提示词
-      // const prompt = `根据以下「${characterName}」的文本，以「${characterName}」的视角总结剧情，要求总结为一句话，
-      // 并且有明确原文对应，且剧情总结中要包含「${characterName}」和哪些角色在什么地方发生了什么事件，
-      // 有什么样的情感变化和什么样的结果`;
+    // 根据选择的模型调用相应的API生成场景总结
+    try {
+      const generatedScenes = await Promise.all(segments.map(async (segment, index) => {
+        // 构建分幕剧情总结的提示词
+        const prompt = `根据以下「${characterName}」的文本，以「${characterName}」的视角总结剧情，要求总结为一句话，
+        并且有明确原文对应，且剧情总结中要包含「${characterName}」和哪些角色在什么地方发生了什么事件，
+        有什么样的情感变化和什么样的结果\n\n文本内容：${segment.text}`;
+        
+        let summary = '';
+        
+        try {
+          // 根据选择的模型调用相应的API
+          console.log(`使用${selectedModel}模型生成场景总结`);
+          if (selectedModel === 'deepseekr1' || selectedModel === 'Gemini') {
+            const response = selectedModel === 'deepseekr1' 
+              ? await generateDeepSeekContent(prompt)
+              : await generateGeminiContent(prompt); // 使用Gemini API
+            summary = response;
+          } else {
+            // 如果没有选择有效模型，使用模拟数据
+            summary = `${characterName}在第${index + 1}段落中与其他角色发生互动，情节发展带来情感变化`;
+          }
+        } catch (error) {
+          console.error(`生成场景总结时出错:`, error);
+          // 出错时使用默认总结
+          summary = `${characterName}在第${index + 1}段落中与其他角色发生互动，情节发展带来情感变化`;
+        }
+        
+        return {
+          id: `scene-${index + 1}`,
+          summary,
+          startPos: segment.startPos,
+          endPos: segment.endPos
+        };
+      }));
       
-      // 这里模拟生成剧情总结
-      // 真实项目中，这部分应该调用API，传入段落内容和角色名
-      const summary = `${characterName}在第${index + 1}段落中与其他角色发生互动，情节发展带来情感变化`;
-      
-      return {
-        id: `scene-${index + 1}`,
-        summary,
-        startPos: segment.startPos,
-        endPos: segment.endPos
-      };
-    });
-    
-    return generatedScenes;
+      return generatedScenes;
+    } catch (error) {
+      console.error("生成场景总结时出错:", error);
+      return [];
+    }
   };
   
   // 生成优化文本
@@ -410,8 +434,12 @@ export function useAppState() {
   
   // 选择模型
   const selectModel = (model: string) => {
+    console.log(`切换模型到: ${model}`);
     setSelectedModel(model);
     setShowModelDropdown(false);
+    
+    // 记录模型选择到localStorage，确保页面刷新后仍然保持选择
+    localStorage.setItem('selectedModel', model);
   };
   
   // 切换文风下拉菜单

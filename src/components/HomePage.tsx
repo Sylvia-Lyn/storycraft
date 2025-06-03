@@ -35,13 +35,15 @@ function HomePage() {
           
           {/* 快速操作按钮 */}
           <div className="flex flex-col gap-4">
-            <Link 
-              to="/editor" 
+            <a 
+              href="https://writer.storyverse.pro/index" 
+              target="_blank"
+              rel="noopener noreferrer"
               className="bg-black text-white py-3 px-6 rounded-md text-center flex items-center justify-center gap-2"
             >
               <span>一键生成剧本内容</span>
               <span className="text-lg">›</span>
-            </Link>
+            </a>
             
             <Link 
               to="/" 

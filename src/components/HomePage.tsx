@@ -46,14 +46,14 @@ function HomePage() {
             </a>
             
             <Link 
-              to="/" 
+              to="/knowledge/knowledge-1" 
               className="border border-gray-300 bg-white py-3 px-6 rounded-md text-center"
             >
               导入我的作品
             </Link>
             
             <Link 
-              to="/" 
+              to="/knowledge/knowledge-1/upload" 
               className="border border-gray-300 bg-white py-3 px-6 rounded-md text-center"
             >
               上传我的素材

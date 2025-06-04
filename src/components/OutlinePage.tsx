@@ -1,5 +1,4 @@
 import Navigation from './Navigation';
-import Sidebar from './Sidebar';
 import OutlineContent from './OutlineContent';
 
 function OutlinePage() {
@@ -10,22 +9,18 @@ function OutlinePage() {
   };
 
   return (
-    <div className="w-full h-screen flex">
-      {/* 侧边栏 */}
-      <Sidebar />
+    <div className="flex-1 flex flex-col">
+      {/* 导航栏 */}
+      <div className="flex w-full pl-10">
+        <Navigation 
+          tabs={tabs} 
+          defaultTab="大纲" 
+          onTabChange={handleTabChange} 
+        />
+      </div>
       
-      {/* 主内容区 */}
-      <div className="flex-1 flex flex-col overflow-hidden pl-5">
-        {/* 导航栏 - 向左偏移 */}
-        <div className="flex w-full pl-10">
-          <Navigation 
-            tabs={tabs} 
-            defaultTab="大纲" 
-            onTabChange={handleTabChange} 
-          />
-        </div>
-        
-        {/* 使用封装的大纲内容组件 */}
+      {/* 使用封装的大纲内容组件 */}
+      <div className="flex-1">
         <OutlineContent />
       </div>
     </div>

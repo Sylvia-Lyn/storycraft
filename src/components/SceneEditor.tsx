@@ -14,7 +14,6 @@ import {
   MenuItem
 } from '@mui/material'
 import { Icon } from '@iconify/react'
-import Sidebar from './Sidebar'
 import Navigation from './Navigation'
 import PromptDisplay from './PromptDisplay'
 import InputPanel from './InputPanel'
@@ -348,12 +347,9 @@ function SceneEditor() {
   };
 
   return (
-    <div className="flex h-screen bg-white scene-editor-container">
-      {/* 左侧边栏 */}
-      <Sidebar />
-
+    <div className="flex bg-white scene-editor-container">
       {/* 右侧内容区域 */}
-      <div className="flex-1 flex flex-col h-screen">
+      <div className="flex-1 flex flex-col">
         {/* 顶部导航栏 */}
         <div className="border-b border-gray-200 flex-shrink-0">
           <Navigation 

@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Icon } from '@iconify/react'
-import Sidebar from './Sidebar'
 import Navigation from './Navigation'
 import AiInteractionSection from './AiInteractionSection'
 import SceneTableSection from './SceneTableSection'
@@ -45,7 +45,7 @@ const demoScenes: Scene[] = [
 ];
 
 // 分幕列表页面主组件
-function SceneList() {
+const SceneList = () => {
   const tabs = ['大纲', '角色', '关系', '章节', '分幕', '剧本'];
   const [isPlotView, setIsPlotView] = useState(true);
   const [selectedModel, setSelectedModel] = useState('claude35_sonnet2');
@@ -72,9 +72,9 @@ function SceneList() {
   };
 
   return (
-    <div className="flex h-screen bg-white overflow-hidden">
+    <div className="flex bg-white">
       {/* 左侧边栏 */}
-      <Sidebar />
+      {/* <Sidebar /> */}
 
       {/* 中间内容区域 */}
       <div className="flex-1 flex flex-col h-full max-w-[calc(100vw-300px)]">

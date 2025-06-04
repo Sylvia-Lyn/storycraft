@@ -1,7 +1,7 @@
-import Navigation from './Navigation';
-import Sidebar from './Sidebar';
-import { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { Icon } from '@iconify/react';
+import Navigation from './Navigation';
+import 'reactflow/dist/style.css';
 import ReactFlow, {
   MiniMap,
   Controls, 
@@ -9,14 +9,13 @@ import ReactFlow, {
   useNodesState,
   useEdgesState,
   addEdge,
-  Panel,
-  MarkerType,
-  NodeTypes,
   Connection,
   Edge,
-  Node
+  Node,
+  Panel,
+  MarkerType,
+  NodeTypes
 } from 'reactflow';
-import 'reactflow/dist/style.css';
 
 // 自定义节点类型的数据接口
 interface CharacterNodeData {
@@ -39,7 +38,15 @@ const nodeTypes: NodeTypes = {
   characterNode: characterNode
 };
 
-function RelationsPage() {
+interface Relationship {
+  id: string;
+  character1: string;
+  character2: string;
+  type: string;
+  description: string;
+}
+
+const RelationsPage: React.FC = () => {
   const tabs = ['大纲', '角色', '关系', '章节', '分幕', '剧本'];
   
   const handleTabChange = (tab: string) => {
@@ -183,12 +190,9 @@ function RelationsPage() {
   const [activeTool, setActiveTool] = useState('select');
 
   return (
-    <div className="w-full h-screen flex">
+    <div className="w-full flex">
       {/* 侧边栏 */}
-      <Sidebar />
-      
-      {/* 主内容区 */}
-      <div className="flex-1 flex flex-col overflow-hidden pl-5">
+      <div className="flex-1 flex flex-col pl-5">
         {/* 导航栏 - 向左偏移 */}
         <div className="flex w-full pl-10">
       <Navigation 

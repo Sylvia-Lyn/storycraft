@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom'
-import Sidebar from './Sidebar'
 import Navigation from './Navigation'
 
 function HomePage() {
@@ -12,13 +11,9 @@ function HomePage() {
   }
   
   return (
-    <div className="flex h-screen bg-gray-50">
-      {/* 左侧侧边栏 */}
-      <Sidebar />
-      
-      {/* 右侧内容区域 */}
-      <div className="flex-1 flex flex-col items-center justify-center">
-        <div className="max-w-2xl w-full px-4">
+    <div className="min-h-screen flex flex-col">
+      <div className="flex-1 flex flex-col items-center justify-center bg-gray-50 px-4 py-16">
+        <div className="max-w-2xl w-full">
           {/* 欢迎文本 */}
           <h1 className="text-3xl text-center font-normal text-gray-800 mb-16">
             Hello，选择一个方式，开始您的创作吧

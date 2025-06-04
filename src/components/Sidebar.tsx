@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react'
 import { Icon } from '@iconify/react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
+import downloadWork from './WorkDownloader'
 
 interface CreateKnowledgeModalProps {
   isOpen: boolean
@@ -300,16 +301,23 @@ const Sidebar = () => {
   
   // 处理知识库项目点击，导航到知识库详情页面
   const handleKnowledgeItemDetailClick = (knowledgeId: string) => {
-    navigate(`/knowledge/${knowledgeId}`)
-    toast(`正在跳转到知识库: ${knowledgeId}`)
+    const item = knowledgeItems.find(item => item.id === knowledgeId)
+    if (item) {
+      navigate(`/knowledge/${item.id}`)
+    }
   }
   
   // 处理知识库项菜单点击
+  // 假设添加一个新的状态变量来控制右侧页面显示
+  const [showKnowledgePageOnRight, setShowKnowledgePageOnRight] = useState(false);
+  
   const handleKnowledgeMenuClick = (e: React.MouseEvent, id: string) => {
-    e.stopPropagation()
-    setActiveMenuId(id === activeMenuId ? null : id)
-    setEditingKnowledgeId(null)
-    setEditingKnowledgeName('')
+  e.stopPropagation()
+  setActiveMenuId(id === activeMenuId ? null : id)
+  setEditingKnowledgeId(null)
+  setEditingKnowledgeName('')
+  // 添加显示右侧页面的逻辑
+  setShowKnowledgePageOnRight(true); 
   }
   
   // 处理知识库编辑
@@ -615,7 +623,7 @@ const Sidebar = () => {
         <div className="font-bold text-lg mt-6 mb-2 flex justify-between items-center hover:bg-gray-50 p-2 rounded-md">
           <span 
             className="cursor-pointer flex items-center" 
-            onClick={(e) => handleKnowledgeItemClick(e)}
+            onClick={handleKnowledgeItemClick}
           >
             <Icon 
               icon={showKnowledgeItems ? "ri:arrow-down-s-line" : "ri:arrow-right-s-line"} 
@@ -728,4 +736,4 @@ const Sidebar = () => {
   )
 }
 
-export default Sidebar 
+export default Sidebar

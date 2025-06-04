@@ -1,11 +1,27 @@
-import Navigation from './Navigation';
-import Sidebar from './Sidebar';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Icon } from '@iconify/react';
 import { Tabs, Tab, Box } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
+import Navigation from './Navigation';
 
-function CharactersPage() {
+// 角色类型定义
+interface Character {
+  id: string;
+  name: string;
+  avatar?: string;
+  description?: string;
+  details?: {
+    age?: string;
+    occupation?: string;
+    personality?: string;
+    background?: string;
+    appearance?: string;
+    goals?: string;
+    relationships?: string;
+  };
+}
+
+const CharactersPage: React.FC = () => {
   const tabs = ['大纲', '角色', '关系', '章节', '分幕', '剧本'];
   const characters = ['女1', '女2', '女3', '女4', '男1', '男2'];
   const [selectedCharacter, setSelectedCharacter] = useState(0); // 使用索引作为选中值
@@ -20,12 +36,9 @@ function CharactersPage() {
   };
 
   return (
-    <div className="w-full h-screen flex">
+    <div className="w-full flex">
       {/* 侧边栏 */}
-      <Sidebar />
-      
-      {/* 主内容区 */}
-      <div className="flex-1 flex flex-col overflow-hidden pl-5">
+      <div className="flex-1">
         {/* 导航栏 - 向左偏移 */}
         <div className="flex w-full pl-10">
       <Navigation 
@@ -325,7 +338,7 @@ function CharactersPage() {
         <div className="mb-8">
           <h3 className="font-bold mb-2">人物简介</h3>
           <p className="text-gray-700 mb-4">
-          大巫预言的“亡国公主”，蜕变为草原人众望所归的“草原之心”，落子果决而心志脱俗，以鹰隼之眼洞察人心，以狼王之勇统御万众，一统北方建立大燕，要江山更要挚爱
+          大巫预言的"亡国公主"，蜕变为草原人众望所归的"草原之心"，落子果决而心志脱俗，以鹰隼之眼洞察人心，以狼王之勇统御万众，一统北方建立大燕，要江山更要挚爱
           </p>
         </div>
 

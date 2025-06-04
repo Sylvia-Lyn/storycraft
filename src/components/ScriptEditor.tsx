@@ -1,7 +1,7 @@
 import { useRef, useEffect, useState } from 'react'
 import { Icon } from '@iconify/react'
-import Sidebar from './Sidebar'
 import MiddleSection from './MiddleSection'
+import ResultsSection from './ResultsSection'
 import { useAppState } from '../hooks/useAppState'
 import EditorComponent, { EditorComponentRef } from './EditorComponent'
 
@@ -109,7 +109,7 @@ function ContentArea() {
   };
 
   return (
-    <div className="flex-1 overflow-hidden flex flex-col h-full p-3 bg-white">
+    <div className="flex-1 flex flex-col p-3 bg-white">
       {/* 顶部标题和操作区 */}
       <div className="flex items-center justify-between mb-3">
           <div className="font-bold text-lg">初稿编辑</div>
@@ -140,7 +140,7 @@ function ContentArea() {
       </div>
 
       {/* Editor.js 编辑器 */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1">
         <EditorComponent 
           ref={editorRef}
           initialData={editorData}
@@ -175,10 +175,7 @@ function ContentArea() {
 
 function ScriptEditor() {
   return (
-    <div className="flex h-screen bg-white">
-      {/* 左侧边栏 */}
-      <Sidebar />
-
+    <div className="flex bg-white">
       {/* 中间操作台 */}
       <MiddleSection />
 

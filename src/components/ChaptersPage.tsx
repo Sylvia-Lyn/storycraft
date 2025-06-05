@@ -8,7 +8,7 @@ const ChaptersPage: React.FC = () => {
   const [selectedCharacter, setSelectedCharacter] = useState('女1');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   
-  const characterOptions = ['女1', '女二', '男1', '男二'];
+  const characterOptions = ['女一', '女二', '男一', '男二'];
 
   const handleCharacterSelect = (character: string) => {
     setSelectedCharacter(character);

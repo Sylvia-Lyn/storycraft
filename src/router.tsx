@@ -50,27 +50,15 @@ const router = createHashRouter([
       },
       {
         path: 'chapters',
-        element: (
-          <OptimizingFeatureWrapper targetPaths={['chapters']} redirectTo="editor">
-            <ChaptersPage />
-          </OptimizingFeatureWrapper>
-        )
+        element: <ChaptersPage />
       },
       {
         path: 'scenes',
-        element: (
-          <OptimizingFeatureWrapper targetPaths={['scenes']} redirectTo="editor">
-            <SceneList />
-          </OptimizingFeatureWrapper>
-        )
+        element: <SceneList />
       },
       {
         path: 'scenes/:sceneId',
-        element: (
-          <OptimizingFeatureWrapper targetPaths={['scenes']} redirectTo="editor">
-            <SceneEditor />
-          </OptimizingFeatureWrapper>
-        )
+        element: <SceneEditor />
       },
       {
         path: 'story-settings',

@@ -310,14 +310,28 @@ const Sidebar = () => {
   // 处理知识库项菜单点击
   // 假设添加一个新的状态变量来控制右侧页面显示
   const [showKnowledgePageOnRight, setShowKnowledgePageOnRight] = useState(false);
+  const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 })
   
   const handleKnowledgeMenuClick = (e: React.MouseEvent, id: string) => {
-  e.stopPropagation()
-  setActiveMenuId(id === activeMenuId ? null : id)
-  setEditingKnowledgeId(null)
-  setEditingKnowledgeName('')
-  // 添加显示右侧页面的逻辑
-  setShowKnowledgePageOnRight(true); 
+    e.stopPropagation()
+    
+    if (id === activeMenuId) {
+      setActiveMenuId(null)
+      return
+    }
+    
+    // 计算菜单位置
+    const rect = (e.target as HTMLElement).getBoundingClientRect()
+    setMenuPosition({
+      x: rect.right - 100, // 菜单宽度大约100px，所以向左偏移
+      y: rect.bottom + 5
+    })
+    
+    setActiveMenuId(id)
+    setEditingKnowledgeId(null)
+    setEditingKnowledgeName('')
+    // 添加显示右侧页面的逻辑
+    setShowKnowledgePageOnRight(true); 
   }
   
   // 处理知识库编辑
@@ -406,14 +420,27 @@ const Sidebar = () => {
       setActiveMenuId(null)
     }
     
+    const handleScroll = () => {
+      setActiveMenuId(null)
+    }
+    
     document.addEventListener('click', handleClickOutside)
+    // 监听侧边栏滚动事件
+    const sidebarElement = document.querySelector('.sidebar-container')
+    if (sidebarElement) {
+      sidebarElement.addEventListener('scroll', handleScroll)
+    }
+    
     return () => {
       document.removeEventListener('click', handleClickOutside)
+      if (sidebarElement) {
+        sidebarElement.removeEventListener('scroll', handleScroll)
+      }
     }
   }, [])
 
   return (
-    <div className="w-[280px] bg-white border-r border-gray-200 overflow-auto">
+    <div className="w-[280px] bg-white border-r border-gray-200 overflow-auto sidebar-container">
       <div className="p-4">
         <div className="flex items-center space-x-1 py-2 mb-6">
           <div className="w-3 h-3 rounded-full bg-gray-400"></div>
@@ -675,24 +702,6 @@ const Sidebar = () => {
                     className="w-5 h-5 text-gray-400 cursor-pointer"
                     onClick={(e) => handleKnowledgeMenuClick(e, item.id)}
                   />
-                  {activeMenuId === item.id && (
-                    <div className="absolute right-0 top-6 bg-white shadow-lg rounded-md py-1 z-10 w-24">
-                      <div 
-                        className="px-3 py-2 hover:bg-gray-100 cursor-pointer flex items-center"
-                        onClick={(e) => handleKnowledgeEdit(e, item)}
-                      >
-                        <Icon icon="ri:edit-line" className="w-4 h-4 mr-2" />
-                        <span>修改</span>
-                      </div>
-                      <div 
-                        className="px-3 py-2 hover:bg-gray-100 cursor-pointer flex items-center text-red-500"
-                        onClick={(e) => handleKnowledgeDelete(e, item.id)}
-                      >
-                        <Icon icon="ri:delete-bin-line" className="w-4 h-4 mr-2" />
-                        <span>删除</span>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
             ))}
@@ -732,6 +741,35 @@ const Sidebar = () => {
         onClose={() => setIsCreateModalOpen(false)}
         onConfirm={handleKnowledgeBaseCreate}
       />
+      
+      {/* 全局右键菜单 */}
+      {activeMenuId && (
+        <div 
+          className="fixed bg-white shadow-lg rounded-md py-1 z-50 w-24"
+          style={{
+            left: `${menuPosition.x}px`,
+            top: `${menuPosition.y}px`
+          }}
+        >
+          <div 
+            className="px-3 py-2 hover:bg-gray-100 cursor-pointer flex items-center"
+            onClick={(e) => {
+              const item = knowledgeItems.find(k => k.id === activeMenuId)
+              if (item) handleKnowledgeEdit(e, item)
+            }}
+          >
+            <Icon icon="ri:edit-line" className="w-4 h-4 mr-2" />
+            <span>修改</span>
+          </div>
+          <div 
+            className="px-3 py-2 hover:bg-gray-100 cursor-pointer flex items-center text-red-500"
+            onClick={(e) => handleKnowledgeDelete(e, activeMenuId)}
+          >
+            <Icon icon="ri:delete-bin-line" className="w-4 h-4 mr-2" />
+            <span>删除</span>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

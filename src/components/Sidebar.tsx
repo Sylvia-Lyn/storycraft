@@ -230,7 +230,7 @@ const Sidebar = () => {
 
   // 处理添加新作品
   const handleAddWork = () => {
-    showToast()
+    navigate('/')
   }
 
   // 处理下载作品
@@ -289,7 +289,7 @@ const Sidebar = () => {
   // 处理工作流其他按钮点击
   const handleWorkflowOtherAction = (e: React.MouseEvent) => {
     e.stopPropagation()
-    showToast()
+    navigate('/story-settings')
   }
 
   // 处理知识库项点击
@@ -727,7 +727,7 @@ const Sidebar = () => {
             className="w-5 h-5 text-gray-500 cursor-pointer"
             onClick={(e) => {
               e.stopPropagation()
-              showToast()
+              navigate('/story-settings')
             }}
           />
         </div>

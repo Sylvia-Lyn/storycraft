@@ -9,6 +9,7 @@ import ChaptersPage from './components/ChaptersPage'
 import HomePage from './components/HomePage'
 import KnowledgeBasePage from './components/KnowledgeBasePage'
 import KnowledgeUploadPage from './components/KnowledgeUploadPage'
+import StorySettingsPage from './components/StorySettingsPage'
 import OptimizingFeatureWrapper from './components/OptimizingFeatureWrapper'
 import App from './App'
 
@@ -70,6 +71,10 @@ const router = createHashRouter([
             <SceneEditor />
           </OptimizingFeatureWrapper>
         )
+      },
+      {
+        path: 'story-settings',
+        element: <StorySettingsPage />
       },
       {
         path: 'knowledge/:knowledgeId',

@@ -164,7 +164,7 @@ function OutlineContent() {
   const handleInputBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     // 延迟隐藏建议，允许用户点击建议
     setTimeout(() => {
-      if (!e.currentTarget.contains(document.activeElement)) {
+      if (e.currentTarget && !e.currentTarget.contains(document.activeElement)) {
         setShowSuggestions(false);
       }
     }, 200);

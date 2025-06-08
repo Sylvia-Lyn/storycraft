@@ -157,7 +157,7 @@ const Sidebar = () => {
     }
     // 如果没有保存的数据，返回默认测试数据
     return [
-      { id: 'knowledge-1', name: '测试知识库', documents: 6, ideas: 0 }
+      { id: 'knowledge-1', name: '测试知识库', documents: 3, ideas: 0 }
     ]
   }
 

@@ -9,7 +9,7 @@ function OutlineContent() {
   const [generatedResults, setGeneratedResults] = useState<string[]>(['', '', '']);
   const [outlineStyle, setOutlineStyle] = useState('古风情感');
   const [keySettings, setKeySettings] = useState('逆向时空');
-  const [referenceCase, setReferenceCase] = useState('《古相思曲》- 大纲  《扶剑惊风》- 大纲');
+  const [referenceCase, setReferenceCase] = useState('《古相思曲》- 大纲');
   const [selectedModel, setSelectedModel] = useState('deepseekr1');
   const [backgroundContent, setBackgroundContent] = useState('正在输入内容...');
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -155,6 +155,11 @@ function OutlineContent() {
     }
   };
 
+  const handleReferenceCaseChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    setReferenceCase(value);
+  };
+
   // 选择建议
   const selectSuggestion = (suggestion: string) => {
     setInputText(suggestion);
@@ -224,11 +229,14 @@ function OutlineContent() {
               <select 
                 className="appearance-none border border-gray-300 rounded-md px-4 py-2 pr-8 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
                 value={referenceCase}
-                onChange={(e) => setReferenceCase(e.target.value)}
+                onChange={handleReferenceCaseChange}
               >
-                <option>《古相思曲》- 大纲  《扶剑惊风》- 大纲</option>
-                <option>《倾城之恋》- 大纲  《花间梦》- 大纲</option>
-                <option>《谍影重重》- 大纲  《夜雨声烦》- 大纲</option>
+                <option value="《古相思曲》- 大纲">《古相思曲》- 大纲</option>
+                <option value="《扶剑惊风》- 大纲">《扶剑惊风》- 大纲</option>
+                <option value="《倾城之恋》- 大纲">《倾城之恋》- 大纲</option>
+                <option value="《花间梦》- 大纲">《花间梦》- 大纲</option>
+                <option value="《谍影重重》- 大纲">《谍影重重》- 大纲</option>
+                <option value="《夜雨声烦》- 大纲">《夜雨声烦》- 大纲</option>
               </select>
               <Icon 
                 icon="ri:arrow-down-s-line"

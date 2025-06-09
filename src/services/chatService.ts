@@ -32,7 +32,11 @@ export class ChatService {
 
     constructor() {
         this.vectorStore = new VectorStore();
-        this.embeddingManager = new EmbeddingManager();
+        this.embeddingManager = new EmbeddingManager(
+            process.env.DEEPSEEK_API_KEY || 'mock-api-key',
+            process.env.DEEPSEEK_API_BASE || 'https://api.deepseek.com',
+            process.env.EMBEDDING_MODEL || 'mock-embedding-model'
+        );
         this.qaGenerator = new QAGenerator();
     }
 

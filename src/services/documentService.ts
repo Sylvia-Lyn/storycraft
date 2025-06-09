@@ -1,6 +1,6 @@
 import { DocumentProcessor } from './documentProcessor';
-import { EmbeddingManager } from './embeddingManager';
-import { VectorStore } from './vectorStore';
+import { EmbeddingManager } from '../services/embeddingManager';
+import { VectorStore } from '../services/vectorStore';
 
 export interface DocumentStats {
     fileName: string;
@@ -24,7 +24,11 @@ export class DocumentService {
 
     constructor() {
         this.documentProcessor = new DocumentProcessor();
-        this.embeddingManager = new EmbeddingManager();
+        this.embeddingManager = new EmbeddingManager(
+            process.env.DEEPSEEK_API_KEY || 'mock-api-key',
+            process.env.DEEPSEEK_API_BASE || 'https://api.deepseek.com',
+            process.env.EMBEDDING_MODEL || 'mock-embedding-model'
+        );
         this.vectorStore = new VectorStore();
     }
 

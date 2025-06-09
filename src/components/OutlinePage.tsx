@@ -1,5 +1,6 @@
 import Navigation from './Navigation';
 import OutlineContent from './OutlineContent';
+import AnnouncementBar from './AnnouncementBar';
 
 function OutlinePage() {
   const tabs = ['大纲', '角色', '关系', '章节', '分幕', '剧本'];
@@ -10,6 +11,11 @@ function OutlinePage() {
 
   return (
     <div className="flex-1 flex flex-col">
+      {/* 公告栏 */}
+      <div className="w-full">
+        <AnnouncementBar onTabClick={handleTabChange} />
+      </div>
+
       {/* 导航栏 */}
       <div className="flex w-full pl-10">
         <Navigation 

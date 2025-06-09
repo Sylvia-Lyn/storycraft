@@ -543,7 +543,9 @@ const Sidebar = () => {
                                     className="w-5 h-5 mr-2 text-gray-500 cursor-pointer"
                                     onClick={() => toggleExpand(char.id)}
                                   />
-                                  <span className="flex-grow cursor-pointer">{char.name.includes(':') ? char.name : `${char.name}: xxx`}</span>
+                                  <span className="flex-grow cursor-pointer">
+  {char.name.includes(':') ? char.name : `${char.name}`}
+</span>
                                   <Icon 
                                     icon="ri:download-line" 
                                     className="w-5 h-5 ml-2 text-gray-500 cursor-pointer"
@@ -569,7 +571,7 @@ const Sidebar = () => {
                                           className="flex-grow cursor-pointer"
                                           onClick={() => handleScriptClick()}
                                         >
-                                          第{script.name}本
+                                          {script.name}
                                         </span>
                                         <Icon 
                                           icon="ri:download-line" 

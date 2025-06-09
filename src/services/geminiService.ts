@@ -107,12 +107,33 @@ export async function generateGeminiContent(prompt: string): Promise<string> {
           contents: [{
             role: "user",
             parts: [{
-              text: prompt
+              text: `请根据以下用户反馈，提供三种不同的剧情优化方向。每个方向需要包含标题、描述和具体建议。请使用JSON格式返回，格式如下：
+{
+  "suggestions": [
+    {
+      "title": "方向一的标题",
+      "description": "方向一的详细描述",
+      "suggestions": ["具体建议1", "具体建议2", "具体建议3"]
+    },
+    {
+      "title": "方向二的标题",
+      "description": "方向二的详细描述",
+      "suggestions": ["具体建议1", "具体建议2", "具体建议3"]
+    },
+    {
+      "title": "方向三的标题",
+      "description": "方向三的详细描述",
+      "suggestions": ["具体建议1", "具体建议2", "具体建议3"]
+    }
+  ]
+}
+
+用户反馈：${prompt}`
             }]
           }],
           generationConfig: {
             temperature: 0.7,
-            maxOutputTokens: 2048,  // 增加输出token限制
+            maxOutputTokens: 4096,  // 进一步增加输出token限制
             topP: 0.95,
             topK: 40,
             candidateCount: 1
@@ -171,15 +192,22 @@ export async function generateGeminiContent(prompt: string): Promise<string> {
 
       // 根据Gemini API的响应格式提取内容
       if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
-        return data.candidates[0].content.parts[0].text;
+        const responseText = data.candidates[0].content.parts[0].text;
+        try {
+          // 尝试解析JSON响应
+          const jsonResponse = JSON.parse(responseText);
+          if (jsonResponse.suggestions && Array.isArray(jsonResponse.suggestions)) {
+            return responseText; // 返回JSON字符串
+          }
+        } catch (e) {
+          console.error("解析JSON响应失败:", e);
+        }
+        return responseText;
       } else if (data.candidates?.[0]?.text) {
-        // 处理可能的替代响应格式
         return data.candidates[0].text;
       } else if (data.text) {
-        // 处理直接返回text的情况
         return data.text;
       } else if (data.candidates?.[0]?.content?.role === 'model') {
-        // 处理只有role的情况
         console.log("模型返回了空响应，可能是token限制问题");
         throw new Error('模型返回了空响应，请尝试减少输入长度或调整token限制');
       } else {

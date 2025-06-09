@@ -157,7 +157,7 @@ const Sidebar = () => {
     }
     // 如果没有保存的数据，返回默认测试数据
     return [
-      { id: 'knowledge-1', name: '测试知识库', documents: 3, ideas: 0 }
+      { id: 'knowledge-1', name: '知识库', documents: 3, ideas: 0 }
     ]
   }
 
@@ -520,7 +520,7 @@ const Sidebar = () => {
                             className="w-5 h-5 mr-2 text-gray-500 cursor-pointer"
                             onClick={() => toggleExpand(`${work.id}-characters`)}
                           />
-                          <span className="flex-grow cursor-pointer">角色剧本</span>
+                          <span className="flex-grow cursor-pointer">剧本1</span>
                           <Icon 
                             icon="ri:download-line" 
                             className="w-5 h-5 ml-2 text-gray-500 cursor-pointer"

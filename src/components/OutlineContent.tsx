@@ -1,6 +1,7 @@
 import { Icon } from '@iconify/react';
 import { Link } from 'react-router-dom';
 import { useState, useRef, useEffect } from 'react';
+import { toast } from 'react-hot-toast';
 
 function OutlineContent() {
   // 添加状态管理
@@ -75,25 +76,20 @@ function OutlineContent() {
   const handleSubmit = async () => {
     if (!inputText.trim() || isGenerating) return;
     
-    setIsGenerating(true);
-    setShowSuggestions(false);
-    
     try {
-      // 构建 prompt
-      const prompt = buildPrompt(inputText.trim());
-      console.log('生成的prompt:', prompt);
+      setIsGenerating(true);
       
-      // 模拟 AI 生成（这里需要替换为实际的 AI API 调用）
-      const results = await generateContent(prompt);
+      // 直接调用生成服务
+      const results = await generateContent(inputText);
       setGeneratedResults(results);
       
-      // 清空输入框
-      setInputText('');
     } catch (error) {
-      console.error('生成内容失败:', error);
-      setGeneratedResults(['生成失败，请重试', '生成失败，请重试', '生成失败，请重试']);
+      console.error('处理输入失败:', error);
+      toast.error('处理失败，请重试');
     } finally {
       setIsGenerating(false);
+      setInputText('');
+      inputRef.current?.blur();
     }
   };
 
@@ -173,7 +169,7 @@ function OutlineContent() {
   const handleInputBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     // 延迟隐藏建议，允许用户点击建议
     setTimeout(() => {
-      if (!e.currentTarget.contains(document.activeElement)) {
+      if (e.currentTarget && !e.currentTarget.contains(document.activeElement)) {
         setShowSuggestions(false);
       }
     }, 200);
@@ -308,7 +304,7 @@ function OutlineContent() {
               {isGenerating ? (
                 <span className="flex items-center">
                   <Icon icon="ri:loader-4-line" className="animate-spin mr-2" />
-                  正在生成内容...
+             正在生成内容...
                 </span>
               ) : (
                 generatedResults[2] || '正在生成内容...'
@@ -342,7 +338,7 @@ function OutlineContent() {
               }`}
               title={inputText.trim() ? '点击发送或按回车键' : '请输入内容'}
             >
-              <Icon 
+            <Icon 
                 icon={isGenerating ? "ri:loader-4-line" : "ri:corner-down-right-fill"} 
                 className={isGenerating ? "animate-spin" : ""}
               />
@@ -370,6 +366,8 @@ function OutlineContent() {
             )}
           </div>
         </div>
+
+
       </div>
 
       {/* 右侧内容展示区 */}
@@ -379,7 +377,7 @@ function OutlineContent() {
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold">背景内容</h2>
           </div>
-                  
+          
           <div className="border border-gray-200 rounded-md p-4 h-[200px] overflow-y-auto">
             <textarea
               className="w-full h-full border-none outline-none resize-none text-gray-800"

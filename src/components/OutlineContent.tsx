@@ -378,7 +378,6 @@ function OutlineContent() {
         <div className="mb-8">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold">背景内容</h2>
-            <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-md">点击查看Prompt模板</div>
           </div>
                   
           <div className="border border-gray-200 rounded-md p-4 h-[200px] overflow-y-auto">

@@ -31,13 +31,13 @@ function ResultsSection({
           <p className="mt-2 text-gray-600">正在使用 {selectedModel} 生成回复...</p>
         </div>
       ) : optimizationResults.length > 0 ? (
-        <div 
-          className="space-y-3 mb-4" 
-          tabIndex={0} 
+        <div
+          className="space-y-3 mb-4"
+          tabIndex={0}
           ref={resultsContainerRef}
         >
           {optimizationResults.map((option) => (
-            <div 
+            <div
               key={option.id}
               className="border border-gray-200 rounded-lg p-3 cursor-pointer hover:border-gray-400 hover:bg-gray-50 transition-colors overflow-hidden relative group"
               onClick={(e) => {
@@ -50,10 +50,10 @@ function ResultsSection({
               }}
               onDoubleClick={() => applyOptimizedText(option.text)}
             >
-              <div 
+              <div
                 className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
               >
-                <button 
+                <button
                   className="p-1 bg-gray-100 rounded-md hover:bg-gray-200 text-gray-600"
                   onClick={(e) => {
                     e.stopPropagation(); // 阻止事件冒泡
@@ -65,12 +65,11 @@ function ResultsSection({
                   <Icon icon="mdi:content-copy" className="w-4 h-4" />
                 </button>
               </div>
-              <p 
-                className="whitespace-normal break-words" 
+              <p
+                className="whitespace-normal break-words indent-8 leading-relaxed"
                 style={{ userSelect: 'text' }}
               >
-                <span className="font-medium">{option.id}. </span>
-                {option.text.replace(/^\d+\.\s+/, '')}
+                {option.text}
               </p>
             </div>
           ))}

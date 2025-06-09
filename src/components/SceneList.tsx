@@ -5,6 +5,7 @@ import Navigation from './Navigation'
 import AiInteractionSection from './AiInteractionSection'
 import SceneTableSection from './SceneTableSection'
 import ViewToggleSwitch from './ViewToggleSwitch'
+import { useAppState } from '../hooks/useAppState'
 
 interface Scene {
   id: string;
@@ -20,8 +21,8 @@ interface Scene {
 
 // 示例数据
 const demoScenes: Scene[] = [
-    { 
-      id: '1', 
+  {
+    id: '1',
     timeline: '长熙xx年【背景】',
     template: '多年之后我在你的婚宴之上见到你',
     plot: '花间客在张嘉敏的订婚宴之上见到曾经爱过的花间客（主弦）\n张嘉敏失去了记忆（副弦）\n张嘉敏因为和花间客接触而昏迷（发展）\n张嘉敏对花间客和自己过去的联系产生好奇（结局）',
@@ -30,9 +31,9 @@ const demoScenes: Scene[] = [
     emotionDevelopment: '• 高亮: 主弦的张力很满，副弦一般，后面几个音符时看不出门道。\n• 衔接: 1，更糟糕的是……\n2，在剩下的时间里……',
     characterRelationships: '1. 苏飞卿与父母：传统的将门子弟，父严母慈，备受期待\n2. 苏飞卿与太子：表兄弟关系，互相信任',
     characterEffect: '这些情节共同构建了一个充满政治阴谋、战争威胁和美爱情的故事背景。\n1. 展现了苏飞卿年少轻狂却情重义的性格\n2. 凸显了阿鹰身份的神秘性和复杂性'
-    },
-    { 
-      id: '2', 
+  },
+  {
+    id: '2',
     timeline: '长熙二年春',
     template: '背景模板',
     plot: '示例剧情描述',
@@ -45,22 +46,38 @@ const demoScenes: Scene[] = [
 ];
 
 // 分幕列表页面主组件
-const SceneList = () => {
+export default function SceneList() {
   const tabs = ['大纲', '角色', '关系', '章节', '分幕', '剧本'];
   const [isPlotView, setIsPlotView] = useState(true);
   const [selectedModel, setSelectedModel] = useState('claude35_sonnet2');
   const [userInput, setUserInput] = useState('');
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
-  
+
+  const {
+    selectedModel: appStateSelectedModel,
+    setSelectedModel: appStateSetSelectedModel,
+    userInput: appStateUserInput,
+    setUserInput: appStateSetUserInput,
+    handleKeyDown: appStateHandleKeyDown,
+    aiSuggestions: appStateAiSuggestions,
+    selectModel: appStateSelectModel
+  } = useAppState();
+
+  console.log(`[SceneList] 组件渲染，当前selectedModel: ${appStateSelectedModel}`);
+  console.log(`[SceneList] selectModel函数是否存在: ${!!appStateSelectModel}`);
+
+  // 从useAppState获取selectModel函数
+  const { selectModel } = useAppState();
+
   // 模拟生成AI建议
   const generateSuggestions = () => {
     if (!userInput.trim()) return;
-    
+
     // 实际项目中应调用API获取建议
     const suggestions = [
       "1. xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
     ];
-    
+
     setAiSuggestions(suggestions);
   };
 
@@ -81,16 +98,16 @@ const SceneList = () => {
         <div className="flex items-center px-4 pt-4">
           {/* 顶部导航 */}
           <div className="flex-1">
-            <Navigation 
-              tabs={tabs} 
-              defaultTab="分幕" 
+            <Navigation
+              tabs={tabs}
+              defaultTab="分幕"
               onTabChange={(tab) => console.log(tab)}
             />
           </div>
-          
+
           {/* 剧情视图开关 */}
           <div className="ml-4">
-            <ViewToggleSwitch 
+            <ViewToggleSwitch
               isEnabled={isPlotView}
               onChange={setIsPlotView}
               leftLabel="角色视图"
@@ -98,19 +115,20 @@ const SceneList = () => {
             />
           </div>
         </div>
-        
+
         {/* 表格区域 */}
         <SceneTableSection scenes={demoScenes} />
-        
+
         {/* 底部AI交互区域 */}
         <AiInteractionSection
-          selectedModel={selectedModel}
-          setSelectedModel={setSelectedModel}
-          userInput={userInput}
-          setUserInput={setUserInput}
-          handleKeyDown={handleKeyDown}
-          aiSuggestions={aiSuggestions}
+          selectedModel={appStateSelectedModel}
+          setSelectedModel={appStateSetSelectedModel}
+          userInput={appStateUserInput}
+          setUserInput={appStateSetUserInput}
+          handleKeyDown={appStateHandleKeyDown}
+          aiSuggestions={appStateAiSuggestions}
           inputPlaceholder="这段内容不好？点击单元格，告诉我如何优化，如：xxxxxx"
+          selectModel={appStateSelectModel}
         />
       </div>
 
@@ -128,6 +146,4 @@ const SceneList = () => {
       </div>
     </div>
   )
-}
-
-export default SceneList 
+} 

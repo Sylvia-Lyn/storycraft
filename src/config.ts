@@ -23,7 +23,7 @@ interface Config {
 const config: Config = {
     DEEPSEEK_API_KEY: import.meta.env.VITE_DEEPSEEK_API_KEY || 'sk-657e30eb77ba48e0834a0821dcd8279f',
     DEEPSEEK_API_BASE: import.meta.env.VITE_DEEPSEEK_API_BASE || 'https://api.deepseek.com/v1',
-    GEMINI_API_KEY: import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyDbzLSTEa1Y3W_dC_pfrHOFQ8Sa1n-jcPU',
+    GEMINI_API_KEY: import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyCt99dDlxwATM16d3YeqnhayuaSKe3ehOw',
     GEMINI_API_BASE: import.meta.env.VITE_GEMINI_API_BASE || 'https://generativelanguage.googleapis.com',
     QDRANT_URL: import.meta.env.VITE_QDRANT_URL || 'https://eb24099c-54e1-4fd9-9a66-1a0dcc65d895.eu-west-2-0.aws.cloud.qdrant.io',
     QDRANT_API_KEY: import.meta.env.VITE_QDRANT_API_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3MiOiJtIn0.L7WJflCWFN1-XanTthshcDqXFjD8usge2Hwfli8YYJY',

@@ -49,25 +49,52 @@ const demoScenes: Scene[] = [
 export default function SceneList() {
   const tabs = ['大纲', '角色', '关系', '章节', '分幕', '剧本'];
   const [isPlotView, setIsPlotView] = useState(true);
-  const [selectedModel, setSelectedModel] = useState('claude35_sonnet2');
-  const [userInput, setUserInput] = useState('');
-  const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
-
+  
+  // 从useAppState获取所有需要的状态和方法
   const {
-    selectedModel: appStateSelectedModel,
-    setSelectedModel: appStateSetSelectedModel,
-    userInput: appStateUserInput,
-    setUserInput: appStateSetUserInput,
-    handleKeyDown: appStateHandleKeyDown,
-    aiSuggestions: appStateAiSuggestions,
-    selectModel: appStateSelectModel
+    selectedModel,
+    selectModel,
+    messages,
+    handleKeyDown,
+    selectedTab,
+    setSelectedTab: handleTabClick,
+    models,
+    showModelDropdown,
+    toggleModelDropdown,
+    selectedStyle,
+    styles,
+    showStyleDropdown,
+    toggleStyleDropdown,
+    selectStyle,
+    generatingScenarios,
+    scenarioOptions,
+    selectedScenario,
+    generateScenarioOptions,
+    selectScenario,
+    scenes,
+    setScenes,
+    selectedScene,
+    setSelectedScene,
+    characterName,
+    setCharacterName,
+    generateSceneSummaries,
+    selectedDraftText,
+    setSelectedDraftText,
+    optimizationPrompt,
+    setOptimizationPrompt,
+    optimizedResults,
+    isOptimizing,
+    generateOptimizedText,
+    optimizationText,
+    setOptimizationText
   } = useAppState();
-
-  console.log(`[SceneList] 组件渲染，当前selectedModel: ${appStateSelectedModel}`);
-  console.log(`[SceneList] selectModel函数是否存在: ${!!appStateSelectModel}`);
-
-  // 从useAppState获取selectModel函数
-  const { selectModel } = useAppState();
+  
+  // 本地状态
+  const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
+  const [userInput, setUserInput] = useState('');
+  
+  console.log(`[SceneList] 组件渲染，当前selectedModel: ${selectedModel}`);
+  console.log(`[SceneList] selectModel函数是否存在: ${!!selectModel}`);
 
   // 模拟生成AI建议
   const generateSuggestions = () => {
@@ -81,12 +108,7 @@ export default function SceneList() {
     setAiSuggestions(suggestions);
   };
 
-  // 处理输入框回车事件
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && userInput.trim()) {
-      generateSuggestions();
-    }
-  };
+  // 使用useAppState中的handleKeyDown处理键盘事件
 
   return (
     <div className="flex bg-white">
@@ -121,14 +143,14 @@ export default function SceneList() {
 
         {/* 底部AI交互区域 */}
         <AiInteractionSection
-          selectedModel={appStateSelectedModel}
-          setSelectedModel={appStateSetSelectedModel}
-          userInput={appStateUserInput}
-          setUserInput={appStateSetUserInput}
-          handleKeyDown={appStateHandleKeyDown}
-          aiSuggestions={appStateAiSuggestions}
+          selectedModel={selectedModel}
+          setSelectedModel={selectModel}
+          userInput={userInput}
+          setUserInput={setUserInput}
+          handleKeyDown={handleKeyDown}
+          aiSuggestions={aiSuggestions}
           inputPlaceholder="这段内容不好？点击单元格，告诉我如何优化，如：xxxxxx"
-          selectModel={appStateSelectModel}
+          selectModel={selectModel}
         />
       </div>
 

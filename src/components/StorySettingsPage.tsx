@@ -169,7 +169,7 @@ const StorySettingsPage = () => {
           <textarea
             value={storyContent}
             onChange={(e) => setStoryContent(e.target.value)}
-            placeholder="请输入故事内容，至少1000字"
+            placeholder="在左侧完成故事设定后，点击“生成故事”按钮，系统将在这里为您生成内容"
             className="w-full h-full resize-none focus:outline-none text-gray-700 leading-relaxed"
             style={{ minHeight: 'calc(100vh - 200px)' }}
           />

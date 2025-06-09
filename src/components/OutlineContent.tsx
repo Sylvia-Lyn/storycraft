@@ -10,7 +10,7 @@ function OutlineContent() {
   const [generatedResults, setGeneratedResults] = useState<string[]>(['', '', '']);
   const [outlineStyle, setOutlineStyle] = useState('古风情感');
   const [keySettings, setKeySettings] = useState('逆向时空');
-  const [referenceCase, setReferenceCase] = useState('《古相思曲》- 大纲  《扶剑惊风》- 大纲');
+  const [referenceCase, setReferenceCase] = useState('《古相思曲》- 大纲');
   const [selectedModel, setSelectedModel] = useState('deepseekr1');
   const [backgroundContent, setBackgroundContent] = useState('正在输入内容...');
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -151,6 +151,11 @@ function OutlineContent() {
     }
   };
 
+  const handleReferenceCaseChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    setReferenceCase(value);
+  };
+
   // 选择建议
   const selectSuggestion = (suggestion: string) => {
     setInputText(suggestion);
@@ -220,11 +225,14 @@ function OutlineContent() {
               <select 
                 className="appearance-none border border-gray-300 rounded-md px-4 py-2 pr-8 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
                 value={referenceCase}
-                onChange={(e) => setReferenceCase(e.target.value)}
+                onChange={handleReferenceCaseChange}
               >
-                <option>《古相思曲》- 大纲  《扶剑惊风》- 大纲</option>
-                <option>《倾城之恋》- 大纲  《花间梦》- 大纲</option>
-                <option>《谍影重重》- 大纲  《夜雨声烦》- 大纲</option>
+                <option value="《古相思曲》- 大纲">《古相思曲》- 大纲</option>
+                <option value="《扶剑惊风》- 大纲">《扶剑惊风》- 大纲</option>
+                <option value="《倾城之恋》- 大纲">《倾城之恋》- 大纲</option>
+                <option value="《花间梦》- 大纲">《花间梦》- 大纲</option>
+                <option value="《谍影重重》- 大纲">《谍影重重》- 大纲</option>
+                <option value="《夜雨声烦》- 大纲">《夜雨声烦》- 大纲</option>
               </select>
               <Icon 
                 icon="ri:arrow-down-s-line"
@@ -368,7 +376,6 @@ function OutlineContent() {
         <div className="mb-8">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold">背景内容</h2>
-            <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-md">点击查看Prompt模板</div>
           </div>
           
           <div className="border border-gray-200 rounded-md p-4 h-[200px] overflow-y-auto">

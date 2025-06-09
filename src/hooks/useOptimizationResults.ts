@@ -96,7 +96,7 @@ export function useOptimizationResults() {
     prompt += `用户反馈：${feedbackText}\n\n`;
 
     // 添加指令
-    prompt += `根据以上上下文，请提供三种不同的剧情优化方向，每个方向具有创意性和连贯性，符合角色设定和故事逻辑。`;
+    prompt += `你是一名擅长写作的大师，请根据以上的用户要求，生成文本。直接写文本，不要添加任何解释。`;
 
     try {
       console.log(`准备调用API，使用模型: ${selectedModel}`);
@@ -114,40 +114,23 @@ export function useOptimizationResults() {
 
       console.log(`${selectedModel} API返回:`, response);
 
-      // 解析API返回的内容，提取三个建议
+      // 解析API返回的内容
       const content = response;
 
-      // 解析内容，提取三个建议
-      const suggestions = content
-        .split(/\n\s*\d+[\.\)]\s+/)
-        .filter((item: string) => item.trim().length > 0)
-        .slice(0, 3)  // 确保只有3个结果
-        .map((suggestion: string) => suggestion.trim());
-
-      // 将提取的建议转换为选项格式
-      const results = suggestions.map((suggestion: string, i: number) => ({
-        id: String(i + 1),
-        text: `${i + 1}. ${suggestion}`
-      }));
-
-      // 如果没有得到足够的建议，添加一些默认选项
-      while (results.length < 3) {
-        results.push({
-          id: String(results.length + 1),
-          text: `${results.length + 1}. 抱歉，我无法为您提供更多的建议。`
-        });
-      }
-
-      console.log("格式化后的建议:", results);
+      // 将响应转换为单个结果
+      const result = {
+        id: '1',
+        text: content
+      };
 
       // 添加到缓存
       setResponseCache(prev => ({
         ...prev,
-        [cacheKey]: results
+        [cacheKey]: [result]
       }));
 
       // 更新结果
-      setOptimizationResults(results);
+      setOptimizationResults([result]);
 
     } catch (error: any) {
       console.error('生成优化内容失败:', error);

@@ -107,33 +107,12 @@ export async function generateGeminiContent(prompt: string): Promise<string> {
           contents: [{
             role: "user",
             parts: [{
-              text: `请根据以下用户反馈，提供三种不同的剧情优化方向。每个方向需要包含标题、描述和具体建议。请使用JSON格式返回，格式如下：
-{
-  "suggestions": [
-    {
-      "title": "方向一的标题",
-      "description": "方向一的详细描述",
-      "suggestions": ["具体建议1", "具体建议2", "具体建议3"]
-    },
-    {
-      "title": "方向二的标题",
-      "description": "方向二的详细描述",
-      "suggestions": ["具体建议1", "具体建议2", "具体建议3"]
-    },
-    {
-      "title": "方向三的标题",
-      "description": "方向三的详细描述",
-      "suggestions": ["具体建议1", "具体建议2", "具体建议3"]
-    }
-  ]
-}
-
-用户反馈：${prompt}`
+              text: prompt
             }]
           }],
           generationConfig: {
             temperature: 0.7,
-            maxOutputTokens: 4096,  // 进一步增加输出token限制
+            maxOutputTokens: 4096,
             topP: 0.95,
             topK: 40,
             candidateCount: 1

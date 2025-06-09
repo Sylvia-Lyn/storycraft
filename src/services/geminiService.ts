@@ -172,15 +172,6 @@ export async function generateGeminiContent(prompt: string): Promise<string> {
       // 根据Gemini API的响应格式提取内容
       if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
         const responseText = data.candidates[0].content.parts[0].text;
-        try {
-          // 尝试解析JSON响应
-          const jsonResponse = JSON.parse(responseText);
-          if (jsonResponse.suggestions && Array.isArray(jsonResponse.suggestions)) {
-            return responseText; // 返回JSON字符串
-          }
-        } catch (e) {
-          console.error("解析JSON响应失败:", e);
-        }
         return responseText;
       } else if (data.candidates?.[0]?.text) {
         return data.candidates[0].text;

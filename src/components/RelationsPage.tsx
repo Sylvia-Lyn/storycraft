@@ -1,10 +1,11 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { Icon } from '@iconify/react';
 import Navigation from './Navigation';
+import AnnouncementBar from './AnnouncementBar';
 import 'reactflow/dist/style.css';
 import ReactFlow, {
   MiniMap,
-  Controls, 
+  Controls,
   Background,
   useNodesState,
   useEdgesState,
@@ -48,7 +49,7 @@ interface Relationship {
 
 const RelationsPage: React.FC = () => {
   const tabs = ['大纲', '角色', '关系', '章节', '分幕', '剧本'];
-  
+
   const handleTabChange = (tab: string) => {
     console.log('Tab changed to:', tab);
   };
@@ -163,7 +164,7 @@ const RelationsPage: React.FC = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [selectedRelation] = useState({ label: '爱情线80%', char: '角色1' });
-  
+
   // 引用用于图谱操作
   const reactFlowInstance = useRef(null);
 
@@ -193,50 +194,56 @@ const RelationsPage: React.FC = () => {
     <div className="w-full flex">
       {/* 侧边栏 */}
       <div className="flex-1 flex flex-col pl-5">
+        {/* 公告栏 */}
+        <AnnouncementBar
+          onTabClick={handleTabChange}
+          featureName="关系图谱"
+        />
+
         {/* 导航栏 - 向左偏移 */}
-        <div className="flex w-full pl-10">
-      <Navigation 
-        tabs={tabs} 
-        defaultTab="关系" 
-        onTabChange={handleTabChange} 
-      />
+        <div className="flex w-full pl-10 mt-12">
+          <Navigation
+            tabs={tabs}
+            defaultTab="关系"
+            onTabChange={handleTabChange}
+          />
         </div>
-        
+
         {/* 关系页面主体内容 */}
         <div className="flex flex-col h-full">
           <div className="flex flex-1">
             {/* 左侧工具栏 */}
             <div className="w-12 border-r flex flex-col items-center py-4 space-y-4">
-              <button 
-                className={`p-2 rounded ${activeTool === 'select' ? 'bg-gray-200' : ''}`} 
+              <button
+                className={`p-2 rounded ${activeTool === 'select' ? 'bg-gray-200' : ''}`}
                 onClick={() => setActiveTool('select')}
                 title="选择"
               >
                 <Icon icon="mdi:cursor-default" className="w-6 h-6" />
               </button>
-              <button 
-                className={`p-2 rounded ${activeTool === 'add-node' ? 'bg-gray-200' : ''}`} 
+              <button
+                className={`p-2 rounded ${activeTool === 'add-node' ? 'bg-gray-200' : ''}`}
                 onClick={() => setActiveTool('add-node')}
                 title="添加节点"
               >
                 <Icon icon="mdi:shape-square-plus" className="w-6 h-6" />
               </button>
-              <button 
-                className={`p-2 rounded ${activeTool === 'add-edge' ? 'bg-gray-200' : ''}`} 
+              <button
+                className={`p-2 rounded ${activeTool === 'add-edge' ? 'bg-gray-200' : ''}`}
                 onClick={() => setActiveTool('add-edge')}
                 title="添加连线"
               >
                 <Icon icon="mdi:vector-line" className="w-6 h-6" />
               </button>
-              <button 
-                className={`p-2 rounded ${activeTool === 'delete' ? 'bg-gray-200' : ''}`} 
+              <button
+                className={`p-2 rounded ${activeTool === 'delete' ? 'bg-gray-200' : ''}`}
                 onClick={() => setActiveTool('delete')}
                 title="删除"
               >
                 <Icon icon="mdi:delete-outline" className="w-6 h-6" />
               </button>
             </div>
-            
+
             {/* 关系图谱区 */}
             <div className="flex-1 h-full">
               <ReactFlow
@@ -253,7 +260,7 @@ const RelationsPage: React.FC = () => {
                 <Background color="#aaa" gap={16} />
                 <MiniMap />
                 <Panel position="top-right">
-                  <button 
+                  <button
                     className="flex items-center space-x-1 bg-white border rounded-md px-3 py-1.5 text-gray-700 shadow-sm hover:bg-gray-50"
                     onClick={addCharacterNode}
                   >
@@ -264,7 +271,7 @@ const RelationsPage: React.FC = () => {
               </ReactFlow>
             </div>
           </div>
-          
+
           {/* 底部区域 */}
           <div className="h-64 border-t flex">
             {/* 情感线编辑区 (左下) */}
@@ -278,7 +285,7 @@ const RelationsPage: React.FC = () => {
                   </button>
                 </div>
               </div>
-              
+
               <div className="flex items-center space-x-2 mb-4">
                 <span>和</span>
                 <div className="relative">
@@ -287,7 +294,7 @@ const RelationsPage: React.FC = () => {
                     <option>角色2</option>
                     <option>角色3</option>
                   </select>
-                  <Icon 
+                  <Icon
                     icon="ri:arrow-down-s-line"
                     className="absolute top-1/2 right-2 transform -translate-y-1/2 text-gray-500"
                   />
@@ -299,7 +306,7 @@ const RelationsPage: React.FC = () => {
                     <option>爱情线</option>
                     <option>友情线</option>
                   </select>
-                  <Icon 
+                  <Icon
                     icon="ri:arrow-down-s-line"
                     className="absolute top-1/2 right-2 transform -translate-y-1/2 text-gray-500"
                   />
@@ -312,40 +319,40 @@ const RelationsPage: React.FC = () => {
                     <option>60%</option>
                     <option>50%</option>
                   </select>
-                  <Icon 
+                  <Icon
                     icon="ri:arrow-down-s-line"
                     className="absolute top-1/2 right-2 transform -translate-y-1/2 text-gray-500"
                   />
                 </div>
                 <Icon icon="mdi:check" className="w-5 h-5 text-green-500" />
               </div>
-              
+
               <div className="mb-4">
                 <div className="text-sm font-medium mb-1">情感点</div>
                 <div className="relative">
                   <select className="appearance-none border border-gray-300 rounded-md px-4 py-2 pr-8 bg-white focus:outline-none w-full bg-purple-50">
                     <option>「只差一步就能永远在一起」</option>
                   </select>
-                  <Icon 
+                  <Icon
                     icon="ri:arrow-down-s-line"
                     className="absolute top-1/2 right-2 transform -translate-y-1/2 text-gray-500"
                   />
                 </div>
               </div>
-              
+
               <div className="relative">
-                <input 
-                  type="text" 
-                  className="w-full border border-gray-300 rounded-md px-4 py-2 pr-10" 
-                  placeholder="角色关系不好？告诉我如何优化，如" 
+                <input
+                  type="text"
+                  className="w-full border border-gray-300 rounded-md px-4 py-2 pr-10"
+                  placeholder="角色关系不好？告诉我如何优化，如"
                 />
-                <Icon 
-                  icon="ri:corner-down-right-fill" 
+                <Icon
+                  icon="ri:corner-down-right-fill"
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer"
                 />
               </div>
             </div>
-            
+
             {/* 关联剧情区 (右下) */}
             <div className="w-1/2 p-4">
               <div className="text-lg font-bold mb-4">关联剧情</div>

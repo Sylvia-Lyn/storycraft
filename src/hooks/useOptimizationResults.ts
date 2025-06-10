@@ -8,12 +8,36 @@ interface OptimizationResult {
   text: string;
 }
 
+// 创建一个全局的事件总线来处理模型切换
+export const modelChangeEventBus = {
+  listeners: new Set<(model: string) => void>(),
+  subscribe(listener: (model: string) => void) {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  },
+  notify(model: string) {
+    this.listeners.forEach(listener => listener(model));
+  }
+};
+
 export function useOptimizationResults() {
   const { selectedModel } = useAppState();
   const [isGenerating, setIsGenerating] = useState(false);
   const [optimizationResults, setOptimizationResults] = useState<OptimizationResult[]>([]);
   const [responseCache, setResponseCache] = useState<{ [key: string]: OptimizationResult[] }>({});
   const resultsContainerRef = useRef<HTMLDivElement>(null);
+
+  // 使用一个独立的state来跟踪当前使用的模型
+  const [currentModel, setCurrentModel] = useState(selectedModel || 'Gemini');  // 默认使用Gemini
+
+  // 当selectedModel变化时，通过事件总线通知更新
+  useCallback(() => {
+    const unsubscribe = modelChangeEventBus.subscribe((model) => {
+      console.log(`[useOptimizationResults] 收到模型切换事件: ${model}`);
+      setCurrentModel(model);
+    });
+    return unsubscribe;
+  }, [])();
 
   // 选择并应用优化结果
   const applyOptimizedText = useCallback((optimizedText: string) => {
@@ -76,43 +100,58 @@ export function useOptimizationResults() {
       setIsGenerating(true);
     }
 
-    console.log("开始生成优化内容，输入:", feedbackText);
-    console.log("当前选择的模型:", selectedModel);
+    console.log("[useOptimizationResults] 开始生成优化内容");
+    console.log("[useOptimizationResults] 输入:", feedbackText);
+    console.log("[useOptimizationResults] 当前使用的模型:", currentModel);
 
     // 构建上下文和提示词
     let prompt = '';
 
-    // 如果有之前的内容，添加"接上文"
-    if (previousDraftContent) {
-      prompt += `接上文：${previousDraftContent}\n\n`;
-    }
+    // 获取编辑器中的内容
+    const editorContent = document.querySelector('.codex-editor__redactor')?.textContent || '';
+    console.log("[useOptimizationResults] 编辑器内容:", editorContent);
 
-    // 添加当前内容
-    if (currentDraftContent) {
-      prompt += `当前剧情：${currentDraftContent}\n\n`;
+    // 如果有编辑器内容，添加为上下文
+    if (editorContent) {
+      // 设置最大上下文长度（字符数）
+      const MAX_CONTEXT_LENGTH = 1000;
+
+      let contextContent = editorContent;
+
+      // 如果内容超过最大长度，只保留后半部分
+      if (contextContent.length > MAX_CONTEXT_LENGTH) {
+        contextContent = contextContent.slice(-MAX_CONTEXT_LENGTH);
+        console.log(`[useOptimizationResults] 上下文内容已截取，保留最后${MAX_CONTEXT_LENGTH}个字符`);
+      }
+
+      prompt += `已完成的上文内容：\n${contextContent}\n\n`;
     }
 
     // 添加用户输入
-    prompt += `用户反馈：${feedbackText}\n\n`;
+    prompt += `用户要求：${feedbackText}\n\n`;
 
     // 添加指令
-    prompt += `你是一名擅长写作的大师，请根据以上的用户要求，生成文本。直接写文本，不要添加任何解释。`;
+    prompt += `你是一名擅长写作的大师，正在辅助用户进行创作。请在阅读并理解以上上文以及用户要求后，严格根据以下指令做出回复：
+    1. 如果用户要求续写，则接续上文内容，根据用户要求续写。必须直接返回续写的文本内容，不需要包括上文内容或者解释。
+    2. 如果用户要求优化或改写，则根据用户要求优化或改写。必须直接返回优化或改写后的文本内容，不需要多余的上文或者解释。
+    3. 如果用户要讨论剧情或思路，则基于要求和前文内容，正常对话。`;
 
     try {
-      console.log(`准备调用API，使用模型: ${selectedModel}`);
+      console.log(`[useOptimizationResults] 准备调用API，使用模型: ${currentModel}`);
+      console.log(`[useOptimizationResults] 完整提示词:\n${prompt}`);
 
       let response;
-      if (selectedModel === 'deepseek-r1') {
-        console.log(`调用DeepSeek API... 尝试 ${retryCount + 1}/${MAX_RETRIES + 1}`);
+      if (currentModel === 'deepseek-r1') {
+        console.log(`[useOptimizationResults] 调用DeepSeek API... 尝试 ${retryCount + 1}/${MAX_RETRIES + 1}`);
         response = await generateDeepSeekContent(prompt);
-      } else if (selectedModel === 'Gemini') {
-        console.log(`调用Gemini API... 尝试 ${retryCount + 1}/${MAX_RETRIES + 1}`);
+      } else if (currentModel === 'Gemini') {
+        console.log(`[useOptimizationResults] 调用Gemini API... 尝试 ${retryCount + 1}/${MAX_RETRIES + 1}`);
         response = await generateGeminiContent(prompt);
       } else {
-        throw new Error(`不支持的模型: ${selectedModel}`);
+        throw new Error(`不支持的模型: ${currentModel}`);
       }
 
-      console.log(`${selectedModel} API返回:`, response);
+      console.log(`[useOptimizationResults] ${currentModel} API返回:`, response);
 
       // 解析API返回的内容
       const content = response;
@@ -133,7 +172,7 @@ export function useOptimizationResults() {
       setOptimizationResults([result]);
 
     } catch (error: any) {
-      console.error('生成优化内容失败:', error);
+      console.error('[useOptimizationResults] 生成优化内容失败:', error);
 
       // 重试机制
       if (retryCount < MAX_RETRIES &&
@@ -174,7 +213,7 @@ export function useOptimizationResults() {
     } finally {
       setIsGenerating(false);
     }
-  }, [responseCache, selectedModel]);
+  }, [responseCache, currentModel]);
 
   // 快速生成内容
   const generateQuickContent = useCallback((

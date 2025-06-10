@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { toast } from 'react-hot-toast'
 import Navigation from './Navigation'
 
 function HomePage() {
@@ -30,37 +31,44 @@ function HomePage() {
           
           {/* 快速操作按钮 */}
           <div className="flex flex-col gap-4">
-            <a 
-              href="https://writer.storyverse.pro/index" 
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link 
+              to="/story-settings"
               className="bg-black text-white py-3 px-6 rounded-md text-center flex items-center justify-center gap-2"
             >
               <span>一键生成剧本内容</span>
               <span className="text-lg">›</span>
-            </a>
+            </Link>
+            
+            <Link 
+              to="/editor" 
+              className="border border-gray-300 bg-white py-3 px-6 rounded-md text-center"
+            >
+              续写我的作品
+            </Link>
             
             <Link 
               to="/knowledge/knowledge-1" 
               className="border border-gray-300 bg-white py-3 px-6 rounded-md text-center"
             >
-              导入我的作品
-            </Link>
-            
-            <Link 
-              to="/knowledge/knowledge-1/upload" 
-              className="border border-gray-300 bg-white py-3 px-6 rounded-md text-center"
-            >
               上传我的素材
             </Link>
             
-            <Link 
-              to="/" 
-              className="border border-gray-300 bg-white py-3 px-6 rounded-md text-center flex items-center justify-center gap-2"
+            <button 
+              onClick={() => {
+                toast('功能开发中...', {
+                  duration: 2000,
+                  style: {
+                    background: '#333',
+                    color: '#fff',
+                  },
+                });
+              }}
+              className="border border-gray-300 bg-gray-100 text-gray-400 py-3 px-6 rounded-md text-center flex items-center justify-center gap-2 cursor-not-allowed"
+              disabled
             >
               <span>不喜欢这个方式？新建工作流</span>
               <span className="text-lg">›</span>
-            </Link>
+            </button>
           </div>
         </div>
       </div>

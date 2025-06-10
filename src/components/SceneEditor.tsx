@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableContainer, 
-  TableHead, 
-  TableRow, 
-  Paper, 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
   Switch,
   FormControlLabel,
   Menu,
@@ -81,11 +81,11 @@ function SceneEditor() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [workingMode, setWorkingMode] = useState<'conversation' | 'optimization' | 'result'>('conversation');
   const [generatedResponse, setGeneratedResponse] = useState<string>('');
-  
+
   // 处理表格数据更新
   const handleUpdateTableData = (id: string, field: keyof TableData, value: string) => {
-    setTableData(prevData => 
-      prevData.map(row => 
+    setTableData(prevData =>
+      prevData.map(row =>
         row.id === id ? { ...row, [field]: value } : row
       )
     );
@@ -99,7 +99,7 @@ function SceneEditor() {
   // 处理输入提交
   const handleInputSubmit = async (input: string) => {
     setIsGenerating(true);
-    
+
     try {
       // 使用Gemini API生成内容
       const response = await generateSceneContent(input);
@@ -116,7 +116,7 @@ function SceneEditor() {
   // 处理预设Prompt选择
   const handlePresetPromptSelect = async (prompt: string) => {
     setIsGenerating(true);
-    
+
     try {
       // 使用Gemini API生成内容
       const response = await generateSceneContent(prompt);
@@ -129,20 +129,20 @@ function SceneEditor() {
       setWorkingMode('result');
     }
   };
-  
+
   // 处理润色功能
   const handlePolish = async () => {
     setIsPolishing(true);
-    
+
     try {
       // 获取当前选中的内容或整个场景内容
-      const contentToPolish = tableData.map(row => 
+      const contentToPolish = tableData.map(row =>
         `${row.character}：\n${row.keyEvent}`
       ).join('\n\n');
-      
+
       // 使用Gemini API润色内容
       const polishedContent = await polishContent(contentToPolish);
-      
+
       // 显示润色结果
       setGeneratedResponse(polishedContent);
       setWorkingMode('result');
@@ -153,32 +153,32 @@ function SceneEditor() {
       setIsPolishing(false);
     }
   };
-  
+
   // 处理修改剧情菜单打开
   const handlePlotMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setPlotMenuAnchorEl(event.currentTarget);
   };
-  
+
   // 处理修改剧情菜单关闭
   const handlePlotMenuClose = () => {
     setPlotMenuAnchorEl(null);
   };
-  
+
   // 处理修改剧情
   const handleModifyPlot = async () => {
     setPlotMenuAnchorEl(null);
     setIsGenerating(true);
-    
+
     try {
       // 获取当前场景内容
-      const currentPlot = tableData.map(row => 
+      const currentPlot = tableData.map(row =>
         `${row.character}：\n${row.keyEvent}`
       ).join('\n\n');
-      
+
       // 使用Gemini API生成修改建议
       const prompt = `请分析以下剧情，并提供修改建议，使其更加引人入胜：\n\n${currentPlot}`;
       const response = await generateSceneContent(prompt);
-      
+
       setGeneratedResponse(response);
       setWorkingMode('result');
     } catch (error) {
@@ -188,7 +188,7 @@ function SceneEditor() {
       setIsGenerating(false);
     }
   };
-  
+
   // 处理选择剧情
   const handleSelectPlot = () => {
     setPlotMenuAnchorEl(null);
@@ -245,44 +245,44 @@ function SceneEditor() {
             {tableData.map((row) => (
               <TableRow key={row.id}>
                 <TableCell>
-                  <PromptDisplay 
-                    type="character" 
-                    content={row.character} 
+                  <PromptDisplay
+                    type="character"
+                    content={row.character}
                     onEdit={(value: string) => handleUpdateTableData(row.id, 'character', value)}
                   />
                 </TableCell>
                 <TableCell>
-                  <PromptDisplay 
-                    type="timeline" 
-                    content={row.timeline} 
+                  <PromptDisplay
+                    type="timeline"
+                    content={row.timeline}
                     onEdit={(value: string) => handleUpdateTableData(row.id, 'timeline', value)}
                   />
                 </TableCell>
                 <TableCell>
-                  <PromptDisplay 
-                    type="event" 
-                    content={row.keyEvent} 
+                  <PromptDisplay
+                    type="event"
+                    content={row.keyEvent}
                     onEdit={(value: string) => handleUpdateTableData(row.id, 'keyEvent', value)}
                   />
                 </TableCell>
                 <TableCell>
-                  <PromptDisplay 
-                    type="emotion" 
-                    content={row.emotionChange} 
+                  <PromptDisplay
+                    type="emotion"
+                    content={row.emotionChange}
                     onEdit={(value: string) => handleUpdateTableData(row.id, 'emotionChange', value)}
                   />
                 </TableCell>
                 <TableCell>
-                  <PromptDisplay 
-                    type="relationship" 
-                    content={row.relationship} 
+                  <PromptDisplay
+                    type="relationship"
+                    content={row.relationship}
                     onEdit={(value: string) => handleUpdateTableData(row.id, 'relationship', value)}
                   />
                 </TableCell>
                 <TableCell>
-                  <PromptDisplay 
-                    type="character-effect" 
-                    content={row.characterEffect} 
+                  <PromptDisplay
+                    type="character-effect"
+                    content={row.characterEffect}
                     onEdit={(value: string) => handleUpdateTableData(row.id, 'characterEffect', value)}
                   />
                 </TableCell>
@@ -303,7 +303,7 @@ function SceneEditor() {
             <div className="flex justify-between items-center">
               <span>分幕标题: {sceneId ? `分幕${sceneId}` : '分幕1'} - 花间客在订婚宴上重逢前爱人</span>
               <div className="flex items-center space-x-2">
-                <button 
+                <button
                   className="px-3 py-1 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm rounded-md flex items-center"
                   onClick={handlePlotMenuOpen}
                 >
@@ -318,8 +318,8 @@ function SceneEditor() {
                   <MenuItem onClick={handleModifyPlot}>修改剧情</MenuItem>
                   <MenuItem onClick={handleSelectPlot}>选择剧情</MenuItem>
                 </Menu>
-                
-                <button 
+
+                <button
                   className="px-3 py-1 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm rounded-md flex items-center"
                   onClick={handlePolish}
                   disabled={isPolishing}
@@ -332,7 +332,7 @@ function SceneEditor() {
 
           <div>
             {tableData.map((row) => (
-              <div 
+              <div
                 key={row.id}
                 className="p-4 mb-2 rounded cursor-pointer border border-gray-200 hover:border-gray-400"
               >
@@ -352,10 +352,10 @@ function SceneEditor() {
       <div className="flex-1 flex flex-col">
         {/* 顶部导航栏 */}
         <div className="border-b border-gray-200 flex-shrink-0">
-          <Navigation 
-            tabs={['分幕', '剧本', '大纲', '角色', '关系', '章节']} 
+          <Navigation
+            tabs={['分幕', '剧本', '大纲', '角色', '关系', '章节']}
             defaultTab="分幕"
-            onTabChange={() => {}}
+            onTabChange={() => { }}
           />
         </div>
 
@@ -382,7 +382,7 @@ function SceneEditor() {
         </div>
 
         {/* 底部输入面板 */}
-        <InputPanel 
+        <InputPanel
           onSubmit={handleInputSubmit}
           isGenerating={isGenerating}
           workingMode={workingMode}

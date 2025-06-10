@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Icon } from '@iconify/react';
+import AnnouncementBar from './AnnouncementBar';
 
 interface KnowledgeFile {
   id: string;
@@ -29,7 +30,7 @@ const KnowledgeBasePage: React.FC = () => {
       try {
         // 模拟API调用延迟
         await new Promise(resolve => setTimeout(resolve, 500));
-        
+
         // 模拟知识库数据
         if (knowledgeId === 'knowledge-1') {
           setKnowledgeBase({ id: 'knowledge-1', name: '测试知识库' });
@@ -53,11 +54,11 @@ const KnowledgeBasePage: React.FC = () => {
             console.error('获取知识库信息失败:', e);
           }
         }
-        
+
         // 尝试从 localStorage 加载用户上传的文件
         const uploadedFilesKey = `uploadedFiles_${knowledgeId}`;
         const uploadedFilesJson = localStorage.getItem(uploadedFilesKey);
-        
+
         if (uploadedFilesJson) {
           try {
             const uploadedFiles = JSON.parse(uploadedFilesJson);
@@ -69,7 +70,7 @@ const KnowledgeBasePage: React.FC = () => {
             console.error('解析上传文件数据失败:', e);
           }
         }
-        
+
         // 如果没有用户上传的文件，显示示例文件
         const demoFiles = [
           {
@@ -104,7 +105,7 @@ const KnowledgeBasePage: React.FC = () => {
         setIsLoading(false);
       }
     };
-    
+
     loadData();
   }, [knowledgeId]);
 
@@ -135,9 +136,11 @@ const KnowledgeBasePage: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full bg-gray-50">
+      {/* 公告栏 */}
+      <AnnouncementBar featureName="知识库管理" />
       {/* 顶部导航 */}
       <div className="flex items-center p-4 border-b border-gray-200 bg-white">
-        <button 
+        <button
           className="text-gray-600 hover:text-gray-900 mr-4"
           onClick={handleGoBack}
         >
@@ -163,7 +166,7 @@ const KnowledgeBasePage: React.FC = () => {
               <div className="text-base font-medium text-gray-700">
                 {knowledgeBase?.name || '加载中...'}
               </div>
-              
+
               <div className="flex items-center space-x-3">
                 <div className="relative">
                   <input
@@ -178,8 +181,8 @@ const KnowledgeBasePage: React.FC = () => {
                     <Icon icon="ri:search-line" className="w-4 h-4" />
                   </div>
                 </div>
-                
-                <button 
+
+                <button
                   className="flex items-center px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 rounded-md text-white text-sm shadow-sm"
                   onClick={handleFileUpload}
                 >
@@ -188,7 +191,7 @@ const KnowledgeBasePage: React.FC = () => {
                 </button>
               </div>
             </div>
-            
+
             {/* 文件表格 */}
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
@@ -281,41 +284,41 @@ const KnowledgeBasePage: React.FC = () => {
                 </tbody>
               </table>
             </div>
-            
+
             {/* 分页控制 */}
             <div className="flex items-center justify-between px-6 py-4 bg-white border-t border-gray-200">
               <div className="text-sm text-gray-700">
                 共 <span className="font-medium">{files.length}</span> 条数据
               </div>
-              
+
               <div className="flex items-center">
-                <button 
+                <button
                   className="px-3 py-1 rounded-md mr-2 text-gray-600 hover:bg-gray-100"
                   onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                   disabled={currentPage === 1}
                 >
                   上一页
                 </button>
-                
+
                 <div className="flex items-center bg-gray-100 rounded-md overflow-hidden">
-                  <button 
+                  <button
                     className={`w-8 h-8 flex items-center justify-center ${currentPage === 1 ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-200'}`}
                   >
                     1
                   </button>
                 </div>
-                
-                <button 
+
+                <button
                   className="px-3 py-1 rounded-md ml-2 text-gray-600 hover:bg-gray-100"
                   onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                   disabled={currentPage === totalPages || totalPages === 0}
                 >
                   下一页
                 </button>
-                
+
                 <div className="ml-4 flex items-center">
                   <span className="text-sm text-gray-700 mr-2">每页显示:</span>
-                  <select 
+                  <select
                     className="border border-gray-300 rounded-md px-2 py-1 text-sm"
                     value={itemsPerPage}
                     onChange={(e) => setItemsPerPage(Number(e.target.value))}

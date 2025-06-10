@@ -4,7 +4,7 @@
  */
 
 // DeepSeek API密钥
-const DEEPSEEK_API_KEY = "sk-a66b3a944d5441469d3bd013b8f43cf7";
+const DEEPSEEK_API_KEY = "sk-657e30eb77ba48e0834a0821dcd8279f";
 const API_URL = "https://api.deepseek.com/v1/chat/completions";
 
 /**
@@ -12,7 +12,7 @@ const API_URL = "https://api.deepseek.com/v1/chat/completions";
  * @param prompt 用户输入的提示
  * @returns 生成的文本内容
  */
-export async function generateDeepSeekContent(prompt: string): Promise<string> {
+export const generateDeepSeekContent = async (prompt: string): Promise<string> => {
   try {
     const response = await fetch(API_URL, {
       method: 'POST',
@@ -49,7 +49,7 @@ export async function generateDeepSeekContent(prompt: string): Promise<string> {
  * 检查DeepSeek API是否可用
  * @returns API状态
  */
-export async function checkDeepSeekApiStatus(): Promise<boolean> {
+export const checkDeepSeekApiStatus = async (): Promise<boolean> => {
   try {
     const response = await fetch(`${API_URL}?check=true`, {
       method: 'GET',

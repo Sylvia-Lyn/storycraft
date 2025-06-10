@@ -453,14 +453,15 @@ const Sidebar: React.FC = () => {
           </button>
           <span className="text-lg font-medium">创作工具</span>
         </div>
-        <div className="flex items-center space-x-2">
+        {/* 暂时注释了“更多”按钮 */}
+        {/* <div className="flex items-center space-x-2">
           <button
             className="p-2 hover:bg-gray-100 rounded-full transition-colors"
             onClick={() => showToast()}
           >
             <Icon icon="ri:more-2-fill" className="w-5 h-5 text-gray-600" />
           </button>
-        </div>
+        </div> */}
       </div>
 
       <div className="p-4">

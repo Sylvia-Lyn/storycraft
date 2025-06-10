@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { generateDeepSeekContent } from '../services/deepseekService'
 import { generateGeminiContent } from '../services/geminiService'
+import { modelChangeEventBus } from './useOptimizationResults'
 
 export interface Message {
   text: string;
@@ -56,9 +57,15 @@ export function useAppState() {
   // 从localStorage中读取保存的模型选择，如果没有则默认为deepseek-r1
   const [selectedModel, setSelectedModel] = useState(() => {
     const savedModel = localStorage.getItem('selectedModel');
+    console.log(`[useAppState] 初始化selectedModel，从localStorage读取: ${savedModel}`);
     return savedModel && ['deepseek-r1', 'Gemini'].includes(savedModel) ? savedModel : 'deepseek-r1';
   })
   const models = ['deepseek-r1', 'Gemini']
+
+  // 添加useEffect来监控selectedModel的变化
+  useEffect(() => {
+    console.log(`[useAppState] selectedModel发生变化: ${selectedModel}`);
+  }, [selectedModel]);
 
   // 文风相关状态管理
   const [showStyleDropdown, setShowStyleDropdown] = useState(false)
@@ -438,6 +445,9 @@ export function useAppState() {
     // 记录模型选择到localStorage，确保页面刷新后仍然保持选择
     localStorage.setItem('selectedModel', model);
     console.log(`[useAppState] 模型选择已保存到localStorage`);
+
+    // 通知其他组件模型已更改
+    modelChangeEventBus.notify(model);
   };
 
   // 切换文风下拉菜单

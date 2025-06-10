@@ -107,24 +107,38 @@ export function useOptimizationResults() {
     // 构建上下文和提示词
     let prompt = '';
 
-    // 如果有之前的内容，添加"接上文"
-    if (previousDraftContent) {
-      prompt += `接上文：${previousDraftContent}\n\n`;
-    }
+    // 获取编辑器中的内容
+    const editorContent = document.querySelector('.codex-editor__redactor')?.textContent || '';
+    console.log("[useOptimizationResults] 编辑器内容:", editorContent);
 
-    // 添加当前内容
-    if (currentDraftContent) {
-      prompt += `当前剧情：${currentDraftContent}\n\n`;
+    // 如果有编辑器内容，添加为上下文
+    if (editorContent) {
+      // 设置最大上下文长度（字符数）
+      const MAX_CONTEXT_LENGTH = 1000;
+
+      let contextContent = editorContent;
+
+      // 如果内容超过最大长度，只保留后半部分
+      if (contextContent.length > MAX_CONTEXT_LENGTH) {
+        contextContent = contextContent.slice(-MAX_CONTEXT_LENGTH);
+        console.log(`[useOptimizationResults] 上下文内容已截取，保留最后${MAX_CONTEXT_LENGTH}个字符`);
+      }
+
+      prompt += `已完成的上文内容：\n${contextContent}\n\n`;
     }
 
     // 添加用户输入
-    prompt += `用户反馈：${feedbackText}\n\n`;
+    prompt += `用户要求：${feedbackText}\n\n`;
 
     // 添加指令
-    prompt += `你是一名擅长写作的大师，请根据以上的用户要求，生成文本。直接写文本，不要添加任何解释。`;
+    prompt += `你是一名擅长写作的大师，正在辅助用户进行创作。请在阅读并理解以上上文以及用户要求后，严格根据以下指令做出回复：
+    1. 如果用户要求续写，则接续上文内容，根据用户要求续写。必须直接返回后续内容，不需要多余的上文或者解释。
+    2. 如果用户要求优化或改写，则根据用户要求优化或改写。必须直接返回优化或改写后的内容，不需要多余的上文或者解释。
+    3. 如果用户要与你讨论剧情或思路，则基于要求和前文内容，正常对话。`;
 
     try {
       console.log(`[useOptimizationResults] 准备调用API，使用模型: ${currentModel}`);
+      console.log(`[useOptimizationResults] 完整提示词:\n${prompt}`);
 
       let response;
       if (currentModel === 'deepseek-r1') {

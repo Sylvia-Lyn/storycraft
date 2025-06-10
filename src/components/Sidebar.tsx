@@ -119,7 +119,7 @@ const Sidebar = () => {
   const [works, setWorks] = useState<Work[]>([
     {
       id: 'work-1',
-      name: '大纲',
+      name: '《剧本1》',
       views: {
         outline: true,      // 大纲视图
         characters: true,   // 角色剧本视图
@@ -295,7 +295,7 @@ const Sidebar = () => {
   // 处理知识库项点击
   const handleKnowledgeItemClick = (e: React.MouseEvent) => {
     e.stopPropagation()
-    setShowKnowledgeItems(!showKnowledgeItems)
+    setShowKnowledgeItems(false)  // 默认收起知识库
     setActiveMenuId(null)
   }
   
@@ -544,8 +544,8 @@ const Sidebar = () => {
                                     onClick={() => toggleExpand(char.id)}
                                   />
                                   <span className="flex-grow cursor-pointer">
-  {char.name.includes(':') ? char.name : `${char.name}`}
-</span>
+                                    {char.name.includes(':') ? char.name : `${char.name}`}
+                                  </span>
                                   <Icon 
                                     icon="ri:download-line" 
                                     className="w-5 h-5 ml-2 text-gray-500 cursor-pointer"

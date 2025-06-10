@@ -28,7 +28,7 @@ export function useOptimizationResults() {
   const resultsContainerRef = useRef<HTMLDivElement>(null);
 
   // 使用一个独立的state来跟踪当前使用的模型
-  const [currentModel, setCurrentModel] = useState(selectedModel);
+  const [currentModel, setCurrentModel] = useState(selectedModel || 'Gemini');  // 默认使用Gemini
 
   // 当selectedModel变化时，通过事件总线通知更新
   useCallback(() => {

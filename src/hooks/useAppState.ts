@@ -54,13 +54,13 @@ export function useAppState() {
 
   // 模型选择状态管理
   const [showModelDropdown, setShowModelDropdown] = useState(false)
-  // 从localStorage中读取保存的模型选择，如果没有则默认为deepseek-r1
+  // 从localStorage中读取保存的模型选择，如果没有则默认为Gemini
   const [selectedModel, setSelectedModel] = useState(() => {
     const savedModel = localStorage.getItem('selectedModel');
     console.log(`[useAppState] 初始化selectedModel，从localStorage读取: ${savedModel}`);
-    return savedModel && ['deepseek-r1', 'Gemini'].includes(savedModel) ? savedModel : 'deepseek-r1';
+    return savedModel && ['deepseek-r1', 'Gemini'].includes(savedModel) ? savedModel : 'Gemini';
   })
-  const models = ['deepseek-r1', 'Gemini']
+  const models = ['Gemini', 'deepseek-r1']  // 修改顺序，Gemini在前
 
   // 添加useEffect来监控selectedModel的变化
   useEffect(() => {

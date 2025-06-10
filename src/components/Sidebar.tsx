@@ -13,14 +13,14 @@ interface CreateKnowledgeModalProps {
 const CreateKnowledgeModal = ({ isOpen, onClose, onConfirm }: CreateKnowledgeModalProps) => {
   const [knowledgeName, setKnowledgeName] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
-  
+
   useEffect(() => {
     if (isOpen && inputRef.current) {
       inputRef.current.focus()
       setKnowledgeName('')
     }
   }, [isOpen])
-  
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (knowledgeName.trim()) {
@@ -28,9 +28,9 @@ const CreateKnowledgeModal = ({ isOpen, onClose, onConfirm }: CreateKnowledgeMod
       setKnowledgeName('')
     }
   }
-  
+
   if (!isOpen) return null
-  
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-80 shadow-xl">
@@ -106,16 +106,16 @@ interface KnowledgeItem {
   ideas?: number
 }
 
-const Sidebar = () => {
+const Sidebar: React.FC = () => {
   const navigate = useNavigate();
-  
+
   const [expandedItems, setExpandedItems] = useState<ExpandedItems>({
     works: true,  // 默认展开作品集
     'work-1': true, // 默认展开第一个作品
     'work-1-characters': true, // 默认展开角色剧本
     'work-1-char-1': true // 默认展开第一个角色
   })
-  
+
   const [works, setWorks] = useState<Work[]>([
     {
       id: 'work-1',
@@ -169,7 +169,7 @@ const Sidebar = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const knowledgeEditInputRef = useRef<HTMLInputElement>(null)
   const editInputRef = useRef<HTMLInputElement>(null)
-  
+
   const [editingWorkId, setEditingWorkId] = useState<string | null>(null)
   const [editingWorkName, setEditingWorkName] = useState('')
 
@@ -201,9 +201,9 @@ const Sidebar = () => {
   // 处理作品名称编辑保存
   const handleWorkEditSave = () => {
     if (editingWorkId) {
-      setWorks(prev => 
-        prev.map(work => 
-          work.id === editingWorkId 
+      setWorks(prev =>
+        prev.map(work =>
+          work.id === editingWorkId
             ? { ...work, name: editingWorkName }
             : work
         )
@@ -258,7 +258,7 @@ const Sidebar = () => {
     e.stopPropagation()
     setIsCreateModalOpen(true)
   }
-  
+
   // 处理知识库创建确认
   const handleKnowledgeBaseCreate = (name: string) => {
     const newId = `knowledge-${knowledgeItems.length + 1}`
@@ -270,7 +270,7 @@ const Sidebar = () => {
     }
     const updatedItems = [...knowledgeItems, newKnowledgeItem];
     setKnowledgeItems(updatedItems)
-  
+
     // 保存到本地存储
     try {
       localStorage.setItem('knowledgeItems', JSON.stringify(updatedItems))
@@ -280,7 +280,7 @@ const Sidebar = () => {
       toast.error('知识库保存失败，请重试')
       return
     }
-  
+
     setShowKnowledgeItems(true)
     setIsCreateModalOpen(false)
     toast.success('知识库创建成功')
@@ -298,7 +298,7 @@ const Sidebar = () => {
     setShowKnowledgeItems(!showKnowledgeItems)
     setActiveMenuId(null)
   }
-  
+
   // 处理知识库项目点击，导航到知识库详情页面
   const handleKnowledgeItemDetailClick = (knowledgeId: string) => {
     const item = knowledgeItems.find(item => item.id === knowledgeId)
@@ -306,34 +306,34 @@ const Sidebar = () => {
       navigate(`/knowledge/${item.id}`)
     }
   }
-  
+
   // 处理知识库项菜单点击
   // 假设添加一个新的状态变量来控制右侧页面显示
   const [showKnowledgePageOnRight, setShowKnowledgePageOnRight] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 })
-  
+
   const handleKnowledgeMenuClick = (e: React.MouseEvent, id: string) => {
     e.stopPropagation()
-    
+
     if (id === activeMenuId) {
       setActiveMenuId(null)
       return
     }
-    
+
     // 计算菜单位置
     const rect = (e.target as HTMLElement).getBoundingClientRect()
     setMenuPosition({
       x: rect.right - 100, // 菜单宽度大约100px，所以向左偏移
       y: rect.bottom + 5
     })
-    
+
     setActiveMenuId(id)
     setEditingKnowledgeId(null)
     setEditingKnowledgeName('')
     // 添加显示右侧页面的逻辑
-    setShowKnowledgePageOnRight(true); 
+    setShowKnowledgePageOnRight(true);
   }
-  
+
   // 处理知识库编辑
   const handleKnowledgeEdit = (e: React.MouseEvent, item: KnowledgeItem) => {
     e.stopPropagation()
@@ -345,13 +345,13 @@ const Sidebar = () => {
   // 处理知识库编辑保存
   const handleKnowledgeEditSave = () => {
     if (editingKnowledgeId && editingKnowledgeName.trim()) {
-      const updatedItems = knowledgeItems.map(item => 
-        item.id === editingKnowledgeId 
-          ? { ...item, name: editingKnowledgeName.trim() } 
+      const updatedItems = knowledgeItems.map(item =>
+        item.id === editingKnowledgeId
+          ? { ...item, name: editingKnowledgeName.trim() }
           : item
       )
       setKnowledgeItems(updatedItems)
-      
+
       // 保存到本地存储
       try {
         localStorage.setItem('knowledgeItems', JSON.stringify(updatedItems))
@@ -377,7 +377,7 @@ const Sidebar = () => {
     const updatedItems = knowledgeItems.filter(item => item.id !== id)
     setKnowledgeItems(updatedItems)
     setActiveMenuId(null)
-    
+
     // 保存到本地存储
     try {
       localStorage.setItem('knowledgeItems', JSON.stringify(updatedItems))
@@ -407,30 +407,30 @@ const Sidebar = () => {
       editInputRef.current.focus()
     }
   }, [editingWorkId])
-  
+
   useEffect(() => {
     if (editingKnowledgeId && knowledgeEditInputRef.current) {
       knowledgeEditInputRef.current.focus()
     }
   }, [editingKnowledgeId])
-  
+
   // 点击外部关闭菜单
   useEffect(() => {
     const handleClickOutside = () => {
       setActiveMenuId(null)
     }
-    
+
     const handleScroll = () => {
       setActiveMenuId(null)
     }
-    
+
     document.addEventListener('click', handleClickOutside)
     // 监听侧边栏滚动事件
     const sidebarElement = document.querySelector('.sidebar-container')
     if (sidebarElement) {
       sidebarElement.addEventListener('scroll', handleScroll)
     }
-    
+
     return () => {
       document.removeEventListener('click', handleClickOutside)
       if (sidebarElement) {
@@ -440,41 +440,63 @@ const Sidebar = () => {
   }, [])
 
   return (
-    <div className="w-[280px] bg-white border-r border-gray-200 overflow-auto sidebar-container">
-      <div className="p-4">
-        <div className="flex items-center space-x-1 py-2 mb-6">
-          <div className="w-3 h-3 rounded-full bg-gray-400"></div>
-          <div className="w-3 h-3 rounded-full bg-gray-400"></div>
-          <div className="w-3 h-3 rounded-full bg-gray-400"></div>
+    <div className="w-[300px] h-screen bg-white border-r border-gray-200 flex flex-col">
+      {/* 顶部区域 */}
+      <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={() => navigate('/')}
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            title="回到主页"
+          >
+            <Icon icon="ri:home-4-line" className="w-5 h-5 text-gray-600" />
+          </button>
+          <span className="text-lg font-medium">创作工具</span>
         </div>
+        <div className="flex items-center space-x-2">
+          <button
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            onClick={() => showToast()}
+          >
+            <Icon icon="ri:more-2-fill" className="w-5 h-5 text-gray-600" />
+          </button>
+        </div>
+      </div>
+
+      <div className="p-4">
+        {/* <div className="flex items-center space-x-1 py-2 mb-6">
+          <div className="w-3 h-3 rounded-full bg-gray-400"></div>
+          <div className="w-3 h-3 rounded-full bg-gray-400"></div>
+          <div className="w-3 h-3 rounded-full bg-gray-400"></div>
+        </div> */}
 
         {/* 作品集部分 */}
         <div className="font-bold text-lg mb-6 flex justify-between items-center">
-          <span 
-            className="cursor-pointer flex items-center" 
+          <span
+            className="cursor-pointer flex items-center"
             onClick={() => toggleExpand('works')}
           >
-            <Icon 
-              icon={expandedItems['works'] ? "ri:arrow-down-s-line" : "ri:arrow-right-s-line"} 
+            <Icon
+              icon={expandedItems['works'] ? "ri:arrow-down-s-line" : "ri:arrow-right-s-line"}
               className="w-5 h-5 mr-1 text-gray-500"
             />
             作品集
           </span>
-          <Icon 
-            icon="ri:add-line" 
+          <Icon
+            icon="ri:add-line"
             className="w-5 h-5 text-gray-500 cursor-pointer"
             onClick={handleAddWork}
           />
         </div>
-        
+
         {/* 作品集内容 */}
         {expandedItems['works'] && (
           <div className="space-y-4 mb-4">
             {works.map(work => (
               <div key={work.id}>
                 <div className="flex items-center">
-                  <Icon 
-                    icon={expandedItems[work.id] ? "ri:arrow-down-s-line" : "ri:arrow-right-s-line"} 
+                  <Icon
+                    icon={expandedItems[work.id] ? "ri:arrow-down-s-line" : "ri:arrow-right-s-line"}
                     className="w-5 h-5 mr-2 text-gray-500 cursor-pointer"
                     onClick={() => toggleExpand(work.id)}
                   />
@@ -488,7 +510,7 @@ const Sidebar = () => {
                       className="flex-grow border border-gray-300 rounded px-2 py-1"
                     />
                   ) : (
-                    <span 
+                    <span
                       className="flex-grow cursor-pointer"
                       onClick={() => handleWorkClick(work)}
                       onDoubleClick={() => handleWorkDoubleClick(work)}
@@ -496,13 +518,13 @@ const Sidebar = () => {
                       {work.name}
                     </span>
                   )}
-                  <Icon 
-                    icon="ri:download-line" 
+                  <Icon
+                    icon="ri:download-line"
                     className="w-5 h-5 ml-2 text-gray-500 cursor-pointer"
                     onClick={() => handleDownloadWork()}
                   />
-                  <Icon 
-                    icon="ri:add-line" 
+                  <Icon
+                    icon="ri:add-line"
                     className="w-5 h-5 ml-2 text-gray-500 cursor-pointer"
                     onClick={() => showToast()}
                   />
@@ -515,71 +537,71 @@ const Sidebar = () => {
                     {work.views.characters && work.characters && work.characters.length > 0 && (
                       <div>
                         <div className="flex items-center">
-                          <Icon 
-                            icon={expandedItems[`${work.id}-characters`] ? "ri:arrow-down-s-line" : "ri:arrow-right-s-line"} 
+                          <Icon
+                            icon={expandedItems[`${work.id}-characters`] ? "ri:arrow-down-s-line" : "ri:arrow-right-s-line"}
                             className="w-5 h-5 mr-2 text-gray-500 cursor-pointer"
                             onClick={() => toggleExpand(`${work.id}-characters`)}
                           />
                           <span className="flex-grow cursor-pointer">剧本1</span>
-                          <Icon 
-                            icon="ri:download-line" 
+                          <Icon
+                            icon="ri:download-line"
                             className="w-5 h-5 ml-2 text-gray-500 cursor-pointer"
                             onClick={() => work.characters && work.characters.length > 0 ? handleDownloadCharacterScript() : showToast()}
                           />
-                          <Icon 
-                            icon="ri:add-line" 
+                          <Icon
+                            icon="ri:add-line"
                             className="w-5 h-5 ml-2 text-gray-500 cursor-pointer"
                             onClick={() => work.characters && work.characters.length > 0 ? handleAddScript() : showToast()}
                           />
                         </div>
-                        
+
                         {expandedItems[`${work.id}-characters`] && (
                           <div className="ml-6 mt-1 space-y-1">
                             {work.characters && work.characters.map(char => (
                               <div key={char.id}>
                                 <div className="flex items-center">
-                                  <Icon 
-                                    icon={expandedItems[char.id] ? "ri:arrow-down-s-line" : "ri:arrow-right-s-line"} 
+                                  <Icon
+                                    icon={expandedItems[char.id] ? "ri:arrow-down-s-line" : "ri:arrow-right-s-line"}
                                     className="w-5 h-5 mr-2 text-gray-500 cursor-pointer"
                                     onClick={() => toggleExpand(char.id)}
                                   />
                                   <span className="flex-grow cursor-pointer">
-  {char.name.includes(':') ? char.name : `${char.name}`}
-</span>
-                                  <Icon 
-                                    icon="ri:download-line" 
+                                    {char.name.includes(':') ? char.name : `${char.name}`}
+                                  </span>
+                                  <Icon
+                                    icon="ri:download-line"
                                     className="w-5 h-5 ml-2 text-gray-500 cursor-pointer"
                                     onClick={() => handleDownloadCharacterScript()}
                                   />
-                                  <Icon 
-                                    icon="ri:add-line" 
+                                  <Icon
+                                    icon="ri:add-line"
                                     className="w-5 h-5 ml-2 text-gray-500 cursor-pointer"
                                     onClick={() => handleAddScript()}
                                   />
                                 </div>
-                                
+
                                 {/* 角色剧本列表 */}
                                 {expandedItems[char.id] && char.scripts && char.scripts.length > 0 && (
                                   <div className="ml-7 space-y-1 mt-1">
                                     {char.scripts && char.scripts.map(script => (
                                       <div key={script.id} className="flex items-center">
-                                        <Icon 
-                                          icon="ri:arrow-right-s-line" 
+                                        <Icon
+                                          icon="ri:arrow-right-s-line"
                                           className="w-5 h-5 mr-2 text-gray-500"
                                         />
-                                        <span 
+                                        <span
                                           className="flex-grow cursor-pointer"
                                           onClick={() => handleScriptClick()}
                                         >
                                           {script.name}
                                         </span>
-                                        <Icon 
-                                          icon="ri:download-line" 
+                                        <Icon
+                                          icon="ri:download-line"
                                           className="w-5 h-5 ml-2 text-gray-500 cursor-pointer"
                                           onClick={() => handleDownloadScript()}
                                         />
-                                        <Icon 
-                                          icon="ri:add-line" 
+                                        <Icon
+                                          icon="ri:add-line"
                                           className="w-5 h-5 ml-2 text-gray-500 cursor-pointer"
                                           onClick={() => showToast()}
                                         />
@@ -593,49 +615,49 @@ const Sidebar = () => {
                         )}
                       </div>
                     )}
-                    
+
                     {/* 主持人手册部分 */}
                     {work.views.hostManual && (
                       <div className="flex items-center">
-                        <Icon 
-                          icon="ri:arrow-right-s-line" 
+                        <Icon
+                          icon="ri:arrow-right-s-line"
                           className="w-5 h-5 mr-2 text-gray-500"
                         />
-                        <span 
+                        <span
                           className="flex-grow cursor-pointer"
                           onClick={() => showToast()}
                         >主持人手册</span>
-                        <Icon 
-                          icon="ri:download-line" 
+                        <Icon
+                          icon="ri:download-line"
                           className="w-5 h-5 ml-2 text-gray-500 cursor-pointer"
                           onClick={() => showToast()}
                         />
-                        <Icon 
-                          icon="ri:add-line" 
+                        <Icon
+                          icon="ri:add-line"
                           className="w-5 h-5 ml-2 text-gray-500 cursor-pointer"
                           onClick={() => showToast()}
                         />
                       </div>
                     )}
-                    
+
                     {/* 物料部分 */}
                     {work.views.materials && (
                       <div className="flex items-center">
-                        <Icon 
-                          icon="ri:arrow-right-s-line" 
+                        <Icon
+                          icon="ri:arrow-right-s-line"
                           className="w-5 h-5 mr-2 text-gray-500"
                         />
-                        <span 
+                        <span
                           className="flex-grow cursor-pointer"
                           onClick={() => showToast()}
                         >物料</span>
-                        <Icon 
-                          icon="ri:download-line" 
+                        <Icon
+                          icon="ri:download-line"
                           className="w-5 h-5 ml-2 text-gray-500 cursor-pointer"
                           onClick={() => showToast()}
                         />
-                        <Icon 
-                          icon="ri:add-line" 
+                        <Icon
+                          icon="ri:add-line"
                           className="w-5 h-5 ml-2 text-gray-500 cursor-pointer"
                           onClick={() => showToast()}
                         />
@@ -650,29 +672,29 @@ const Sidebar = () => {
 
         {/* 知识库部分 */}
         <div className="font-bold text-lg mt-6 mb-2 flex justify-between items-center hover:bg-gray-50 p-2 rounded-md">
-          <span 
-            className="cursor-pointer flex items-center" 
+          <span
+            className="cursor-pointer flex items-center"
             onClick={handleKnowledgeItemClick}
           >
-            <Icon 
-              icon={showKnowledgeItems ? "ri:arrow-down-s-line" : "ri:arrow-right-s-line"} 
+            <Icon
+              icon={showKnowledgeItems ? "ri:arrow-down-s-line" : "ri:arrow-right-s-line"}
               className="w-5 h-5 mr-1 text-gray-500"
             />
             知识库
           </span>
-          <Icon 
-            icon="ri:add-line" 
+          <Icon
+            icon="ri:add-line"
             className="w-5 h-5 text-gray-500 cursor-pointer"
             onClick={handleKnowledgeBaseAddClick}
           />
         </div>
-        
+
         {/* 知识库项目列表 */}
         {showKnowledgeItems && (
           <div className="space-y-2 ml-4">
             {knowledgeItems.map(item => (
-              <div 
-                key={item.id} 
+              <div
+                key={item.id}
                 className="flex items-center justify-between px-3 py-2 hover:bg-gray-100 cursor-pointer"
                 onClick={() => handleKnowledgeItemDetailClick(item.id)}
               >
@@ -699,8 +721,8 @@ const Sidebar = () => {
                   </div>
                 )}
                 <div className="relative">
-                  <Icon 
-                    icon="ri:more-fill" 
+                  <Icon
+                    icon="ri:more-fill"
                     className="w-5 h-5 text-gray-400 cursor-pointer"
                     onClick={(e) => handleKnowledgeMenuClick(e, item.id)}
                   />
@@ -711,21 +733,21 @@ const Sidebar = () => {
             <div className="py-2"></div>
           </div>
         )}
-        
+
         {/* 工作流部分 */}
         <div className="font-bold text-lg mt-6 mb-2 flex justify-between items-center hover:bg-gray-50 p-2 rounded-md">
-          <span 
-            className="cursor-pointer flex items-center" 
+          <span
+            className="cursor-pointer flex items-center"
             onClick={handleWorkflowOtherAction}
           >
-            <Icon 
-              icon="ri:arrow-right-s-line" 
+            <Icon
+              icon="ri:arrow-right-s-line"
               className="w-5 h-5 mr-1 text-gray-500"
             />
             工作流
           </span>
-          <Icon 
-            icon="ri:add-line" 
+          <Icon
+            icon="ri:add-line"
             className="w-5 h-5 text-gray-500 cursor-pointer"
             onClick={(e) => {
               e.stopPropagation()
@@ -733,27 +755,27 @@ const Sidebar = () => {
             }}
           />
         </div>
-        
+
         <div className="text-gray-400 text-sm absolute bottom-4 left-4">Writer.AI @千帆叙梦</div>
       </div>
-      
+
       {/* 创建知识库模态窗口 */}
-      <CreateKnowledgeModal 
+      <CreateKnowledgeModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onConfirm={handleKnowledgeBaseCreate}
       />
-      
+
       {/* 全局右键菜单 */}
       {activeMenuId && (
-        <div 
+        <div
           className="fixed bg-white shadow-lg rounded-md py-1 z-50 w-24"
           style={{
             left: `${menuPosition.x}px`,
             top: `${menuPosition.y}px`
           }}
         >
-          <div 
+          <div
             className="px-3 py-2 hover:bg-gray-100 cursor-pointer flex items-center"
             onClick={(e) => {
               const item = knowledgeItems.find(k => k.id === activeMenuId)
@@ -763,7 +785,7 @@ const Sidebar = () => {
             <Icon icon="ri:edit-line" className="w-4 h-4 mr-2" />
             <span>修改</span>
           </div>
-          <div 
+          <div
             className="px-3 py-2 hover:bg-gray-100 cursor-pointer flex items-center text-red-500"
             onClick={(e) => handleKnowledgeDelete(e, activeMenuId)}
           >

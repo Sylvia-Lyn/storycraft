@@ -3,6 +3,7 @@ import { Icon } from '@iconify/react';
 import { Tabs, Tab, Box } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import Navigation from './Navigation';
+import AnnouncementBar from './AnnouncementBar';
 
 // 角色类型定义
 interface Character {
@@ -26,7 +27,7 @@ const CharactersPage: React.FC = () => {
   const characters = ['女1', '女2', '女3', '女4', '男1', '男2'];
   const [selectedCharacter, setSelectedCharacter] = useState(0); // 使用索引作为选中值
   const [gender, setGender] = useState('女');
-  
+
   const handleTabChange = (tab: string) => {
     console.log('Tab changed to:', tab);
   };
@@ -39,20 +40,26 @@ const CharactersPage: React.FC = () => {
     <div className="w-full flex">
       {/* 侧边栏 */}
       <div className="flex-1">
+        {/* 公告栏 */}
+        <AnnouncementBar
+          onTabClick={handleTabChange}
+          featureName="角色生成"
+        />
+
         {/* 导航栏 - 向左偏移 */}
-        <div className="flex w-full pl-10">
-      <Navigation 
-        tabs={tabs} 
-        defaultTab="角色" 
-        onTabChange={handleTabChange} 
-      />
+        <div className="flex w-full pl-10 mt-12">
+          <Navigation
+            tabs={tabs}
+            defaultTab="角色"
+            onTabChange={handleTabChange}
+          />
         </div>
-        
+
         {/* 角色页面主体内容 */}
         <div className="flex flex-col p-4 overflow-y-auto">
           {/* 角色选择区域 - 使用 Material-UI Tabs */}
           <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-            <Tabs 
+            <Tabs
               value={selectedCharacter}
               onChange={handleCharacterChange}
               aria-label="character tabs"
@@ -73,52 +80,52 @@ const CharactersPage: React.FC = () => {
               <div className="w-24 text-right">性别</div>
               <div className="flex space-x-4">
                 <label className="flex items-center space-x-1 cursor-pointer">
-                  <input 
-                    type="radio" 
-                    name="gender" 
-                    checked={gender === '女'} 
+                  <input
+                    type="radio"
+                    name="gender"
+                    checked={gender === '女'}
                     onChange={() => setGender('女')}
-                    className="form-radio" 
+                    className="form-radio"
                   />
                   <span>女</span>
                 </label>
                 <label className="flex items-center space-x-1 cursor-pointer">
-                  <input 
-                    type="radio" 
-                    name="gender" 
-                    checked={gender === '男'} 
+                  <input
+                    type="radio"
+                    name="gender"
+                    checked={gender === '男'}
                     onChange={() => setGender('男')}
-                    className="form-radio" 
+                    className="form-radio"
                   />
                   <span>男</span>
                 </label>
                 <label className="flex items-center space-x-1 cursor-pointer">
-                  <input 
-                    type="radio" 
-                    name="gender" 
-                    checked={gender === '无性别'} 
+                  <input
+                    type="radio"
+                    name="gender"
+                    checked={gender === '无性别'}
                     onChange={() => setGender('无性别')}
-                    className="form-radio" 
+                    className="form-radio"
                   />
                   <span>无性别</span>
                 </label>
                 <label className="flex items-center space-x-1 cursor-pointer">
-                  <input 
-                    type="radio" 
-                    name="gender" 
-                    checked={gender === '双性别版本'} 
+                  <input
+                    type="radio"
+                    name="gender"
+                    checked={gender === '双性别版本'}
                     onChange={() => setGender('双性别版本')}
-                    className="form-radio" 
+                    className="form-radio"
                   />
                   <span>双性别版本</span>
                 </label>
                 <label className="flex items-center space-x-1 cursor-pointer">
-                  <input 
-                    type="radio" 
-                    name="gender" 
-                    checked={gender === '自定义'} 
+                  <input
+                    type="radio"
+                    name="gender"
+                    checked={gender === '自定义'}
                     onChange={() => setGender('自定义')}
-                    className="form-radio" 
+                    className="form-radio"
                   />
                   <span>自定义</span>
                 </label>
@@ -133,7 +140,7 @@ const CharactersPage: React.FC = () => {
                   <select className="appearance-none border border-gray-300 rounded-md px-4 py-2 pr-8 bg-white focus:outline-none">
                     <option>MBTI</option>
                   </select>
-                  <Icon 
+                  <Icon
                     icon="ri:arrow-down-s-line"
                     className="absolute top-1/2 right-2 transform -translate-y-1/2 text-gray-500"
                   />
@@ -142,7 +149,7 @@ const CharactersPage: React.FC = () => {
                   <select className="appearance-none border border-gray-300 rounded-md px-4 py-2 pr-8 bg-white focus:outline-none">
                     <option>ENTJ</option>
                   </select>
-                  <Icon 
+                  <Icon
                     icon="ri:arrow-down-s-line"
                     className="absolute top-1/2 right-2 transform -translate-y-1/2 text-gray-500"
                   />
@@ -157,7 +164,7 @@ const CharactersPage: React.FC = () => {
                 <select className="appearance-none border border-gray-300 rounded-md px-4 py-2 pr-8 bg-white focus:outline-none">
                   <option>玩家</option>
                 </select>
-                <Icon 
+                <Icon
                   icon="ri:arrow-down-s-line"
                   className="absolute top-1/2 right-2 transform -translate-y-1/2 text-gray-500"
                 />
@@ -168,13 +175,13 @@ const CharactersPage: React.FC = () => {
             <div className="flex items-center space-x-4">
               <div className="w-20 text-right">角色名称</div>
               <div className="relative flex-1 max-w-md">
-                <input 
-                  type="text" 
-                  placeholder="输入角色名称" 
+                <input
+                  type="text"
+                  placeholder="输入角色名称"
                   className="w-full border border-gray-300 rounded-md px-4 py-2 pr-10"
                 />
                 <button className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-                  
+
                 </button>
               </div>
             </div>
@@ -194,12 +201,12 @@ const CharactersPage: React.FC = () => {
             <div className="flex items-center space-x-4">
               <div className="w-20 text-right">关键词</div>
               <div className="relative flex-1 max-w-md">
-                <input 
-                  type="text" 
-                  value="女性成长,爱情被付出" 
+                <input
+                  type="text"
+                  value="女性成长,爱情被付出"
                   className="w-full border border-gray-300 rounded-md px-4 py-2 pr-10"
                 />
-                <Icon 
+                <Icon
                   icon="ri:arrow-down-s-line"
                   className="absolute top-1/2 right-2 transform -translate-y-1/2 text-gray-500 cursor-pointer"
                 />
@@ -210,13 +217,13 @@ const CharactersPage: React.FC = () => {
             <div className="flex items-center space-x-4">
               <div className="w-20 text-right">角色判词</div>
               <div className="relative flex-1 max-w-md">
-                <input 
-                  type="text" 
-                  placeholder="输入角色判词" 
+                <input
+                  type="text"
+                  placeholder="输入角色判词"
                   className="w-full border border-gray-300 rounded-md px-4 py-2 pr-10"
                 />
                 <button className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-                  
+
                 </button>
               </div>
             </div>
@@ -239,7 +246,7 @@ const CharactersPage: React.FC = () => {
                 <select className="appearance-none border border-gray-300 rounded-md px-4 py-1 pr-8 bg-white focus:outline-none">
                   <option>角色1</option>
                 </select>
-                <Icon 
+                <Icon
                   icon="ri:arrow-down-s-line"
                   className="absolute top-1/2 right-2 transform -translate-y-1/2 text-gray-500"
                 />
@@ -249,7 +256,7 @@ const CharactersPage: React.FC = () => {
                 <select className="appearance-none border border-gray-300 rounded-md px-4 py-1 pr-8 bg-white focus:outline-none">
                   <option>事业线</option>
                 </select>
-                <Icon 
+                <Icon
                   icon="ri:arrow-down-s-line"
                   className="absolute top-1/2 right-2 transform -translate-y-1/2 text-gray-500"
                 />
@@ -259,7 +266,7 @@ const CharactersPage: React.FC = () => {
                 <select className="appearance-none border border-gray-300 rounded-md px-4 py-1 pr-8 bg-white focus:outline-none">
                   <option>80%</option>
                 </select>
-                <Icon 
+                <Icon
                   icon="ri:arrow-down-s-line"
                   className="absolute top-1/2 right-2 transform -translate-y-1/2 text-gray-500"
                 />
@@ -273,7 +280,7 @@ const CharactersPage: React.FC = () => {
                 <select className="appearance-none border border-gray-300 rounded-md px-4 py-2 pr-8 bg-white focus:outline-none w-full">
                   <option>「只差一步就能永远在一起」</option>
                 </select>
-                <Icon 
+                <Icon
                   icon="ri:arrow-down-s-line"
                   className="absolute top-1/2 right-2 transform -translate-y-1/2 text-gray-500"
                 />
@@ -286,8 +293,8 @@ const CharactersPage: React.FC = () => {
             <div className="flex items-center space-x-4">
               <div className="w-20 text-right">人物简介</div>
               <div className="relative flex-1">
-                <textarea 
-                  placeholder="输入人物简介" 
+                <textarea
+                  placeholder="输入人物简介"
                   className="w-full border border-gray-300 rounded-md px-4 py-2 h-32 resize-none"
                 ></textarea>
               </div>
@@ -298,13 +305,13 @@ const CharactersPage: React.FC = () => {
           <div className="space-y-2 mt-8">
             <div>Q: 您是想要这样的{characters[selectedCharacter]}的角色设定吗？</div>
             <div className="relative">
-              <input 
-                type="text" 
-                className="w-full border border-gray-300 rounded-md px-4 py-2 pr-10" 
-                placeholder="角色不好？告诉我如何优化，如：" 
+              <input
+                type="text"
+                className="w-full border border-gray-300 rounded-md px-4 py-2 pr-10"
+                placeholder="角色不好？告诉我如何优化，如："
               />
-              <Icon 
-                icon="ri:corner-down-right-fill" 
+              <Icon
+                icon="ri:corner-down-right-fill"
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer"
               />
             </div>
@@ -318,9 +325,9 @@ const CharactersPage: React.FC = () => {
           <h2 className="text-xl font-bold">角色设定</h2>
           <div className="flex items-center">
             <div className="w-16 h-16 bg-gray-200 rounded-full overflow-hidden">
-              <img 
-                src="/placeholder-avatar.png" 
-                alt="Character" 
+              <img
+                src="/placeholder-avatar.png"
+                alt="Character"
                 className="w-full h-full object-cover"
                 onError={(e) => {
                   // 如果图片加载失败，显示占位符
@@ -338,14 +345,14 @@ const CharactersPage: React.FC = () => {
         <div className="mb-8">
           <h3 className="font-bold mb-2">人物简介</h3>
           <p className="text-gray-700 mb-4">
-          大巫预言的"亡国公主"，蜕变为草原人众望所归的"草原之心"，落子果决而心志脱俗，以鹰隼之眼洞察人心，以狼王之勇统御万众，一统北方建立大燕，要江山更要挚爱
+            大巫预言的"亡国公主"，蜕变为草原人众望所归的"草原之心"，落子果决而心志脱俗，以鹰隼之眼洞察人心，以狼王之勇统御万众，一统北方建立大燕，要江山更要挚爱
           </p>
         </div>
 
         <div className="mb-8">
           <h3 className="font-bold mb-2">人物小传</h3>
           <p className="text-gray-700 mb-4">
-          1. 只差一步就能永远在一起，却永远失去了你；跨越千山只差一步就能说出口的道歉和表白再也说不出来。被欺骗的忠犬至死都在等你回来。救了所有人却救不下自己最爱的人。一生在爱里自私，与爱情背道而驰的薄情人死于殉情。是到最后才知道他的付出远比你更重，是勃然醒悟却无可挽回。先爱上的是对方，放不下的是自己。你的行为决定了你是谁，而不是你的血统决定了你是谁。你每一次都险些要被权力异化，但你总是能够因为他而苏醒过来。你的保护欲差点变成了征服和独占欲，可是他让你明白什么才是你真正应该做的事。慕强的核心是对更好的追求。
+            1. 只差一步就能永远在一起，却永远失去了你；跨越千山只差一步就能说出口的道歉和表白再也说不出来。被欺骗的忠犬至死都在等你回来。救了所有人却救不下自己最爱的人。一生在爱里自私，与爱情背道而驰的薄情人死于殉情。是到最后才知道他的付出远比你更重，是勃然醒悟却无可挽回。先爱上的是对方，放不下的是自己。你的行为决定了你是谁，而不是你的血统决定了你是谁。你每一次都险些要被权力异化，但你总是能够因为他而苏醒过来。你的保护欲差点变成了征服和独占欲，可是他让你明白什么才是你真正应该做的事。慕强的核心是对更好的追求。
           </p>
         </div>
 

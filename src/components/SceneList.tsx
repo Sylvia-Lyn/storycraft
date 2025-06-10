@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Icon } from '@iconify/react'
 import Navigation from './Navigation'
+import AnnouncementBar from './AnnouncementBar'
 import AiInteractionSection from './AiInteractionSection'
 import SceneTableSection from './SceneTableSection'
 import ViewToggleSwitch from './ViewToggleSwitch'
@@ -49,7 +50,7 @@ const demoScenes: Scene[] = [
 export default function SceneList() {
   const tabs = ['大纲', '角色', '关系', '章节', '分幕', '剧本'];
   const [isPlotView, setIsPlotView] = useState(true);
-  
+
   // 从useAppState获取所有需要的状态和方法
   const {
     selectedModel,
@@ -88,13 +89,17 @@ export default function SceneList() {
     optimizationText,
     setOptimizationText
   } = useAppState();
-  
+
   // 本地状态
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
   const [userInput, setUserInput] = useState('');
-  
+
   console.log(`[SceneList] 组件渲染，当前selectedModel: ${selectedModel}`);
   console.log(`[SceneList] selectModel函数是否存在: ${!!selectModel}`);
+
+  const handleTabChange = (tab: string) => {
+    console.log('Tab changed to:', tab);
+  };
 
   // 模拟生成AI建议
   const generateSuggestions = () => {
@@ -117,13 +122,19 @@ export default function SceneList() {
 
       {/* 中间内容区域 */}
       <div className="flex-1 flex flex-col h-full max-w-[calc(100vw-300px)]">
-        <div className="flex items-center px-4 pt-4">
+        {/* 公告栏 */}
+        <AnnouncementBar
+          onTabClick={handleTabChange}
+          featureName="分幕生成"
+        />
+
+        <div className="flex items-center px-4 pt-4 mt-12">
           {/* 顶部导航 */}
           <div className="flex-1">
             <Navigation
               tabs={tabs}
               defaultTab="分幕"
-              onTabChange={(tab) => console.log(tab)}
+              onTabChange={handleTabChange}
             />
           </div>
 

@@ -14,16 +14,16 @@ function ContentArea() {
     generateSceneSummaries,
     setSelectedDraftText
   } = useAppState();
-  
+
   // 初稿内容状态
-  const [editorData, setEditorData] = useState<any>({ 
-    blocks: [{ type: 'paragraph', data: { text: '' } }] 
+  const [editorData, setEditorData] = useState<any>({
+    blocks: [{ type: 'paragraph', data: { text: '' } }]
   });
   const [isProcessing, setIsProcessing] = useState(false);
-  
+
   // 选中文本的状态
   const [selectedText, setSelectedText] = useState("");
-  
+
   // 编辑器引用
   const editorRef = useRef<EditorComponentRef>(null);
 
@@ -45,10 +45,10 @@ function ContentArea() {
           });
       }
     };
-    
+
     // 注册自定义事件监听
     window.addEventListener('optimizedTextReady' as any, handleOptimizedText);
-    
+
     return () => {
       window.removeEventListener('optimizedTextReady' as any, handleOptimizedText);
     };
@@ -64,7 +64,7 @@ function ContentArea() {
     if (text) {
       setSelectedText(text);
       setSelectedDraftText(text);
-      
+
       // 触发自定义事件，将选中的文本发送到中间操作台
       const event = new CustomEvent('draftTextSelected', {
         detail: { text }
@@ -100,7 +100,7 @@ function ContentArea() {
     }
 
     setIsProcessing(true);
-    
+
     // 使用全局状态中的方法生成分幕剧情总结
     setTimeout(() => {
       generateSceneSummaries(plainText, characterName);
@@ -112,8 +112,8 @@ function ContentArea() {
     <div className="flex-1 flex flex-col p-3 bg-white">
       {/* 顶部标题和操作区 */}
       <div className="flex items-center justify-between mb-3">
-          <div className="font-bold text-lg">初稿编辑</div>
-        
+        <div className="font-bold text-lg">初稿编辑</div>
+
         <div className="flex items-center space-x-2">
           <input
             type="text"
@@ -122,7 +122,7 @@ function ContentArea() {
             placeholder="主角"
             className="border border-gray-300 rounded px-3 py-1 text-sm w-24"
           />
-          <button 
+          <button
             onClick={handleGenerateSceneSummaries}
             disabled={isProcessing}
             className="bg-black text-white px-5 py-1 rounded text-sm flex items-center disabled:bg-gray-400"
@@ -141,20 +141,20 @@ function ContentArea() {
 
       {/* Editor.js 编辑器 */}
       <div className="flex-1">
-        <EditorComponent 
+        <EditorComponent
           ref={editorRef}
           initialData={editorData}
           onChange={handleEditorChange}
           onSelect={handleTextSelection}
         />
-        </div>
+      </div>
 
       {/* 选中文本操作区 - 我们保留这个功能，它在屏幕下方显示选中的文本信息 */}
       {selectedText && (
         <div className="mt-3 p-2 border border-gray-300 rounded bg-gray-50">
           <div className="flex items-center justify-between mb-1">
             <div className="font-medium text-sm">已选中文本</div>
-            <button 
+            <button
               onClick={() => {
                 setSelectedText("");
                 setSelectedDraftText("");
@@ -167,15 +167,15 @@ function ContentArea() {
           <div className="text-xs text-gray-600 mb-1 line-clamp-2">
             {selectedText.length > 100 ? selectedText.substring(0, 100) + "..." : selectedText}
           </div>
-          </div>
-        )}
+        </div>
+      )}
     </div>
   );
 }
 
 function ScriptEditor() {
   return (
-    <div className="flex bg-white">
+    <div className="flex bg-white h-full">
       {/* 中间操作台 */}
       <MiddleSection />
 

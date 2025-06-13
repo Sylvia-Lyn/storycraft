@@ -22,7 +22,7 @@ const simpleChapters: SimpleChapterRow[] = [
   {
     id: '1',
     chapterName: '第一本-第一幕',
-    mainEvents: 'XXXXXXXXXXXXX'
+    mainEvents: ''
   },
   {
     id: '2',
@@ -61,12 +61,12 @@ const detailedChapters: DetailedChapterRow[] = [
   {
     id: '1',
     chapterName: '第一本-第一幕',
-    initialState: 'XXXXXXXXXXXX',
-    climax: 'XXXXXXXXXX',
-    intensifyingEvent: 'XXXXXXXXXXX',
-    keyChoice: 'XXXXXXXXXXX',
-    conflict: 'XXXXXXXXXXX',
-    characterSpotlight: 'XXXXXXXXXXXXXXX'
+    initialState: '',
+    climax: '',
+    intensifyingEvent: '',
+    keyChoice: '',
+    conflict: '',
+    characterSpotlight: ''
   },
   {
     id: '2',
@@ -153,7 +153,7 @@ function ChapterTable() {
   return (
     <div className="flex gap-8">
       <style dangerouslySetInnerHTML={{ __html: customScrollbarStyle }} />
-      
+
       {/* 左侧简单表格 */}
       <div className="w-[450px]">
         <div className="max-h-[500px] overflow-y-auto overflow-x-auto custom-scrollbar">

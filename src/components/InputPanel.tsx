@@ -7,6 +7,8 @@ interface InputPanelProps {
   workingMode?: 'conversation' | 'optimization' | 'result';
   placeholderOverride?: string;
   generatedResponse?: string;
+  presetPrompts?: string[];
+  onPresetPromptSelect?: (prompt: string) => void;
 }
 
 const InputPanel: React.FC<InputPanelProps> = ({
@@ -14,7 +16,9 @@ const InputPanel: React.FC<InputPanelProps> = ({
   isGenerating = false,
   workingMode = 'conversation',
   placeholderOverride,
-  generatedResponse = ''
+  generatedResponse = '',
+  presetPrompts = [],
+  onPresetPromptSelect
 }) => {
   const [inputText, setInputText] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);

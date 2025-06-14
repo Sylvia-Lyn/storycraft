@@ -5,11 +5,12 @@ interface NavigationProps {
   tabs: string[];
   defaultTab?: string;
   onTabChange: (tab: string) => void;
+  isHomePage?: boolean;
 }
 
-function Navigation({ tabs, defaultTab, onTabChange }: NavigationProps) {
+function Navigation({ tabs, defaultTab, onTabChange, isHomePage = false }: NavigationProps) {
   const [selectedTab, setSelectedTab] = useState(defaultTab || tabs[0]);
-  
+
   // 尝试获取navigate，如果不在Router上下文中则使用一个空函数
   let navigate;
   try {
@@ -23,7 +24,7 @@ function Navigation({ tabs, defaultTab, onTabChange }: NavigationProps) {
 
   const handleTabClick = (tab: string) => {
     setSelectedTab(tab);
-    
+
     // 根据不同标签执行不同的路由导航
     if (tab === '分幕') {
       navigate('/scenes');
@@ -38,7 +39,7 @@ function Navigation({ tabs, defaultTab, onTabChange }: NavigationProps) {
     } else if (tab === '章节') {
       navigate('/chapters');
     }
-    
+
     onTabChange(tab);
   };
 
@@ -48,12 +49,11 @@ function Navigation({ tabs, defaultTab, onTabChange }: NavigationProps) {
       <div className="flex justify-center items-center mb-6 mt-5 overflow-x-auto">
         {tabs.map((tab, index) => (
           <div key={tab} className="flex items-center flex-shrink-0">
-            <button 
-              className={`flex items-center justify-center min-w-[54px] px-3 py-1 text-[14px] border ${
-                selectedTab === tab 
-                  ? 'bg-black text-white border-black' 
+            <button
+              className={`flex items-center justify-center min-w-[54px] px-3 py-1 text-[14px] border ${!isHomePage && selectedTab === tab
+                  ? 'bg-black text-white border-black'
                   : 'bg-white text-black border-gray-300'
-              } rounded-md`}
+                } rounded-md`}
               onClick={() => handleTabClick(tab)}
             >
               {tab}

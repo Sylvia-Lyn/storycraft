@@ -22,13 +22,15 @@ const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({ 
   const appState = useAppState();
   const editorRef = useRef<EditorJS | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [selection, setSelection] = useState<{text: string, range: Range | null}>({text: '', range: null});
+  const [selection, setSelection] = useState<{ text: string, range: Range | null }>({ text: '', range: null });
   const [showTemplates, setShowTemplates] = useState(false);
   const [editorHistory, setEditorHistory] = useState<any[]>([]);
   const [currentHistoryIndex, setCurrentHistoryIndex] = useState(-1);
   const [isSaving, setIsSaving] = useState(false);
   const [lastSavedData, setLastSavedData] = useState<any>(null);
-  
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   // 预设的模板句式
   const templateSentences = [
     "这是一个转折点，主角开始意识到自己的使命。",
@@ -37,15 +39,15 @@ const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({ 
     "回忆如潮水般涌来，过往的点滴在心头激荡。",
     "环顾四周，这里的一切都变得陌生而遥远。"
   ];
-  
+
   // 批注功能相关状态
-  const [annotations, setAnnotations] = useState<Array<{id: string, text: string, blockIndex: number}>>([]);
+  const [annotations, setAnnotations] = useState<Array<{ id: string, text: string, blockIndex: number }>>([]);
   const [showAnnotations, setShowAnnotations] = useState(true);
-  
+
   // 初始化编辑器
   useEffect(() => {
     if (!containerRef.current) return;
-    
+
     const editor = new EditorJS({
       holder: containerRef.current,
       tools: {
@@ -76,25 +78,25 @@ const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({ 
         if (editorRef.current) {
           try {
             const savedData = await editorRef.current.save();
-            
+
             // 只有当内容确实发生变化时才添加到历史记录
             const currentContent = JSON.stringify(savedData);
-            const lastContent = editorHistory.length > 0 ? 
+            const lastContent = editorHistory.length > 0 ?
               JSON.stringify(editorHistory[currentHistoryIndex]) : '';
-              
+
             if (currentContent !== lastContent) {
               // 如果当前不在历史记录的最后，则清除当前位置之后的所有历史
               if (currentHistoryIndex < editorHistory.length - 1) {
                 setEditorHistory(prev => prev.slice(0, currentHistoryIndex + 1));
               }
-              
+
               // 添加新的历史记录
               setEditorHistory(prev => [...prev, savedData]);
               setCurrentHistoryIndex(prev => prev + 1);
-              
+
               console.log('添加历史记录:', savedData);
             }
-            
+
             if (onChange) {
               onChange(savedData);
             }
@@ -104,9 +106,9 @@ const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({ 
         }
       }
     });
-    
+
     editorRef.current = editor;
-    
+
     // 初始化时保存初始状态到历史记录
     editor.isReady.then(() => {
       editor.save().then(initialSavedData => {
@@ -115,37 +117,37 @@ const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({ 
         console.log('初始化历史记录:', initialSavedData);
       });
     });
-    
+
     return () => {
       if (editorRef.current && editorRef.current.destroy) {
         editorRef.current.destroy();
       }
     };
   }, []);
-  
+
   // 监听选中文本
   useEffect(() => {
     const handleSelectionChange = () => {
       const selection = window.getSelection();
       if (selection && selection.toString()) {
         const selectedText = selection.toString();
-        setSelection({text: selectedText, range: selection.getRangeAt(0)});
-        
+        setSelection({ text: selectedText, range: selection.getRangeAt(0) });
+
         if (onSelect) {
           onSelect(selectedText, selection.getRangeAt(0));
         }
       } else {
-        setSelection({text: '', range: null});
+        setSelection({ text: '', range: null });
       }
     };
-    
+
     document.addEventListener('selectionchange', handleSelectionChange);
-    
+
     return () => {
       document.removeEventListener('selectionchange', handleSelectionChange);
     };
   }, [onSelect]);
-  
+
   // 监听键盘快捷键
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -155,24 +157,24 @@ const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({ 
         handleUndo();
       }
     };
-    
+
     document.addEventListener('keydown', handleKeyDown);
-    
+
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, [currentHistoryIndex, editorHistory]);
-  
+
   // 插入模板句式
   const insertTemplate = async (template: string) => {
     if (!editorRef.current) return;
-    
+
     try {
       // 获取当前激活的块
       const currentBlockIndex = await editorRef.current.save().then(data => {
         return data.blocks.length - 1; // 简单起见，假设光标在最后一个块
       });
-      
+
       // 插入新块
       await editorRef.current.blocks.insert('paragraph', {
         text: template
@@ -181,20 +183,20 @@ const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({ 
       console.error('插入模板失败:', error);
     }
   };
-  
+
   // 删除当前段落
   const deleteCurrentParagraph = async () => {
     if (!editorRef.current) return;
-    
+
     try {
       // 获取当前激活的块
       const currentBlockIndex = await editorRef.current.save().then(data => {
         return data.blocks.length - 1; // 简单起见，假设光标在最后一个块
       });
-      
+
       // 删除当前块
       await editorRef.current.blocks.delete(currentBlockIndex);
-      
+
       // 如果删除后没有块了，添加一个空段落
       const savedData = await editorRef.current.save();
       if (savedData.blocks.length === 0) {
@@ -206,16 +208,16 @@ const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({ 
       console.error('删除段落失败:', error);
     }
   };
-  
+
   // 将选中文本设置为 Capilot 的上文
   const highlightSelection = () => {
     if (!selection.range || !selection.text) return;
-    
+
     const selectedText = selection.text;
-    
+
     // 将选中的文本传递给 Capilot 作为上文
     appState.setSelectedDraftText(selectedText);
-    
+
     // 可选：显示一个临时的高亮效果，表示文本已被选中为上文
     const range = selection.range;
     const originalContents = range.extractContents();
@@ -223,10 +225,10 @@ const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({ 
     tempHighlightNode.className = 'bg-yellow-100 transition-colors duration-500';
     tempHighlightNode.appendChild(originalContents);
     range.insertNode(tempHighlightNode);
-    
+
     // 显示提示信息
     toast.success('已将选中文本设置为 Capilot 上文');
-    
+
     // 2秒后移除高亮效果
     setTimeout(() => {
       if (tempHighlightNode.parentNode) {
@@ -238,14 +240,14 @@ const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({ 
       }
     }, 2000);
   };
-  
+
   // 清除所有格式
   const clearFormat = async () => {
     if (!editorRef.current) return;
-    
+
     try {
       const savedData = await editorRef.current.save();
-      
+
       // 创建纯文本块
       const plainTextBlocks = savedData.blocks.map(block => {
         if (block.type === 'paragraph') {
@@ -260,7 +262,7 @@ const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({ 
         }
         return block;
       });
-      
+
       // 重新渲染编辑器
       await editorRef.current.render({
         blocks: plainTextBlocks
@@ -273,31 +275,31 @@ const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({ 
   // 添加批注
   const addAnnotation = async () => {
     if (!selection.text || !editorRef.current) return;
-    
+
     try {
       // 获取当前激活的块的索引
       const currentBlockIndex = await editorRef.current.save().then(data => {
         // 简单起见，假设是最后一个块
         return data.blocks.length - 1;
       });
-      
+
       // 创建新批注
       const newAnnotation = {
         id: Date.now().toString(),
         text: selection.text,
         blockIndex: currentBlockIndex
       };
-      
+
       setAnnotations([...annotations, newAnnotation]);
-      
+
       // 为选中文本添加批注样式
       if (selection.range) {
         const range = selection.range;
         const selectedText = selection.text;
-        
+
         // 包装选中文本为批注样式的HTML
         const annotatedText = `<span class="bg-yellow-100 border-b border-yellow-400 cursor-help" title="已添加批注">${selectedText}</span>`;
-        
+
         // 插入带批注样式的文本
         range.deleteContents();
         const annotationNode = document.createElement('span');
@@ -308,7 +310,7 @@ const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({ 
       console.error('添加批注失败:', error);
     }
   };
-  
+
   // 删除批注
   const deleteAnnotation = (id: string) => {
     setAnnotations(annotations.filter(annotation => annotation.id !== id));
@@ -320,18 +322,18 @@ const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({ 
       try {
         const prevHistoryIndex = currentHistoryIndex - 1;
         const prevData = editorHistory[prevHistoryIndex];
-        
+
         console.log('撤销到历史记录:', prevHistoryIndex, prevData);
-        
+
         // 清空当前编辑器
         await editorRef.current.clear();
-        
+
         // 重新渲染上一个状态的内容
         await editorRef.current.render(prevData);
-        
+
         // 更新历史索引
         setCurrentHistoryIndex(prevHistoryIndex);
-        
+
         toast.success('已撤销上一步操作');
       } catch (error) {
         console.error('撤销操作失败:', error);
@@ -341,22 +343,22 @@ const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({ 
       toast.error('没有可撤销的操作');
     }
   };
-  
+
   // 保存操作
   const handleSave = async () => {
     if (!editorRef.current) return;
-    
+
     try {
       setIsSaving(true);
       const savedData = await editorRef.current.save();
-      
+
       // 这里可以添加实际的保存逻辑，例如发送到服务器
       // 模拟保存操作
       await new Promise(resolve => setTimeout(resolve, 500));
-      
+
       // 更新最后保存的数据
       setLastSavedData(savedData);
-      
+
       toast.success('内容已保存');
     } catch (error) {
       console.error('保存失败:', error);
@@ -366,18 +368,104 @@ const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({ 
     }
   };
 
+  // 导出文件函数
+  const exportFile = (format: 'txt' | 'md' | 'docx') => {
+    if (!editorRef.current) return;
+
+    editorRef.current.save().then(savedData => {
+      // 将编辑器数据转换为纯文本
+      const plainText = savedData.blocks
+        .map((block: any) => {
+          if (block.type === 'paragraph') {
+            return block.data.text.replace(/<\/?[^>]+(>|$)/g, "");
+          }
+          return "";
+        })
+        .join("\n\n");
+
+      // 创建 Blob 对象
+      const blob = new Blob([plainText], { type: 'text/plain;charset=utf-8' });
+
+      // 创建下载链接
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `剧本_${new Date().toLocaleDateString()}.${format}`;
+
+      // 触发下载
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    });
+  };
+
+  // 添加点击外部关闭下拉菜单的处理
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.export-menu-container')) {
+        setShowExportMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // 处理文件导入
+  const handleFileImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const content = e.target?.result as string;
+      if (!content || !editorRef.current) return;
+
+      try {
+        // 清空当前内容
+        const currentData = await editorRef.current.save();
+        currentData.blocks.forEach((_, index) => {
+          editorRef.current?.blocks.delete(index);
+        });
+
+        // 按行分割内容并插入
+        const lines = content.split('\n').filter(line => line.trim());
+        for (const line of lines) {
+          await editorRef.current.blocks.insert('paragraph', {
+            text: line
+          });
+        }
+
+        // 触发内容变化回调
+        if (onChange) {
+          const newData = await editorRef.current.save();
+          onChange(newData);
+        }
+      } catch (error) {
+        console.error('导入文件失败:', error);
+        toast.error('导入文件失败，请重试');
+      }
+    };
+
+    reader.readAsText(file);
+  };
+
   // 暴露API方法给父组件
   useImperativeHandle(ref, () => ({
     // 在当前位置插入文本
     insertText: async (text: string) => {
       if (!editorRef.current) return;
-      
+
       try {
         // 获取当前激活的块
         const currentBlockIndex = await editorRef.current.save().then(data => {
           return data.blocks.length - 1; // 简单起见，假设是最后一个块
         });
-        
+
         // 插入新块
         await editorRef.current.blocks.insert('paragraph', {
           text: text
@@ -391,103 +479,129 @@ const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({ 
   return (
     <div className="flex flex-col h-full border border-gray-200 rounded-md overflow-hidden">
       {/* 自定义工具栏 */}
-      <div className="p-2 bg-gray-50 border-b border-gray-200 flex items-center space-x-1">
-        <div className="relative">
-          <button 
+      <div className="flex items-center p-2 border-b border-gray-200 bg-gray-50">
+        <div className="flex items-center space-x-1">
+          <div className="relative">
+            <button
+              className="p-1.5 hover:bg-gray-200 rounded text-gray-600 flex items-center text-sm"
+              onClick={() => alert("开发中功能")}
+              title="插入模板句式"
+            >
+              <Icon icon="mdi:text-box-plus-outline" className="mr-1" />
+              <span>插入模板</span>
+            </button>
+          </div>
+
+          <button
             className="p-1.5 hover:bg-gray-200 rounded text-gray-600 flex items-center text-sm"
-            onClick={() => setShowTemplates(!showTemplates)}
-            title="插入模板句式"
+            onClick={() => alert("开发中功能")}
+            title="删除当前段落"
           >
-            <Icon icon="mdi:text-box-plus-outline" className="mr-1" />
-            <span>插入模板</span>
+            <Icon icon="mdi:text-box-remove-outline" className="mr-1" />
+            <span>删除段落</span>
           </button>
-          
-          {/* 模板句式下拉菜单 */}
-          {showTemplates && (
-            <div className="absolute left-0 top-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-50 w-80">
-              <div className="p-2 border-b border-gray-100 flex justify-between items-center">
-                <span className="text-sm font-medium">选择模板句式</span>
-                <button 
-                  className="text-gray-400 hover:text-gray-600"
-                  onClick={() => setShowTemplates(false)}
+
+          <button
+            className="p-1.5 hover:bg-gray-200 rounded text-gray-600 flex items-center text-sm"
+            onClick={() => alert("开发中功能")}
+            title="高亮选中内容"
+            disabled={!selection.text}
+          >
+            <Icon icon="mdi:marker" className="mr-1" />
+            <span>高亮选中</span>
+          </button>
+
+          <button
+            className="p-1.5 hover:bg-gray-200 rounded text-gray-600 flex items-center text-sm"
+            onClick={() => alert("开发中功能")}
+            title="撤销"
+            disabled={currentHistoryIndex <= 0}
+          >
+            <Icon icon="mdi:undo" className="mr-1" />
+            <span>撤销</span>
+          </button>
+
+          <button
+            className="p-1.5 hover:bg-gray-200 rounded text-gray-600 flex items-center text-sm"
+            onClick={() => alert("暂未开放数据库，请手动保存或选择导出")}
+            title="保存"
+            disabled={isSaving}
+          >
+            <Icon icon="mdi:content-save-outline" className="mr-1" />
+            <span>{isSaving ? '保存中...' : '保存'}</span>
+          </button>
+
+          {/* 导入按钮 */}
+          <div className="relative">
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              accept=".txt,.md"
+              onChange={handleFileImport}
+            />
+            <button
+              className="p-1.5 hover:bg-gray-200 rounded text-gray-600 flex items-center text-sm"
+              title="导入文件"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Icon icon="mdi:file-import-outline" className="mr-1" />
+              <span>导入</span>
+            </button>
+          </div>
+
+          {/* 导出按钮 */}
+          <div className="relative export-menu-container">
+            <button
+              className="p-1.5 hover:bg-gray-200 rounded text-gray-600 flex items-center text-sm"
+              title="导出文件"
+              onClick={() => setShowExportMenu(!showExportMenu)}
+            >
+              <Icon icon="mdi:file-export-outline" className="mr-1" />
+              <span>导出</span>
+            </button>
+            {showExportMenu && (
+              <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded shadow-lg z-50">
+                <button
+                  onClick={() => {
+                    exportFile('txt');
+                    setShowExportMenu(false);
+                  }}
+                  className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
                 >
-                  <Icon icon="mdi:close" className="w-4 h-4" />
+                  导出为 TXT
+                </button>
+                <button
+                  onClick={() => {
+                    exportFile('md');
+                    setShowExportMenu(false);
+                  }}
+                  className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                >
+                  导出为 MD
                 </button>
               </div>
-              <div className="max-h-60 overflow-y-auto">
-                {templateSentences.map((template, index) => (
-                  <div
-                    key={index}
-                    className="p-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-0"
-                    onClick={() => {
-                      insertTemplate(template);
-                      setShowTemplates(false);
-                    }}
-                  >
-                    <div className="text-sm">{template}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
-        
-        <button 
-          className="p-1.5 hover:bg-gray-200 rounded text-gray-600 flex items-center text-sm"
-          onClick={deleteCurrentParagraph}
-          title="删除当前段落"
-        >
-          <Icon icon="mdi:text-box-remove-outline" className="mr-1" />
-          <span>删除段落</span>
-        </button>
-        
-        <button 
-          className="p-1.5 hover:bg-gray-200 rounded text-gray-600 flex items-center text-sm"
-          onClick={highlightSelection}
-          title="高亮选中内容"
-          disabled={!selection.text}
-        >
-          <Icon icon="mdi:marker" className="mr-1" />
-          <span>高亮选中</span>
-        </button>
-        
-        <button 
-          className="p-1.5 hover:bg-gray-200 rounded text-gray-600 flex items-center text-sm"
-          onClick={handleUndo}
-          title="撤销"
-          disabled={currentHistoryIndex <= 0}
-        >
-          <Icon icon="mdi:undo" className="mr-1" />
-          <span>撤销</span>
-        </button>
-        
-        <button 
-          className="p-1.5 hover:bg-gray-200 rounded text-gray-600 flex items-center text-sm"
-          onClick={handleSave}
-          title="保存"
-          disabled={isSaving}
-        >
-          <Icon icon="mdi:content-save-outline" className="mr-1" />
-          <span>{isSaving ? '保存中...' : '保存'}</span>
-        </button>
-        
+
         <div className="flex-1"></div>
       </div>
-      
+
       {/* 编辑器容器 */}
       <div className="flex flex-1 overflow-hidden">
-        <div 
-          ref={containerRef} 
+        <div
+          ref={containerRef}
           className="flex-1 overflow-y-auto p-4"
           style={{ minHeight: "300px" }}
         />
-        
+
         {/* 批注侧边栏 */}
         {showAnnotations && annotations.length > 0 && (
           <div className="w-64 border-l border-gray-200 overflow-y-auto p-2 bg-gray-50">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-medium">批注 ({annotations.length})</h3>
-              <button 
+              <button
                 className="text-xs text-gray-500 hover:text-red-500"
                 onClick={() => setAnnotations([])}
                 title="清除所有批注"
@@ -495,13 +609,13 @@ const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({ 
                 清除全部
               </button>
             </div>
-            
+
             <div className="space-y-2">
               {annotations.map((annotation) => (
                 <div key={annotation.id} className="p-2 bg-white border border-gray-200 rounded text-xs">
                   <div className="flex justify-between items-start mb-1">
                     <div className="font-medium">批注 #{annotation.id.slice(-4)}</div>
-                    <button 
+                    <button
                       className="text-gray-400 hover:text-red-500"
                       onClick={() => deleteAnnotation(annotation.id)}
                     >

@@ -1,7 +1,6 @@
 import { useRef, useEffect, useState } from 'react'
 import { Icon } from '@iconify/react'
 import MiddleSection from './MiddleSection'
-import ResultsSection from './ResultsSection'
 import { useAppState } from '../hooks/useAppState'
 import EditorComponent, { EditorComponentRef } from './EditorComponent'
 
@@ -26,6 +25,36 @@ function ContentArea() {
 
   // 编辑器引用
   const editorRef = useRef<EditorComponentRef>(null);
+
+  // 导出文件函数
+  const exportFile = (format: 'txt' | 'md' | 'docx') => {
+    if (!editorData || !editorData.blocks) return;
+
+    // 将编辑器数据转换为纯文本
+    const plainText = editorData.blocks
+      .map((block: any) => {
+        if (block.type === 'paragraph') {
+          return block.data.text.replace(/<\/?[^>]+(>|$)/g, "");
+        }
+        return "";
+      })
+      .join("\n\n");
+
+    // 创建 Blob 对象
+    const blob = new Blob([plainText], { type: 'text/plain;charset=utf-8' });
+
+    // 创建下载链接
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `剧本_${new Date().toLocaleDateString()}.${format}`;
+
+    // 触发下载
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  };
 
   // 监听从中间操作台传来的优化文本
   useEffect(() => {
@@ -87,7 +116,6 @@ function ContentArea() {
     const plainText = editorData.blocks
       .map((block: any) => {
         if (block.type === 'paragraph') {
-          // 简单去除HTML标签，实际应用中可能需要更复杂的处理
           return block.data.text.replace(/<\/?[^>]+(>|$)/g, "");
         }
         return "";
@@ -101,11 +129,14 @@ function ContentArea() {
 
     setIsProcessing(true);
 
-    // 使用全局状态中的方法生成分幕剧情总结
-    setTimeout(() => {
-      generateSceneSummaries(plainText, characterName);
+    try {
+      await generateSceneSummaries(plainText, characterName);
+    } catch (error) {
+      console.error("生成分幕剧情失败:", error);
+      alert("生成分幕剧情失败，请稍后重试");
+    } finally {
       setIsProcessing(false);
-    }, 2000); // 模拟API延迟
+    }
   };
 
   return (
@@ -123,33 +154,27 @@ function ContentArea() {
             className="border border-gray-300 rounded px-3 py-1 text-sm w-24"
           />
           <button
-            onClick={handleGenerateSceneSummaries}
-            disabled={isProcessing}
-            className="bg-black text-white px-5 py-1 rounded text-sm flex items-center disabled:bg-gray-400"
+            onClick={() => alert("开发中功能")}
+            className="bg-black text-white px-5 py-1 rounded text-sm"
           >
-            {isProcessing ? (
-              <>
-                <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span>
-                处理中...
-              </>
-            ) : (
-              "生成分幕剧情"
-            )}
+            生成分幕剧情
           </button>
         </div>
       </div>
 
-      {/* Editor.js 编辑器 */}
-      <div className="flex-1">
-        <EditorComponent
-          ref={editorRef}
-          initialData={editorData}
-          onChange={handleEditorChange}
-          onSelect={handleTextSelection}
-        />
+      {/* Editor.js 编辑器 - 添加固定高度和滚动控制 */}
+      <div className="flex-1 overflow-hidden">
+        <div className="h-full overflow-y-auto">
+          <EditorComponent
+            ref={editorRef}
+            initialData={editorData}
+            onChange={handleEditorChange}
+            onSelect={handleTextSelection}
+          />
+        </div>
       </div>
 
-      {/* 选中文本操作区 - 我们保留这个功能，它在屏幕下方显示选中的文本信息 */}
+      {/* 选中文本操作区 - 暂时注释掉UI显示
       {selectedText && (
         <div className="mt-3 p-2 border border-gray-300 rounded bg-gray-50">
           <div className="flex items-center justify-between mb-1">
@@ -169,6 +194,7 @@ function ContentArea() {
           </div>
         </div>
       )}
+      */}
     </div>
   );
 }
@@ -185,4 +211,4 @@ function ScriptEditor() {
   );
 }
 
-export default ScriptEditor 
+export default ScriptEditor; 

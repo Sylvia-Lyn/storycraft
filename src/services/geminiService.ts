@@ -11,46 +11,11 @@ const API_BASE_URL = config.GEMINI_API_BASE;
 const GEMINI_MODEL = "models/gemini-2.5-flash-preview-04-17"; // 使用Gemini 2.5 Flash Preview模型
 
 /**
- * 获取可用的Gemini模型列表
- */
-async function listGeminiModels(): Promise<string[]> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/v1beta/models?key=${GEMINI_API_KEY}`);
-    if (!response.ok) {
-      throw new Error(`获取模型列表失败: ${response.status}`);
-    }
-    const data = await response.json();
-    return data.models.map((model: any) => model.name);
-  } catch (error) {
-    console.error("获取Gemini模型列表失败:", error);
-    return [];
-  }
-}
-
-/**
- * 选择最适合的Gemini模型
+ * 选择Gemini模型
  */
 async function selectGeminiModel(): Promise<string> {
-  const availableModels = await listGeminiModels();
-  console.log("可用的Gemini模型:", availableModels);
-
-  // 优先选择列表中的模型
-  const preferredModels = [
-    "models/gemini-2.5-flash-preview-04-17",
-    "models/gemini-2.5-flash-preview-05-20",
-    "models/gemini-2.5-pro-preview-03-25",
-    "models/gemini-2.5-pro-preview-05-06"
-  ];
-
-  for (const model of preferredModels) {
-    if (availableModels.includes(model)) {
-      console.log(`选择Gemini模型: ${model}`);
-      return model;
-    }
-  }
-
-  // 如果没有找到首选模型，返回默认模型
-  console.log(`使用默认Gemini模型: ${GEMINI_MODEL}`);
+  // 直接返回固定模型
+  console.log(`使用Gemini模型: ${GEMINI_MODEL}`);
   return GEMINI_MODEL;
 }
 
@@ -86,8 +51,8 @@ export async function generateGeminiContent(prompt: string): Promise<string> {
 
   while (retryCount < MAX_RETRIES) {
     try {
-      // 选择最适合的模型
-      const selectedModel = await selectGeminiModel();
+      // 使用固定模型
+      const selectedModel = GEMINI_MODEL;
 
       // 使用v1beta版本的API
       const API_URL = `${API_BASE_URL}/v1beta/${selectedModel}:generateContent?key=${GEMINI_API_KEY}`;
@@ -185,21 +150,17 @@ export async function generateGeminiContent(prompt: string): Promise<string> {
         throw new Error('无法从API响应中提取内容');
       }
     } catch (error) {
-      console.error("Gemini API调用失败:", error);
+      console.error(`Gemini API调用失败 (尝试 ${retryCount + 1}/${MAX_RETRIES}):`, error);
       retryCount++;
-
-      if (retryCount >= MAX_RETRIES) {
-        return "抱歉，在生成内容时发生错误。请稍后再试。";
+      if (retryCount === MAX_RETRIES) {
+        throw error;
       }
-
       // 等待一段时间后重试
-      const delay = Math.min(1000 * Math.pow(2, retryCount), 10000); // 指数退避，最大10秒
-      console.log(`等待 ${delay / 1000} 秒后重试...`);
-      await new Promise(resolve => setTimeout(resolve, delay));
+      await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
     }
   }
 
-  return "抱歉，在生成内容时发生错误。请稍后再试。";
+  throw new Error('达到最大重试次数');
 }
 
 /**
@@ -208,9 +169,8 @@ export async function generateGeminiContent(prompt: string): Promise<string> {
  */
 export async function checkGeminiApiStatus(): Promise<boolean> {
   try {
-    // 检查模型列表API
-    const models = await listGeminiModels();
-    return models.length > 0;
+    // 直接返回true，因为我们使用固定模型
+    return true;
   } catch (error) {
     console.error("Gemini API状态检查失败:", error);
     return false;

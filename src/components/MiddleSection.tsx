@@ -145,8 +145,8 @@ function MiddleSection() {
   return (
     <div className="w-[520px] border-r border-gray-200 bg-white flex flex-col h-full">
       {/* 中间内容区域 */}
-      <div className="flex-1 overflow-auto">
-        <div className="p-4 pb-20">
+      <div className="flex-1 flex flex-col">
+        <div className="p-4">
           {/* 使用Navigation组件 */}
           <Navigation
             tabs={tabs}
@@ -193,21 +193,21 @@ function MiddleSection() {
             </div>
           </div>
 
-          {/* 对话消息区域 */}
-          <div className="space-y-4 mb-6">
-            {messages.length > 0 ? (
-              <>
-                <div className="flex justify-between items-center mb-2">
-                  <h3 className="text-sm font-medium text-gray-500">对话历史</h3>
-                  <button
-                    className="text-xs text-gray-500 hover:text-red-500 flex items-center gap-1"
-                    onClick={clearHistory}
-                  >
-                    <Icon icon="mdi:delete-outline" className="w-4 h-4" />
-                    <span>清空历史</span>
-                  </button>
-                </div>
-                <div className="space-y-4">
+          {/* 对话消息区域 - 添加固定高度和滚动控制 */}
+          <div className="flex-1 overflow-hidden flex flex-col">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="text-sm font-medium text-gray-500">对话历史</h3>
+              <button
+                className="text-xs text-gray-500 hover:text-red-500 flex items-center gap-1"
+                onClick={clearHistory}
+              >
+                <Icon icon="mdi:delete-outline" className="w-4 h-4" />
+                <span>清空历史</span>
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto space-y-4 pr-2">
+              {messages.length > 0 ? (
+                <>
                   {messages.map((message) => (
                     <div key={message.id} className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}>
                       <div className={`max-w-[80%] ${message.isUser ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-800'} rounded-lg p-3`}>
@@ -233,14 +233,14 @@ function MiddleSection() {
                     </div>
                   )}
                   <div ref={messagesEndRef} />
+                </>
+              ) : (
+                <div className="text-center py-10 text-gray-500">
+                  <p>暂无对话历史</p>
+                  <p className="text-sm mt-1">输入内容开始对话</p>
                 </div>
-              </>
-            ) : (
-              <div className="text-center py-10 text-gray-500">
-                <p>暂无对话历史</p>
-                <p className="text-sm mt-1">输入内容开始对话</p>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </div>

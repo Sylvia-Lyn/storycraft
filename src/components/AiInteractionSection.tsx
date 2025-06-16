@@ -258,7 +258,7 @@ function AiInteractionSection({
 
   // 发送消息
   const sendMessage = () => {
-    if (!userInput.trim() || isLoadingAI) return;
+    if (!userInput.trim()) return;
 
     // 创建用户消息
     const userMessage: Message = {

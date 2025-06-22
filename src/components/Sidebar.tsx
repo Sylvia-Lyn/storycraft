@@ -119,7 +119,7 @@ const Sidebar: React.FC = () => {
   const [works, setWorks] = useState<Work[]>([
     {
       id: 'work-1',
-      name: '《剧本1》',
+      name: '剧本1',
       views: {
         outline: true,      // 大纲视图
         characters: true,   // 角色剧本视图
@@ -453,18 +453,23 @@ const Sidebar: React.FC = () => {
           </button>
           <span className="text-lg font-medium">创作工具</span>
         </div>
-        {/* 暂时注释了“更多”按钮 */}
-        {/* <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2">
           <button
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-            onClick={() => showToast()}
+            onClick={() => navigate('/vip')}
+            className="px-4 py-2 text-sm font-medium text-blue-700 bg-blue-100 border border-blue-200 rounded-md hover:bg-blue-200"
           >
-            <Icon icon="ri:more-2-fill" className="w-5 h-5 text-gray-600" />
+            会员
           </button>
-        </div> */}
+          <button
+            onClick={() => navigate('/login')}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-100"
+          >
+            登录
+          </button>
+        </div>
       </div>
 
-      <div className="p-4">
+      <div className="flex-grow overflow-y-auto p-4">
         {/* <div className="flex items-center space-x-1 py-2 mb-6">
           <div className="w-3 h-3 rounded-full bg-gray-400"></div>
           <div className="w-3 h-3 rounded-full bg-gray-400"></div>
@@ -473,14 +478,8 @@ const Sidebar: React.FC = () => {
 
         {/* 作品集部分 */}
         <div className="font-bold text-lg mb-6 flex justify-between items-center">
-          <span
-            className="cursor-pointer flex items-center"
-            onClick={() => toggleExpand('works')}
-          >
-            <Icon
-              icon={expandedItems['works'] ? "ri:arrow-down-s-line" : "ri:arrow-right-s-line"}
-              className="w-5 h-5 mr-1 text-gray-500"
-            />
+          <span className="cursor-pointer flex items-center">
+            <Icon icon="ri:arrow-down-s-line" className="w-5 h-5 mr-1 text-gray-500" />
             作品集
           </span>
           <Icon
@@ -490,188 +489,25 @@ const Sidebar: React.FC = () => {
           />
         </div>
 
-        {/* 作品集内容 */}
-        {expandedItems['works'] && (
-          <div className="space-y-4 mb-4">
-            {works.map(work => (
-              <div key={work.id}>
-                <div className="flex items-center">
-                  <Icon
-                    icon={expandedItems[work.id] ? "ri:arrow-down-s-line" : "ri:arrow-right-s-line"}
-                    className="w-5 h-5 mr-2 text-gray-500 cursor-pointer"
-                    onClick={() => toggleExpand(work.id)}
-                  />
-                  {editingWorkId === work.id ? (
-                    <input
-                      ref={editInputRef}
-                      value={editingWorkName}
-                      onChange={e => setEditingWorkName(e.target.value)}
-                      onBlur={handleWorkEditSave}
-                      onKeyDown={handleWorkEditKeyPress}
-                      className="flex-grow border border-gray-300 rounded px-2 py-1"
-                    />
-                  ) : (
-                    <span
-                      className="flex-grow cursor-pointer"
-                      onClick={() => handleWorkClick(work)}
-                      onDoubleClick={() => handleWorkDoubleClick(work)}
-                    >
-                      {work.name}
-                    </span>
-                  )}
-                  <Icon
-                    icon="ri:download-line"
-                    className="w-5 h-5 ml-2 text-gray-500 cursor-pointer"
-                    onClick={() => handleDownloadWork()}
-                  />
-                  <Icon
-                    icon="ri:add-line"
-                    className="w-5 h-5 ml-2 text-gray-500 cursor-pointer"
-                    onClick={() => showToast()}
-                  />
+        {/* 剧本卡片式展示 */}
+        <div className="space-y-2 mb-4 ml-4">
+          {works.map(work => (
+            <div key={work.id} className="flex items-center justify-between px-3 py-2 hover:bg-gray-100 cursor-pointer rounded-lg">
+              <div className="flex items-center">
+                <div className="bg-purple-100 rounded-lg p-2 mr-3">
+                  <Icon icon="ri:book-2-line" className="w-5 h-5 text-purple-400" />
                 </div>
-
-                {/* 作品内容展开时 */}
-                {expandedItems[work.id] && (
-                  <div className="ml-7 space-y-2 mt-2">
-                    {/* 角色剧本部分 */}
-                    {work.views.characters && work.characters && work.characters.length > 0 && (
-                      <div>
-                        <div className="flex items-center">
-                          <Icon
-                            icon={expandedItems[`${work.id}-characters`] ? "ri:arrow-down-s-line" : "ri:arrow-right-s-line"}
-                            className="w-5 h-5 mr-2 text-gray-500 cursor-pointer"
-                            onClick={() => toggleExpand(`${work.id}-characters`)}
-                          />
-                          <span className="flex-grow cursor-pointer">剧本1</span>
-                          <Icon
-                            icon="ri:download-line"
-                            className="w-5 h-5 ml-2 text-gray-500 cursor-pointer"
-                            onClick={() => work.characters && work.characters.length > 0 ? handleDownloadCharacterScript() : showToast()}
-                          />
-                          <Icon
-                            icon="ri:add-line"
-                            className="w-5 h-5 ml-2 text-gray-500 cursor-pointer"
-                            onClick={() => work.characters && work.characters.length > 0 ? handleAddScript() : showToast()}
-                          />
-                        </div>
-
-                        {expandedItems[`${work.id}-characters`] && (
-                          <div className="ml-6 mt-1 space-y-1">
-                            {work.characters && work.characters.map(char => (
-                              <div key={char.id}>
-                                <div className="flex items-center">
-                                  <Icon
-                                    icon={expandedItems[char.id] ? "ri:arrow-down-s-line" : "ri:arrow-right-s-line"}
-                                    className="w-5 h-5 mr-2 text-gray-500 cursor-pointer"
-                                    onClick={() => toggleExpand(char.id)}
-                                  />
-                                  <span className="flex-grow cursor-pointer">
-                                    {char.name.includes(':') ? char.name : `${char.name}`}
-                                  </span>                                
-
-                                  <Icon
-                                    icon="ri:download-line"
-
-                                    className="w-5 h-5 ml-2 text-gray-500 cursor-pointer"
-                                    onClick={() => handleDownloadCharacterScript()}
-                                  />
-                                  <Icon
-                                    icon="ri:add-line"
-                                    className="w-5 h-5 ml-2 text-gray-500 cursor-pointer"
-                                    onClick={() => handleAddScript()}
-                                  />
-                                </div>
-
-                                {/* 角色剧本列表 */}
-                                {expandedItems[char.id] && char.scripts && char.scripts.length > 0 && (
-                                  <div className="ml-7 space-y-1 mt-1">
-                                    {char.scripts && char.scripts.map(script => (
-                                      <div key={script.id} className="flex items-center">
-                                        <Icon
-                                          icon="ri:arrow-right-s-line"
-                                          className="w-5 h-5 mr-2 text-gray-500"
-                                        />
-                                        <span
-                                          className="flex-grow cursor-pointer"
-                                          onClick={() => handleScriptClick()}
-                                        >
-                                          {script.name}
-                                        </span>
-                                        <Icon
-                                          icon="ri:download-line"
-                                          className="w-5 h-5 ml-2 text-gray-500 cursor-pointer"
-                                          onClick={() => handleDownloadScript()}
-                                        />
-                                        <Icon
-                                          icon="ri:add-line"
-                                          className="w-5 h-5 ml-2 text-gray-500 cursor-pointer"
-                                          onClick={() => showToast()}
-                                        />
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* 主持人手册部分 */}
-                    {work.views.hostManual && (
-                      <div className="flex items-center">
-                        <Icon
-                          icon="ri:arrow-right-s-line"
-                          className="w-5 h-5 mr-2 text-gray-500"
-                        />
-                        <span
-                          className="flex-grow cursor-pointer"
-                          onClick={() => showToast()}
-                        >主持人手册</span>
-                        <Icon
-                          icon="ri:download-line"
-                          className="w-5 h-5 ml-2 text-gray-500 cursor-pointer"
-                          onClick={() => showToast()}
-                        />
-                        <Icon
-                          icon="ri:add-line"
-                          className="w-5 h-5 ml-2 text-gray-500 cursor-pointer"
-                          onClick={() => showToast()}
-                        />
-                      </div>
-                    )}
-
-                    {/* 物料部分 */}
-                    {work.views.materials && (
-                      <div className="flex items-center">
-                        <Icon
-                          icon="ri:arrow-right-s-line"
-                          className="w-5 h-5 mr-2 text-gray-500"
-                        />
-                        <span
-                          className="flex-grow cursor-pointer"
-                          onClick={() => showToast()}
-                        >物料</span>
-                        <Icon
-                          icon="ri:download-line"
-                          className="w-5 h-5 ml-2 text-gray-500 cursor-pointer"
-                          onClick={() => showToast()}
-                        />
-                        <Icon
-                          icon="ri:add-line"
-                          className="w-5 h-5 ml-2 text-gray-500 cursor-pointer"
-                          onClick={() => showToast()}
-                        />
-                      </div>
-                    )}
-                  </div>
-                )}
+                <div>
+                  <div className="font-medium">{work.name}</div>
+                  <div className="text-xs text-gray-500">{work.characters ? work.characters.length : 0} 文档</div>
+                </div>
               </div>
-            ))}
-          </div>
-        )}
+              <div className="flex items-center space-x-1">
+                <Icon icon="ri:more-fill" className="w-5 h-5 text-gray-400 cursor-pointer" onClick={() => showToast()} />
+              </div>
+            </div>
+          ))}
+        </div>
 
         {/* 知识库部分 */}
         <div className="font-bold text-lg mt-6 mb-2 flex justify-between items-center hover:bg-gray-50 p-2 rounded-md">

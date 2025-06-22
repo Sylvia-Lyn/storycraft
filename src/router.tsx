@@ -12,6 +12,9 @@ import KnowledgeUploadPage from './components/KnowledgeUploadPage'
 import StorySettingsPage from './components/StorySettingsPage'
 import OptimizingFeatureWrapper from './components/OptimizingFeatureWrapper'
 import App from './App'
+import LoginPage from './components/LoginPage'
+import RegisterPage from './components/RegisterPage'
+import VipPage from './components/VipPage'
 
 // 临时页面组件，显示"正在加班加点更新中"
 // const ComingSoonPage = () => (
@@ -71,6 +74,18 @@ const router = createHashRouter([
       {
         path: 'knowledge/:knowledgeId/upload',
         element: <KnowledgeUploadPage />
+      },
+      {
+        path: 'vip',
+        element: <VipPage />
+      },
+      {
+        path: 'login',
+        element: <LoginPage />
+      },
+      {
+        path: 'register',
+        element: <RegisterPage />
       }
     ]
   }

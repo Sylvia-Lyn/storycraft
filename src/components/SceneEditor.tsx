@@ -18,6 +18,7 @@ import Navigation from './Navigation'
 import PromptDisplay from './PromptDisplay'
 import InputPanel from './InputPanel'
 import { generateSceneContent, polishContent } from '../services/geminiService'
+import TopBar from './TopBar'
 
 // 表格数据接口
 interface TableData {
@@ -347,56 +348,59 @@ function SceneEditor() {
   };
 
   return (
-    <div className="flex bg-white scene-editor-container">
-      {/* 右侧内容区域 */}
-      <div className="flex-1 flex flex-col">
-        {/* 顶部导航栏 */}
-        <div className="border-b border-gray-200 flex-shrink-0">
-          <Navigation
-            tabs={['分幕', '剧本', '大纲', '角色', '关系', '章节']}
-            defaultTab="分幕"
-            onTabChange={() => { }}
-          />
-        </div>
-
-        {/* 视图切换 */}
-        <div className="flex justify-between items-center px-4 py-2 border-b border-gray-200 flex-shrink-0">
-          <div className="font-medium flex items-center">
-            <span>分幕 {sceneId || '1'}: 花间客在订婚宴上重逢前爱人</span>
+    <div className="flex flex-col bg-white h-screen w-full scene-editor-container">
+      <TopBar />
+      <div className="flex flex-1 h-full">
+        {/* 右侧内容区域 */}
+        <div className="flex-1 flex flex-col">
+          {/* 顶部导航栏 */}
+          <div className="border-b border-gray-200 flex-shrink-0">
+            <Navigation
+              tabs={['分幕', '剧本', '大纲', '角色', '关系', '章节']}
+              defaultTab="分幕"
+              onTabChange={() => { }}
+            />
           </div>
-          <FormControlLabel
-            control={
-              <Switch
-                checked={isCharacterView}
-                onChange={handleViewToggle}
-                color="primary"
-              />
-            }
-            label={isCharacterView ? "角色视图" : "剧情视图"}
+
+          {/* 视图切换 */}
+          <div className="flex justify-between items-center px-4 py-2 border-b border-gray-200 flex-shrink-0">
+            <div className="font-medium flex items-center">
+              <span>分幕 {sceneId || '1'}: 花间客在订婚宴上重逢前爱人</span>
+            </div>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={isCharacterView}
+                  onChange={handleViewToggle}
+                  color="primary"
+                />
+              }
+              label={isCharacterView ? "角色视图" : "剧情视图"}
+            />
+          </div>
+
+          {/* 主内容区域 */}
+          <div className="flex-1 overflow-auto">
+            {isCharacterView ? renderCharacterTable() : renderStoryView()}
+          </div>
+
+          {/* 底部输入面板 */}
+          <InputPanel
+            onSubmit={handleInputSubmit}
+            isGenerating={isGenerating}
+            workingMode={workingMode}
+            placeholderOverride="输入内容优化建议，如：希望花间客能更加犹豫不决..."
+            presetPrompts={[
+              '优化角色性格描写，让角色更加立体',
+              '调整情节节奏，使故事更加紧凑',
+              '增加场景描写，提升沉浸感',
+              '改进对话内容，突出角色个性',
+              '添加冲突元素，增强戏剧性'
+            ]}
+            onPresetPromptSelect={handlePresetPromptSelect}
+            generatedResponse={generatedResponse}
           />
         </div>
-
-        {/* 主内容区域 */}
-        <div className="flex-1 overflow-auto">
-          {isCharacterView ? renderCharacterTable() : renderStoryView()}
-        </div>
-
-        {/* 底部输入面板 */}
-        <InputPanel
-          onSubmit={handleInputSubmit}
-          isGenerating={isGenerating}
-          workingMode={workingMode}
-          placeholderOverride="输入内容优化建议，如：希望花间客能更加犹豫不决..."
-          presetPrompts={[
-            '优化角色性格描写，让角色更加立体',
-            '调整情节节奏，使故事更加紧凑',
-            '增加场景描写，提升沉浸感',
-            '改进对话内容，突出角色个性',
-            '添加冲突元素，增强戏剧性'
-          ]}
-          onPresetPromptSelect={handlePresetPromptSelect}
-          generatedResponse={generatedResponse}
-        />
       </div>
     </div>
   );

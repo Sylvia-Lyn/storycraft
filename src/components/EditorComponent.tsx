@@ -73,7 +73,7 @@ const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({ 
         },
       },
       data: initialData || { blocks: [{ type: 'paragraph', data: { text: '' } }] },
-      placeholder: '开始输入内容...',
+      placeholder: '请输入初稿内容...',
       onChange: async () => {
         if (editorRef.current) {
           try {

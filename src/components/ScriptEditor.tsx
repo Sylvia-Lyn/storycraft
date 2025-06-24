@@ -3,6 +3,7 @@ import { Icon } from '@iconify/react'
 import MiddleSection from './MiddleSection'
 import { useAppState } from '../hooks/useAppState'
 import EditorComponent, { EditorComponentRef } from './EditorComponent'
+import { Button, Select } from 'antd'
 
 // 主要编辑区域组件
 function ContentArea() {
@@ -15,8 +16,16 @@ function ContentArea() {
   } = useAppState();
 
   // 初稿内容状态
-  const [editorData, setEditorData] = useState<any>({
-    blocks: [{ type: 'paragraph', data: { text: '' } }]
+  const [editorData, setEditorData] = useState<any>(() => {
+    const draft = localStorage.getItem('draft_content');
+    if (draft && draft.trim()) {
+      // 清空localStorage，避免下次重复
+      localStorage.removeItem('draft_content');
+      return {
+        blocks: [{ type: 'paragraph', data: { text: draft } }]
+      };
+    }
+    return { blocks: [{ type: 'paragraph', data: { text: '' } }] };
   });
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -140,31 +149,16 @@ function ContentArea() {
   };
 
   return (
-    <div className="flex-1 flex flex-col p-3 bg-white">
-      {/* 顶部标题和操作区 */}
+    <div className="flex-1 flex flex-col p-3 bg-white max-h-full min-h-0 h-full">
+      {/* 顶部操作区 - 按原型图重构 */}
       <div className="flex items-center justify-between mb-3">
         <div className="font-bold text-lg">初稿编辑</div>
 
-        <div className="flex items-center space-x-2">
-          <input
-            type="text"
-            value={characterName}
-            onChange={(e) => setCharacterName(e.target.value)}
-            placeholder="主角"
-            className="border border-gray-300 rounded px-3 py-1 text-sm w-24"
-          />
-          <button
-            onClick={() => alert("开发中功能")}
-            className="bg-black text-white px-5 py-1 rounded text-sm"
-          >
-            生成分幕剧情
-          </button>
-        </div>
       </div>
 
       {/* Editor.js 编辑器 - 添加固定高度和滚动控制 */}
-      <div className="flex-1 overflow-hidden">
-        <div className="h-full overflow-y-auto">
+      <div className="flex-1 overflow-hidden min-h-0">
+        <div className="h-full overflow-y-auto min-h-0">
           <EditorComponent
             ref={editorRef}
             initialData={editorData}
@@ -201,10 +195,9 @@ function ContentArea() {
 
 function ScriptEditor() {
   return (
-    <div className="flex bg-white h-full">
+    <div className="h-[calc(100vh-64px)] flex w-full min-h-0">
       {/* 中间操作台 */}
       <MiddleSection />
-
       {/* 右侧内容区域 */}
       <ContentArea />
     </div>

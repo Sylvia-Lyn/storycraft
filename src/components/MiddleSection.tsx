@@ -3,6 +3,7 @@ import Navigation from './Navigation'
 import { useAppState } from '../hooks/useAppState'
 import { useState, useRef, useEffect } from 'react'
 import { useOptimizationResults } from '../hooks/useOptimizationResults'
+import { Button, Select } from 'antd'
 
 // 消息类型定义
 interface Message {
@@ -143,16 +144,23 @@ function MiddleSection() {
   };
 
   return (
-    <div className="w-[520px] border-r border-gray-200 bg-white flex flex-col h-full">
+    <div className="w-[520px] border-r border-gray-200 bg-white flex flex-col h-full min-h-0">
       {/* 中间内容区域 */}
       <div className="flex-1 flex flex-col">
         <div className="p-4">
-          {/* 使用Navigation组件 */}
-          <Navigation
-            tabs={tabs}
-            defaultTab={selectedTab}
-            onTabChange={setSelectedTab}
-          />
+          {/* 参数操作区（两行） */}
+          <div className="mb-4">
+            <div className="flex items-center gap-3 mb-2">
+              <Select defaultValue="Gemini-2.5-pro" style={{ width: 140 }} size="small" options={[{ value: 'Gemini-2.5-pro', label: 'Gemini-2.5-pro' }]} />
+              <Button type="primary" size="small">续写模式</Button>
+              <Button size="small">创作模式</Button>
+            </div>
+            <div className="flex items-center gap-3">
+              <Select defaultValue="文风参考" style={{ width: 100 }} size="small" options={[{ value: '文风参考', label: '文风参考' }]} />
+              <Select defaultValue="提示词" style={{ width: 100 }} size="small" options={[{ value: '提示词', label: '提示词' }]} />
+              <Select defaultValue="角色" style={{ width: 100 }} size="small" options={[{ value: '角色', label: '角色' }]} />
+            </div>
+          </div>
 
           {/* 顶部选择器区域 */}
           <div className="flex items-center justify-between mb-6 mt-4">
@@ -187,14 +195,10 @@ function MiddleSection() {
               )}
             </div>
 
-            {/* 文风显示 */}
-            <div className="flex items-center px-4 py-2 bg-gray-50 rounded-md">
-              <span className="text-gray-700">文风: {selectedStyle}</span>
-            </div>
           </div>
 
           {/* 对话消息区域 - 添加固定高度和滚动控制 */}
-          <div className="flex-1 overflow-hidden flex flex-col">
+          <div className="flex-1 overflow-hidden flex flex-col min-h-0">
             <div className="flex justify-between items-center mb-2">
               <h3 className="text-sm font-medium text-gray-500">对话历史</h3>
               <button
@@ -205,7 +209,7 @@ function MiddleSection() {
                 <span>清空历史</span>
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto space-y-4 pr-2">
+            <div className="flex-1 overflow-y-auto space-y-4 pr-2 min-h-0">
               {messages.length > 0 ? (
                 <>
                   {messages.map((message) => (

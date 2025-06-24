@@ -440,35 +440,7 @@ const Sidebar: React.FC = () => {
   }, [])
 
   return (
-    <div className="w-[300px] h-screen bg-white border-r border-gray-200 flex flex-col">
-      {/* 顶部区域 */}
-      <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={() => navigate('/')}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-            title="回到主页"
-          >
-            <Icon icon="ri:home-4-line" className="w-5 h-5 text-gray-600" />
-          </button>
-          <span className="text-lg font-medium">创作工具</span>
-        </div>
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={() => navigate('/vip')}
-            className="px-4 py-2 text-sm font-medium text-blue-700 bg-blue-100 border border-blue-200 rounded-md hover:bg-blue-200"
-          >
-            会员
-          </button>
-          <button
-            onClick={() => navigate('/login')}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-100"
-          >
-            登录
-          </button>
-        </div>
-      </div>
-
+    <div className="w-[300px] h-full bg-white border-r border-gray-200 flex flex-col h-[calc(100vh-64px)]">
       <div className="flex-grow overflow-y-auto p-4">
         {/* <div className="flex items-center space-x-1 py-2 mb-6">
           <div className="w-3 h-3 rounded-full bg-gray-400"></div>

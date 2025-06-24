@@ -195,7 +195,7 @@ function ContentArea() {
 
 function ScriptEditor() {
   return (
-    <div className="flex flex-1 h-full bg-white w-full min-h-0">
+    <div className="h-[calc(100vh-64px)] flex w-full min-h-0">
       {/* 中间操作台 */}
       <MiddleSection />
       {/* 右侧内容区域 */}

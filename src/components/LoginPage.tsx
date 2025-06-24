@@ -7,7 +7,7 @@ const { Title, Text } = Typography;
 
 const LoginPage: React.FC = () => {
     return (
-        <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #f0f2f5 0%, #e6eaf3 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="h-[calc(100vh-64px)] flex items-center justify-center bg-gradient-to-br from-[#f0f2f5] to-[#e6eaf3]">
             <Card style={{ width: 380, boxShadow: '0 4px 24px rgba(0,0,0,0.08)' }} bordered={false}>
                 <div style={{ textAlign: 'center', marginBottom: 32 }}>
                     <Title level={2} style={{ marginBottom: 0 }}>欢迎登录</Title>

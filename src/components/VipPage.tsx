@@ -5,15 +5,6 @@ type PlanType = 'yearly' | 'quarterly' | 'monthly';
 
 const planConfigs = [
     {
-        key: 'monthly',
-        label: '连续包月',
-        discount: '4.5折',
-        highlight: 'bg-gray-200 text-gray-800',
-        tagClass: 'bg-blue-100 text-blue-600',
-        desc: '首月低至4.5折',
-        trial: '7天免费试用，包月可随时取消',
-    },
-    {
         key: 'quarterly',
         label: '连续包季',
         discount: '4折',
@@ -23,15 +14,23 @@ const planConfigs = [
         trial: '7天免费试用，包季可随时取消',
     },
     {
+        key: 'monthly',
+        label: '连续包月',
+        discount: '4.5折',
+        highlight: 'bg-black text-white',
+        tagClass: 'bg-red-500 text-white',
+        desc: '首月低至4.5折',
+        trial: '7天免费试用，包月可随时取消',
+    },
+    {
         key: 'yearly',
         label: '连续包年',
         discount: '3.5折',
-        highlight: 'bg-blue-600 text-white',
-        tagClass: 'bg-red-100 text-red-600',
+        highlight: 'bg-black text-white',
+        tagClass: 'bg-red-500 text-white',
         desc: '首年低至3.5折',
         trial: '15天免费试用，包年可随时取消',
     },
-
 ];
 
 const planDurations = {
@@ -71,16 +70,10 @@ const VipPage: React.FC = () => {
     );
 
     return (
-        <div className="flex-1 flex flex-col items-center justify-center p-8 bg-gray-50 h-screen overflow-y-auto">
+        <div className="h-[calc(100vh-64px)] flex flex-col items-center justify-center pt-4 pb-8 px-2 bg-gray-50 overflow-y-auto">
             <div className="w-full max-w-6xl mx-auto">
-                <div className="absolute top-8 right-8">
-                    <button className="px-4 py-2 bg-black text-white rounded-md text-sm font-semibold">
-                        免费版 | 积分: 30000
-                    </button>
-                </div>
-
                 {/* 选择套餐类型 */}
-                <div className="flex justify-center mb-10">
+                <div className="flex justify-center mb-8">
                     <div className="bg-white p-1.5 rounded-full shadow-sm border flex items-center space-x-2">
                         {planConfigs.map(p => (
                             <button
@@ -94,14 +87,14 @@ const VipPage: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
                     {/* 免费版 */}
-                    <div className="bg-white rounded-2xl p-8 border h-fit">
+                    <div className="bg-white rounded-2xl p-8 border flex flex-col h-full min-h-[520px]">
                         <h3 className="text-2xl font-semibold mb-2">免费版</h3>
                         <p className="text-4xl font-bold mb-1">0 <span className="text-lg font-normal text-gray-500">元/{planDurations[plan]}</span></p>
                         <p className="text-gray-400 mb-6 text-sm">永久</p>
                         <button className="w-full py-3 bg-gray-100 text-gray-800 rounded-lg font-semibold hover:bg-gray-200 text-base">免费</button>
-                        <ul className="mt-8 space-y-4 text-gray-600 text-sm">
+                        <ul className="mt-8 space-y-4 text-gray-600 text-sm flex-1">
                             <FeatureItem>每日登录送2000积分</FeatureItem>
                             <FeatureItem>AI辅助创作大纲、角色设定</FeatureItem>
                             <FeatureItem>AI辅助续写网文、剧本</FeatureItem>
@@ -111,14 +104,17 @@ const VipPage: React.FC = () => {
                     </div>
 
                     {/* 中文专业版 */}
-                    <div className="bg-black text-white rounded-2xl p-8 transform scale-105 shadow-2xl relative">
+                    <div className="bg-black text-white rounded-2xl p-8 transform scale-105 shadow-2xl relative flex flex-col h-full min-h-[520px]">
                         <div className="absolute -top-3 right-8 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-full">{planConfig.desc}</div>
                         <h3 className="text-2xl font-semibold mb-2">中文专业版</h3>
                         <p className="text-4xl font-bold mb-1">{selectedPricing.chinese.price} <span className="text-lg font-normal text-gray-400">元/{planDurations[plan]}</span></p>
-                        <p className="text-gray-400 mb-2 text-sm">下{planDurations[plan]}续费: {selectedPricing.chinese.renew}元 [5折]</p>
+                        <p className="mb-2 text-base">
+                            <span className="text-gray-400">下{planDurations[plan]}续费: </span>
+                            <span className="text-white font-bold">{selectedPricing.chinese.renew}元 [5折]</span>
+                        </p>
                         <p className="text-gray-400 mb-6 text-sm">{planConfig.trial}</p>
                         <button className="w-full py-3 bg-white text-black rounded-lg font-semibold hover:bg-gray-200 text-base">购买</button>
-                        <ul className="mt-8 space-y-4 text-sm">
+                        <ul className="mt-8 space-y-4 text-sm flex-1">
                             <FeatureItem>每日登录送<strong className="mx-1">1万</strong>积分</FeatureItem>
                             <FeatureItem>一键生成商用级网文、剧本</FeatureItem>
                             <FeatureItem>一键续写、润色深度润色网文、剧本</FeatureItem>
@@ -130,14 +126,17 @@ const VipPage: React.FC = () => {
                     </div>
 
                     {/* 多语言专业版 */}
-                    <div className="bg-white rounded-2xl p-8 border h-fit relative">
+                    <div className="bg-white rounded-2xl p-8 border flex flex-col h-full min-h-[520px] relative">
                         <div className="absolute -top-3 right-8 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-full">{planConfig.desc}</div>
                         <h3 className="text-2xl font-semibold mb-2">多语言专业版</h3>
                         <p className="text-4xl font-bold mb-1">{selectedPricing.multilingual.price} <span className="text-lg font-normal text-gray-500">元/{planDurations[plan]}</span></p>
-                        <p className="text-gray-400 mb-2 text-sm">下{planDurations[plan]}续费: {selectedPricing.multilingual.renew}元 [5折]</p>
+                        <p className="mb-2 text-base">
+                            <span className="text-gray-400">下{planDurations[plan]}续费: </span>
+                            <span className="text-black font-bold">{selectedPricing.multilingual.renew}元 [5折]</span>
+                        </p>
                         <p className="text-gray-400 mb-6 text-sm">{planConfig.trial}</p>
                         <button className="w-full py-3 bg-gray-800 text-white rounded-lg font-semibold hover:bg-black text-base">购买</button>
-                        <ul className="mt-8 space-y-4 text-gray-600 text-sm">
+                        <ul className="mt-8 space-y-4 text-gray-600 text-sm flex-1">
                             <FeatureItem>每日登录送<strong className="mx-1">1万</strong>积分</FeatureItem>
                             <FeatureItem>一键生成商用级多语言网文、剧本</FeatureItem>
                             <FeatureItem>一键续写、润色多语言网文、剧本</FeatureItem>

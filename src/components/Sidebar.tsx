@@ -3,6 +3,7 @@ import { Icon } from '@iconify/react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
 import downloadWork from './WorkDownloader'
+import { auth } from '../cloudbase'
 
 interface CreateKnowledgeModalProps {
   isOpen: boolean

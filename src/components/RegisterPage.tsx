@@ -6,19 +6,22 @@ import { auth } from '../cloudbase';
 const { Title, Text } = Typography;
 const { Option } = Select;
 
-// 手机号格式化函数，确保严格符合腾讯云要求
+// 手机号格式化函数，严格按照 ^\+[1-9]\d{0,3}\s\d{4,20}$ 规则
 function formatPhoneNumber(phone, countryCode = '+86') {
     let p = phone.trim().replace(/\s+/g, '');
-    // 纯数字，拼接国家码
+    // 提取纯数字手机号
     if (/^[0-9]{4,20}$/.test(p)) {
-        return `${countryCode} ${p}`;
+        // 区号只允许1-4位数字，且首位不能为0
+        let cc = countryCode.trim().replace(/\s+/g, '').replace(/^\+0+/, '+').replace(/^\+/, '');
+        if (!/^[1-9]\d{0,3}$/.test(cc)) cc = '86';
+        return `+${cc} ${p}`;
     }
-    // +86开头且无空格，插入空格
-    if (/^\+\d{1,4}[0-9]{4,20}$/.test(p)) {
-        return p.replace(/^(\+\d{1,4})([0-9]{4,20})$/, '$1 $2');
+    // +区号手机号（无空格），插入空格
+    if (/^\+[1-9]\d{0,3}[0-9]{4,20}$/.test(p)) {
+        return p.replace(/^(\+[1-9]\d{0,3})([0-9]{4,20})$/, '$1 $2');
     }
     // 已经是正确格式
-    if (/^\+\d{1,4}\s[0-9]{4,20}$/.test(p)) {
+    if (/^\+[1-9]\d{0,3}\s[0-9]{4,20}$/.test(p)) {
         return p;
     }
     // 兜底
@@ -88,7 +91,16 @@ const RegisterPage = () => {
         try {
             // 使用统一格式化函数
             const phoneNumber = formatPhoneNumber(phone, countryCode);
+
+            // 调试空格问题：显示每个字符的ASCII码
+            console.log('注册手机号字符分析:');
+            for (let i = 0; i < phoneNumber.length; i++) {
+                const char = phoneNumber[i];
+                const ascii = char.charCodeAt(0);
+                console.log(`位置${i}: "${char}" (ASCII: ${ascii})`);
+            }
             console.log('注册信息:', { phoneNumber, code, password, name });
+
             const res = await auth.signInWithSms({
                 verificationInfo,
                 verificationCode: code,
@@ -135,9 +147,6 @@ const RegisterPage = () => {
                                 <Option value="+852">+852 香港</Option>
                                 <Option value="+853">+853 澳门</Option>
                                 <Option value="+886">+886 台湾</Option>
-                                <Option value="+1">+1 美国/加拿大</Option>
-                                <Option value="+81">+81 日本</Option>
-                                <Option value="+44">+44 英国</Option>
                                 {/* 可补充更多区号 */}
                             </Select>
                             <Input

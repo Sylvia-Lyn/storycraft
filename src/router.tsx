@@ -16,7 +16,6 @@ import LoginPage from './components/LoginPage'
 import RegisterPage from './components/RegisterPage'
 import VipPage from './components/VipPage'
 import ProfilePage from './components/ProfilePage'
-import DebugSms from './components/DebugSms'
 
 // 临时页面组件，显示"正在加班加点更新中"
 // const ComingSoonPage = () => (
@@ -93,10 +92,6 @@ const router = createHashRouter([
         path: 'register',
         element: <RegisterPage />
       },
-      {
-        path: 'debug-sms',
-        element: <DebugSms />
-      }
     ]
   }
 ])

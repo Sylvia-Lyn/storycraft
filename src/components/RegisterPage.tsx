@@ -1,30 +1,60 @@
-import React, { useState, useEffect } from 'react';
-import { Form, Input, Button, Typography, Card, Select, Space, message } from 'antd';
-import { UserOutlined, LockOutlined, PhoneOutlined } from '@ant-design/icons';
+import { LockOutlined, PhoneOutlined, UserOutlined } from '@ant-design/icons';
+import { Button, Card, Form, Input, Select, Space, Typography, message, Modal } from 'antd';
+import { useEffect, useState } from 'react';
 import { auth } from '../cloudbase';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
 
+// 手机号验证规则配置
+const phoneValidationRules = {
+    '86': { length: 11, pattern: /^1[3-9]\d{9}$/ }, // 中国大陆
+    '852': { length: 8, pattern: /^[5-9]\d{7}$/ }, // 香港
+    '853': { length: 8, pattern: /^6\d{7}$/ }, // 澳门
+    '886': { length: 9, pattern: /^9\d{8}$/ }, // 台湾
+};
+
+// 验证手机号是否符合对应国家/地区的格式
+function validatePhoneNumber(phone, countryCode) {
+    const cc = countryCode.replace(/^\+/, '');
+    const rule = phoneValidationRules[cc];
+
+    if (!rule) {
+        // 对于未配置的国家，使用通用规则
+        return /^[0-9]{4,20}$/.test(phone);
+    }
+
+    return phone.length === rule.length && rule.pattern.test(phone);
+}
+
 // 手机号格式化函数，严格按照 ^\+[1-9]\d{0,3}\s\d{4,20}$ 规则
 function formatPhoneNumber(phone, countryCode = '+86') {
     let p = phone.trim().replace(/\s+/g, '');
+
     // 提取纯数字手机号
     if (/^[0-9]{4,20}$/.test(p)) {
+        // 处理区号：移除+号和空格，验证格式
+        let cc = countryCode.trim().replace(/\s+/g, '').replace(/^\+/, '');
         // 区号只允许1-4位数字，且首位不能为0
-        let cc = countryCode.trim().replace(/\s+/g, '').replace(/^\+0+/, '+').replace(/^\+/, '');
-        if (!/^[1-9]\d{0,3}$/.test(cc)) cc = '86';
+        if (!/^[1-9]\d{0,3}$/.test(cc)) {
+            cc = '86'; // 默认中国大陆
+        }
         return `+${cc} ${p}`;
     }
+
     // +区号手机号（无空格），插入空格
     if (/^\+[1-9]\d{0,3}[0-9]{4,20}$/.test(p)) {
         return p.replace(/^(\+[1-9]\d{0,3})([0-9]{4,20})$/, '$1 $2');
     }
+
     // 已经是正确格式
     if (/^\+[1-9]\d{0,3}\s[0-9]{4,20}$/.test(p)) {
         return p;
     }
-    // 兜底
+
+    // 兜底：如果都不匹配，返回原始输入
     return p;
 }
 
@@ -35,10 +65,17 @@ const RegisterPage = () => {
     const [code, setCode] = useState('');
     const [password, setPassword] = useState('');
     const [name, setName] = useState('');
-    const [verificationInfo, setVerificationInfo] = useState<any>(null);
+    // 删除 verificationInfo 相关 state
+    // const [verificationInfo, setVerificationInfo] = useState<any>(null);
     const [loading, setLoading] = useState(false);
     const [msg, setMsg] = useState('');
     const [debugPhone, setDebugPhone] = useState('');
+    const [verification, setVerification] = useState<any>(null);
+    const [verificationTokenRes, setVerificationTokenRes] = useState<any>(null);
+    const [showUserExistsModal, setShowUserExistsModal] = useState(false);
+    const [existingUsername, setExistingUsername] = useState('');
+    const navigate = useNavigate();
+    const { login } = useAuth();
 
     // 在手机号输入时，实时显示格式化后的手机号
     useEffect(() => {
@@ -52,17 +89,25 @@ const RegisterPage = () => {
             return;
         }
 
+        // 验证手机号格式
+        if (!validatePhoneNumber(phone, countryCode)) {
+            const cc = countryCode.replace(/^ +/, '');
+            const rule = phoneValidationRules[cc];
+            if (rule) {
+                message.error(`请输入正确的${countryCode}手机号格式（${rule.length}位数字）`);
+            } else {
+                message.error('请输入正确的手机号格式');
+            }
+            return;
+        }
+
         setLoading(true);
         setMsg('');
         try {
-            // 使用统一格式化函数
             const phoneNumber = formatPhoneNumber(phone, countryCode);
             console.log('发送验证码到:', phoneNumber);
-            const verificationInfo = await auth.getVerification({
-                phone_number: phoneNumber,
-            });
-            console.log('验证码发送结果:', verificationInfo);
-            setVerificationInfo(verificationInfo);
+            const verification = await auth.getVerification({ phone_number: phoneNumber });
+            setVerification(verification);
             setMsg('验证码已发送，请查收短信');
             message.success('验证码已发送');
         } catch (e) {
@@ -81,7 +126,19 @@ const RegisterPage = () => {
             return;
         }
 
-        if (!verificationInfo) {
+        // 验证手机号格式
+        if (!validatePhoneNumber(phone, countryCode)) {
+            const cc = countryCode.replace(/^ +/, '');
+            const rule = phoneValidationRules[cc];
+            if (rule) {
+                message.error(`请输入正确的${countryCode}手机号格式（${rule.length}位数字）`);
+            } else {
+                message.error('请输入正确的手机号格式');
+            }
+            return;
+        }
+
+        if (!verification) {
             message.error('请先获取验证码');
             return;
         }
@@ -89,38 +146,88 @@ const RegisterPage = () => {
         setLoading(true);
         setMsg('');
         try {
-            // 使用统一格式化函数
             const phoneNumber = formatPhoneNumber(phone, countryCode);
-
-            // 调试空格问题：显示每个字符的ASCII码
-            console.log('注册手机号字符分析:');
-            for (let i = 0; i < phoneNumber.length; i++) {
-                const char = phoneNumber[i];
-                const ascii = char.charCodeAt(0);
-                console.log(`位置${i}: "${char}" (ASCII: ${ascii})`);
-            }
-            console.log('注册信息:', { phoneNumber, code, password, name });
-
-            const res = await auth.signInWithSms({
-                verificationInfo,
-                verificationCode: code,
-                phoneNumber: phoneNumber,
+            // 1. 校验验证码
+            const verificationTokenRes = await auth.verify({
+                verification_id: verification.verification_id,
+                verification_code: code,
             });
-            console.log('注册结果:', res);
-            setMsg('注册成功，请登录');
-            message.success('注册成功，请登录');
-            setPhone('');
-            setCode('');
-            setPassword('');
-            setName('');
-            setVerificationInfo(null);
+            setVerificationTokenRes(verificationTokenRes);
+            // 2. 判断用户是否已存在
+            if (verification.is_user) {
+                // 用户已存在，显示弹窗
+                setExistingUsername(verification.username || phoneNumber);
+                setShowUserExistsModal(true);
+                setLoading(false);
+                return;
+            } else {
+                // 不存在，注册
+                await auth.signUp({
+                    phone_number: phoneNumber,
+                    verification_code: code,
+                    verification_token: verificationTokenRes.verification_token,
+                    username: name || phoneNumber,
+                    password,
+                });
+                setMsg('注册成功，请登录');
+                message.success('注册成功，请登录');
+                setPhone('');
+                setCode('');
+                setPassword('');
+                setName('');
+                setVerification(null);
+                setVerificationTokenRes(null);
+            }
         } catch (e) {
-            console.error('注册失败:', e);
-            const errorMsg = e.message || '注册失败，请检查信息';
-            setMsg(`注册失败: ${errorMsg}`);
-            message.error(`注册失败: ${errorMsg}`);
+            console.error('注册/登录失败:', e);
+            const errorMsg = e.message || '注册/登录失败，请检查信息';
+            setMsg(`注册/登录失败: ${errorMsg}`);
+            message.error(`注册/登录失败: ${errorMsg}`);
         }
         setLoading(false);
+    };
+
+    // 直接登录
+    const handleDirectLogin = async () => {
+        setLoading(true);
+        try {
+            const phoneNumber = formatPhoneNumber(phone, countryCode);
+            await auth.signIn({
+                username: phoneNumber,
+                verification_token: verificationTokenRes.verification_token,
+            });
+            message.success('登录成功');
+
+            // 登录成功后跳转
+            if (login) {
+                const userInfo = {
+                    user_id: 1,
+                    user_name: existingUsername || phoneNumber,
+                    user_email: '',
+                    user_plan: 'free',
+                    user_piont: '0'
+                };
+                login(userInfo, 'token');
+                navigate('/');
+            }
+        } catch (e) {
+            console.error('直接登录失败:', e);
+            message.error('直接登录失败，请重试');
+        }
+        setLoading(false);
+        setShowUserExistsModal(false);
+    };
+
+    // 换号注册
+    const handleChangePhone = () => {
+        setPhone('');
+        setCode('');
+        setPassword('');
+        setName('');
+        setVerification(null);
+        setVerificationTokenRes(null);
+        setShowUserExistsModal(false);
+        setMsg('');
     };
 
     return (
@@ -183,10 +290,10 @@ const RegisterPage = () => {
                             onChange={e => setPassword(e.target.value)}
                         />
                     </Form.Item>
-                    <Form.Item label="昵称（可选）">
+                    <Form.Item label="用户名" required>
                         <Input
                             prefix={<UserOutlined />}
-                            placeholder="昵称"
+                            placeholder="用户名（1-32位，包含字母和数字）"
                             value={name}
                             onChange={e => setName(e.target.value)}
                         />
@@ -200,6 +307,23 @@ const RegisterPage = () => {
                     <Text type="secondary">已有账号？ <a href="/login">立即登录</a></Text>
                 </div>
             </Card>
+
+            {/* 用户已存在弹窗 */}
+            <Modal
+                title="用户已存在"
+                open={showUserExistsModal}
+                onCancel={() => setShowUserExistsModal(false)}
+                footer={[
+                    <Button key="change" onClick={handleChangePhone}>
+                        换号注册
+                    </Button>,
+                    <Button key="login" type="primary" loading={loading} onClick={handleDirectLogin}>
+                        直接登录
+                    </Button>,
+                ]}
+            >
+                <p>该手机号已注册，用户名为 <strong>{existingUsername}</strong>，是否直接登录？</p>
+            </Modal>
         </div>
     );
 };

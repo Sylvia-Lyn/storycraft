@@ -582,7 +582,7 @@ const Sidebar: React.FC = () => {
           </span>
         </div>
 
-        <div className="text-gray-400 text-sm absolute bottom-4 left-4">Writer.AI @千帆叙梦</div>
+        <div className="text-gray-400 text-sm absolute bottom-4 left-4">StoryCraft @千帆叙梦</div>
       </div>
 
       {/* 创建知识库模态窗口 */}

@@ -11,7 +11,7 @@ ghpages.publish(
   join(__dirname, 'dist'),
   {
     branch: 'gh-pages',
-    repo: 'https://github.com/Jackwang-lea/writer.git',
+    repo: 'https://github.com/Jackwang-lea/storycraft.git',
     message: 'Auto-deploy from script',
     dotfiles: true,
     user: {

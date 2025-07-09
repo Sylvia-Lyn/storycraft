@@ -1,25 +1,82 @@
 import React, { useState } from 'react';
-import { Form, Input, Button, Checkbox, Typography, Card, message, Select, Space } from 'antd';
-import { LockOutlined, UserOutlined } from '@ant-design/icons';
+import { Form, Input, Button, Typography, Card, message, Select, Space } from 'antd';
+import { LockOutlined, UserOutlined, PhoneOutlined } from '@ant-design/icons';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { auth } from '../cloudbase';
 
 const { Title, Text } = Typography;
+const { Option } = Select;
+
+// 手机号验证规则配置
+const phoneValidationRules = {
+    '86': { length: 11, pattern: /^1[3-9]\d{9}$/ }, // 中国大陆
+    '852': { length: 8, pattern: /^[5-9]\d{7}$/ }, // 香港
+    '853': { length: 8, pattern: /^6\d{7}$/ }, // 澳门
+    '886': { length: 9, pattern: /^9\d{8}$/ }, // 台湾
+};
+
+// 验证手机号是否符合对应国家/地区的格式
+function validatePhoneNumber(phone, countryCode) {
+    const cc = countryCode.replace(/^\+/, '');
+    const rule = phoneValidationRules[cc];
+
+    if (!rule) {
+        // 对于未配置的国家，使用通用规则
+        return /^[0-9]{4,20}$/.test(phone);
+    }
+
+    return phone.length === rule.length && rule.pattern.test(phone);
+}
+
+// 手机号格式化函数，严格按照 ^\+[1-9]\d{0,3}\s\d{4,20}$ 规则
+function formatPhoneNumber(phone, countryCode = '+86') {
+    let p = phone.trim().replace(/\s+/g, '');
+
+    // 提取纯数字手机号
+    if (/^[0-9]{4,20}$/.test(p)) {
+        // 处理区号：移除+号和空格，验证格式
+        let cc = countryCode.trim().replace(/\s+/g, '').replace(/^\+/, '');
+        // 区号只允许1-4位数字，且首位不能为0
+        if (!/^[1-9]\d{0,3}$/.test(cc)) {
+            cc = '86'; // 默认中国大陆
+        }
+        return `+${cc} ${p}`;
+    }
+
+    // +区号手机号（无空格），插入空格
+    if (/^\+[1-9]\d{0,3}[0-9]{4,20}$/.test(p)) {
+        return p.replace(/^(\+[1-9]\d{0,3})([0-9]{4,20})$/, '$1 $2');
+    }
+
+    // 已经是正确格式
+    if (/^\+[1-9]\d{0,3}\s[0-9]{4,20}$/.test(p)) {
+        return p;
+    }
+
+    // 兜底：如果都不匹配，返回原始输入
+    return p;
+}
 
 const LoginPage: React.FC = () => {
     const [mode, setMode] = useState<'phone' | 'account'>('phone');
+    const [countryCode, setCountryCode] = useState('+86');
     const [phone, setPhone] = useState('');
     const [code, setCode] = useState('');
-    const [verificationId, setVerificationId] = useState('');
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [verification, setVerification] = useState<any>(null);
+    const [verificationTokenRes, setVerificationTokenRes] = useState<any>(null);
     const [loading, setLoading] = useState(false);
     const [msg, setMsg] = useState('');
+    const [debugPhone, setDebugPhone] = useState('');
     const navigate = useNavigate();
     const { login } = useAuth();
-    const [countryCode, setCountryCode] = useState('+86');
-    const [verificationInfo, setVerificationInfo] = useState<any>(null);
+
+    // 在手机号输入时，实时显示格式化后的手机号
+    React.useEffect(() => {
+        setDebugPhone(formatPhoneNumber(phone, countryCode));
+    }, [phone, countryCode]);
 
     // 获取验证码
     const handleGetCode = async () => {
@@ -28,28 +85,25 @@ const LoginPage: React.FC = () => {
             return;
         }
 
+        // 验证手机号格式
+        if (!validatePhoneNumber(phone, countryCode)) {
+            const cc = countryCode.replace(/^\+/, '');
+            const rule = phoneValidationRules[cc];
+            if (rule) {
+                message.error(`请输入正确的${countryCode}手机号格式（${rule.length}位数字）`);
+            } else {
+                message.error('请输入正确的手机号格式');
+            }
+            return;
+        }
+
         setLoading(true);
         setMsg('');
         try {
-            // 格式化手机号：确保格式为 "+国家代码 手机号"
-            let phoneNumber = phone.trim();
-
-            // 如果用户只输入了手机号，需要添加国家代码和空格
-            if (!phoneNumber.startsWith('+')) {
-                phoneNumber = `${countryCode} ${phoneNumber}`;
-            } else {
-                // 如果用户输入了完整手机号，确保格式正确
-                phoneNumber = phoneNumber.replace('+86', '+86 ');
-            }
-
+            const phoneNumber = formatPhoneNumber(phone, countryCode);
             console.log('发送验证码到:', phoneNumber);
-
-            // 使用正确的腾讯云开发API - 发送短信验证码
-            const verificationInfo = await auth.getVerification({
-                phone_number: phoneNumber,
-            });
-            console.log('验证码发送结果:', verificationInfo);
-            setVerificationInfo(verificationInfo);
+            const verification = await auth.getVerification({ phone_number: phoneNumber });
+            setVerification(verification);
             setMsg('验证码已发送，请查收短信');
             message.success('验证码已发送');
         } catch (e) {
@@ -68,7 +122,7 @@ const LoginPage: React.FC = () => {
             return;
         }
 
-        if (!verificationInfo) {
+        if (!verification) {
             message.error('请先获取验证码');
             return;
         }
@@ -76,32 +130,35 @@ const LoginPage: React.FC = () => {
         setLoading(true);
         setMsg('');
         try {
-            // 格式化手机号：确保格式为 "+国家代码 手机号"
-            let phoneNumber = phone.trim();
+            const phoneNumber = formatPhoneNumber(phone, countryCode);
 
-            // 如果用户只输入了手机号，需要添加国家代码和空格
-            if (!phoneNumber.startsWith('+')) {
-                phoneNumber = `${countryCode} ${phoneNumber}`;
-            } else {
-                // 如果用户输入了完整手机号，确保格式正确
-                phoneNumber = phoneNumber.replace('+86', '+86 ');
-            }
-
-            console.log('登录信息:', { phoneNumber, code });
-
-            // 使用正确的登录API
-            const res = await auth.signInWithSms({
-                verificationInfo,
-                verificationCode: code,
-                phoneNumber: phoneNumber,
+            // 1. 校验验证码
+            const verificationTokenRes = await auth.verify({
+                verification_id: verification.verification_id,
+                verification_code: code,
             });
-            console.log('登录结果:', res);
+            setVerificationTokenRes(verificationTokenRes);
+
+            // 2. 登录
+            await auth.signIn({
+                username: phoneNumber,
+                verification_token: verificationTokenRes.verification_token,
+            });
+
             setMsg('登录成功');
             message.success('登录成功');
 
             // 登录成功后跳转
             if (login) {
-                login(res.user, res.token);
+                // 这里需要获取用户信息，暂时使用模拟数据
+                const userInfo = {
+                    user_id: 1,
+                    user_name: phoneNumber,
+                    user_email: '',
+                    user_plan: 'free',
+                    user_piont: '0'
+                };
+                login(userInfo, 'token');
                 navigate('/');
             }
         } catch (e) {
@@ -113,8 +170,13 @@ const LoginPage: React.FC = () => {
         setLoading(false);
     };
 
-    // 账号密码登录
+    // 用户名密码登录
     const handleAccountLogin = async () => {
+        if (!username || !password) {
+            message.error('请填写完整信息');
+            return;
+        }
+
         setLoading(true);
         setMsg('');
         try {
@@ -123,47 +185,30 @@ const LoginPage: React.FC = () => {
                 password,
             });
             setMsg('登录成功');
+            message.success('登录成功');
+
+            // 登录成功后跳转
+            if (login) {
+                const userInfo = {
+                    user_id: 1,
+                    user_name: username,
+                    user_email: '',
+                    user_plan: 'free',
+                    user_piont: '0'
+                };
+                login(userInfo, 'token');
+                navigate('/');
+            }
         } catch (e) {
-            setMsg('登录失败，请检查账号密码');
+            console.error('登录失败:', e);
+            const errorMsg = e.message || '登录失败，请检查账号密码';
+            setMsg(`登录失败: ${errorMsg}`);
+            message.error(`登录失败: ${errorMsg}`);
         }
         setLoading(false);
     };
 
-    const onFinish = async (values: any) => {
-        setLoading(true);
-        try {
-            const response = await fetch('/api/auth/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    username: values.username,
-                    password: values.password,
-                }),
-            });
 
-            const result = await response.json();
-
-            if (result.success) {
-                // 使用认证上下文登录
-                login(result.data, result.data.token);
-                message.success('登录成功！');
-                navigate('/');
-            } else {
-                message.error(result.error || '登录失败');
-            }
-        } catch (error) {
-            console.error('Login error:', error);
-            message.error('网络错误，请稍后重试');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // function handleLogin() {
-    //     app.auth().signInWithRedirect();
-    // }
 
     return (
 
@@ -171,76 +216,106 @@ const LoginPage: React.FC = () => {
             <Card variant="outlined" style={{ width: 380, boxShadow: '0 4px 24px rgba(0,0,0,0.08)' }}>
                 <div style={{ textAlign: 'center', marginBottom: 32 }}>
                     <Title level={2} style={{ marginBottom: 0 }}>欢迎登录</Title>
-                    <Text type="secondary">Writer.AI 账号登录</Text>
+                    <Text type="secondary">StoryCraft 账号登录</Text>
                 </div>
                 <div style={{ display: 'flex', marginBottom: 16 }}>
-                    <button onClick={() => setMode('phone')} style={{ flex: 1, background: mode === 'phone' ? '#1890ff' : '#eee', color: mode === 'phone' ? '#fff' : '#333' }}>手机号验证码登录</button>
-                    <button onClick={() => setMode('account')} style={{ flex: 1, background: mode === 'account' ? '#1890ff' : '#eee', color: mode === 'account' ? '#fff' : '#333' }}>账号密码登录</button>
+                    <button
+                        onClick={() => setMode('phone')}
+                        style={{
+                            flex: 1,
+                            background: mode === 'phone' ? '#1890ff' : '#eee',
+                            color: mode === 'phone' ? '#fff' : '#333',
+                            border: 'none',
+                            padding: '8px',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        手机号验证码登录
+                    </button>
+                    <button
+                        onClick={() => setMode('account')}
+                        style={{
+                            flex: 1,
+                            background: mode === 'account' ? '#1890ff' : '#eee',
+                            color: mode === 'account' ? '#fff' : '#333',
+                            border: 'none',
+                            padding: '8px',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        用户名密码登录
+                    </button>
                 </div>
                 {mode === 'phone' ? (
                     <>
-                        <Form.Item name="countryCode" rules={[{ required: true, message: '请选择国家区号!' }]}>
-                            <Input
-                                prefix={<UserOutlined />}
-                                placeholder="国家区号"
-                                size="large"
-                                value={countryCode}
-                                onChange={(e) => setCountryCode(e.target.value)}
-                            />
+                        <Form.Item label="手机号" required>
+                            <Space.Compact>
+                                <Select
+                                    showSearch
+                                    value={countryCode}
+                                    style={{ width: 100 }}
+                                    onChange={setCountryCode}
+                                    optionFilterProp="children"
+                                    filterOption={(input, option) =>
+                                        String(option?.children).toLowerCase().includes(input.toLowerCase())
+                                    }
+                                >
+                                    <Option value="+86">+86 中国大陆</Option>
+                                    <Option value="+852">+852 香港</Option>
+                                    <Option value="+853">+853 澳门</Option>
+                                    <Option value="+886">+886 台湾</Option>
+                                </Select>
+                                <Input
+                                    style={{ width: 200 }}
+                                    placeholder="请输入手机号"
+                                    prefix={<PhoneOutlined />}
+                                    value={phone}
+                                    onChange={e => setPhone(e.target.value)}
+                                />
+                            </Space.Compact>
                         </Form.Item>
-                        <Form.Item name="phone" rules={[{ required: true, message: '请输入手机号!' }]}>
-                            <Input
-                                prefix={<UserOutlined />}
-                                placeholder="手机号"
-                                size="large"
-                                value={phone}
-                                onChange={(e) => setPhone(e.target.value)}
-                            />
+                        {/* 手机号格式调试信息 */}
+                        <div style={{ marginBottom: 8, color: '#888', fontSize: 12 }}>
+                            格式化后手机号: <span style={{ color: '#333' }}>{debugPhone}</span>
+                        </div>
+                        <Form.Item label="验证码" required>
+                            <Space.Compact>
+                                <Input
+                                    style={{ width: 200 }}
+                                    placeholder="请输入验证码"
+                                    value={code}
+                                    onChange={e => setCode(e.target.value)}
+                                />
+                                <Button style={{ width: 120 }} onClick={handleGetCode} disabled={loading || !phone} loading={loading}>
+                                    获取验证码
+                                </Button>
+                            </Space.Compact>
                         </Form.Item>
-                        <Form.Item>
-                            <Button type="primary" htmlType="submit" block size="large" loading={loading} onClick={handleGetCode} disabled={loading || !phone}>
-                                获取验证码
-                            </Button>
-                        </Form.Item>
-                        <Form.Item name="code" rules={[{ required: true, message: '请输入验证码!' }]}>
-                            <Input
-                                placeholder="验证码"
-                                size="large"
-                                value={code}
-                                onChange={(e) => setCode(e.target.value)}
-                            />
-                        </Form.Item>
-                        <Form.Item>
-                            <Button type="primary" htmlType="submit" block size="large" loading={loading} onClick={handlePhoneLogin} disabled={loading || !phone || !code}>
-                                登录
-                            </Button>
-                        </Form.Item>
+                        <Button type="primary" block loading={loading} onClick={handlePhoneLogin} disabled={loading || !phone || !code}>
+                            登录
+                        </Button>
                     </>
                 ) : (
                     <>
-                        <Form.Item name="username" rules={[{ required: true, message: '请输入用户名!' }]}>
+                        <Form.Item label="用户名" required>
                             <Input
                                 prefix={<UserOutlined />}
-                                placeholder="账号/手机号/邮箱"
-                                size="large"
+                                placeholder="请输入用户名"
                                 value={username}
-                                onChange={(e) => setUsername(e.target.value)}
+                                onChange={e => setUsername(e.target.value)}
                             />
                         </Form.Item>
-                        <Form.Item name="password" rules={[{ required: true, message: '请输入密码!' }]}>
+                        <Form.Item label="密码" required>
                             <Input.Password
                                 prefix={<LockOutlined />}
-                                placeholder="密码"
-                                size="large"
+                                placeholder="请输入密码"
                                 value={password}
-                                onChange={(e) => setPassword(e.target.value)}
+                                onChange={e => setPassword(e.target.value)}
                             />
                         </Form.Item>
-                        <Form.Item>
-                            <Button type="primary" htmlType="submit" block size="large" loading={loading} onClick={handleAccountLogin} disabled={loading || !username || !password}>
-                                登录
-                            </Button>
-                        </Form.Item>
+                        <Button type="primary" block loading={loading} onClick={handleAccountLogin} disabled={loading || !username || !password}>
+                            登录
+                        </Button>
                     </>
                 )}
                 {msg && <div style={{ marginTop: 16, color: msg.includes('成功') ? 'green' : 'red' }}>{msg}</div>}

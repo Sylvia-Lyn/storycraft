@@ -3,6 +3,7 @@ import { Icon } from '@iconify/react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
 import downloadWork from './WorkDownloader'
+import { auth } from '../cloudbase'
 
 interface CreateKnowledgeModalProps {
   isOpen: boolean
@@ -567,7 +568,21 @@ const Sidebar: React.FC = () => {
           />
         </div>
 
-        <div className="text-gray-400 text-sm absolute bottom-4 left-4">Writer.AI @千帆叙梦</div>
+        {/* 我的资料部分 */}
+        <div className="font-bold text-lg mt-6 mb-2 flex justify-between items-center hover:bg-gray-50 p-2 rounded-md">
+          <span
+            className="cursor-pointer flex items-center"
+            onClick={() => navigate('/profile')}
+          >
+            <Icon
+              icon="ri:user-line"
+              className="w-5 h-5 mr-1 text-gray-500"
+            />
+            我的
+          </span>
+        </div>
+
+        <div className="text-gray-400 text-sm absolute bottom-4 left-4">StoryCraft @千帆叙梦</div>
       </div>
 
       {/* 创建知识库模态窗口 */}

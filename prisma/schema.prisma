@@ -1,0 +1,46 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model user {
+  id                Int       @id @default(autoincrement()) @map("id")
+  username          String    @unique @db.VarChar(50) @map("username")
+  password          String    @db.VarChar(255) @map("password")
+  login_status      Boolean   @default(false) @map("login_status") @db.TinyInt
+  phone             String?   @unique @db.VarChar(20) @map("phone")
+  phone_verified    Boolean   @default(false) @map("phone_verified") @db.TinyInt
+  email             String?   @unique @db.VarChar(100) @map("email")
+  email_verified    Boolean   @default(false) @map("email_verified") @db.TinyInt
+  real_name         String?   @db.VarChar(50) @map("real_name")
+  id_number         String?   @db.VarChar(32) @map("id_number")
+  realname_verified Boolean   @default(false) @map("realname_verified") @db.TinyInt
+  vip_type          VipType   @default(free) @map("vip_type")
+  vip_plan          VipPlan?  @map("vip_plan")
+  vip_expire_at     DateTime? @map("vip_expire_at")
+  vip_trial         Boolean   @default(false) @map("vip_trial") @db.TinyInt
+  user_points       Int       @default(0) @map("user_points") // 用户积分
+  user_plan         String?   @db.VarChar(255) @default("free") @map("user_plan") // 保留原有字段以兼容
+  user_piont        String?   @db.VarChar(255) @default("0") @map("user_piont") // 保留原有字段以兼容
+  created_at        DateTime  @default(now()) @map("created_at")
+  updated_at        DateTime  @updatedAt @map("updated_at")
+
+  @@map("user")
+}
+
+enum VipType {
+  free
+  chinese
+  multilingual
+}
+
+enum VipPlan {
+  yearly
+  quarterly
+  monthly
+}

@@ -104,7 +104,7 @@
 ```bash
 # 克隆项目 | Clone the repository
 git clone <repository-url>
-cd writer
+cd storycraft
 
 # 安装依赖 | Install dependencies
 npm install
@@ -175,11 +175,11 @@ src/
 
 <div align="center">
 
-**Writer.AI @千帆叙梦**
+**StoryCraft @千帆叙梦**
 
 [![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github)](https://github.com)
 [![Website](https://img.shields.io/badge/Website-4285F4?style=for-the-badge&logo=google-chrome&logoColor=white)](https://your-website.com)
 
-Made with ❤️ by the Writer.AI team
+Made with ❤️ by the StoryCraft team
 
 </div>

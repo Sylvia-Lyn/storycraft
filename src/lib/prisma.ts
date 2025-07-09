@@ -1,41 +1,9 @@
-// 这是一个模拟的Prisma客户端，用于构建过程
-// 在实际开发中，应该使用真正的Prisma客户端
+import { PrismaClient } from '@prisma/client';
 
-type Script = {
-  id: string;
-  content: string;
-  character: {
-    name: string;
-    type: string;
-  };
-  type: string;
+const globalForPrisma = globalThis as unknown as {
+    prisma: PrismaClient | undefined;
 };
 
-// 创建一个模拟的Prisma客户端对象
-export const prisma = {
-  work: {
-    findMany: async () => [],
-  },
-  characterScript: {
-    findMany: async () => [] as Script[],
-    findUnique: async () => ({
-      id: 'mock-id',
-      content: 'mock-content',
-      character: {
-        name: 'mock-character',
-        type: 'mock-type'
-      },
-      type: 'draft'
-    }) as Script,
-    update: async () => ({
-      id: 'mock-id',
-      content: 'mock-content',
-      character: {
-        name: 'mock-character',
-        type: 'mock-type'
-      },
-      type: 'draft'
-    }) as Script,
-    delete: async () => ({}),
-  },
-};
+export const prisma = globalForPrisma.prisma ?? new PrismaClient();
+
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma; 

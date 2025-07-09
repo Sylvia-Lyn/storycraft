@@ -1,11 +1,34 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { HomeOutlined, UserOutlined, CrownOutlined, LoginOutlined } from '@ant-design/icons';
+import { HomeOutlined, UserOutlined, CrownOutlined, LoginOutlined, LogoutOutlined, DownOutlined } from '@ant-design/icons';
+import { Dropdown, Menu, Avatar } from 'antd';
+import { useAuth } from '../contexts/AuthContext';
 
 const TopBar: React.FC = () => {
     const navigate = useNavigate();
-    // TODO: 登录状态判断，暂用false
-    const isLoggedIn = false;
+    const { user, isAuthenticated, logout } = useAuth();
+    const [userMenuVisible, setUserMenuVisible] = useState(false);
+
+    const handleLogout = () => {
+        logout();
+        navigate('/login');
+    };
+
+    const userMenu = (
+        <Menu>
+            <Menu.Item key="profile" onClick={() => navigate('/profile')}>
+                <UserOutlined /> 个人资料
+            </Menu.Item>
+            <Menu.Item key="vip" onClick={() => navigate('/vip')}>
+                <CrownOutlined /> 会员中心
+            </Menu.Item>
+            <Menu.Divider />
+            <Menu.Item key="logout" onClick={handleLogout}>
+                <LogoutOutlined /> 退出登录
+            </Menu.Item>
+        </Menu>
+    );
+
     return (
         <div className="w-full h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 z-50">
             <div className="flex items-center space-x-3">
@@ -25,11 +48,14 @@ const TopBar: React.FC = () => {
                 >
                     <CrownOutlined className="mr-1" />会员
                 </button>
-                {isLoggedIn ? (
-                    <button className="p-2 rounded-full hover:bg-gray-100">
-                        {/* 这里可替换为用户头像 */}
-                        <UserOutlined className="text-xl text-gray-600" />
-                    </button>
+                {isAuthenticated && user ? (
+                    <Dropdown overlay={userMenu} trigger={['click']} onVisibleChange={setUserMenuVisible}>
+                        <div className="flex items-center space-x-2 px-3 py-2 rounded-md hover:bg-gray-100 cursor-pointer">
+                            <Avatar size="small" icon={<UserOutlined />} />
+                            <span className="text-sm font-medium text-gray-700">{user.user_name}</span>
+                            <DownOutlined className="text-xs text-gray-500" />
+                        </div>
+                    </Dropdown>
                 ) : (
                     <button
                         onClick={() => navigate('/login')}

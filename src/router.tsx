@@ -15,6 +15,7 @@ import App from './App'
 import LoginPage from './components/LoginPage'
 import RegisterPage from './components/RegisterPage'
 import VipPage from './components/VipPage'
+import ProfilePage from './components/ProfilePage'
 
 // 临时页面组件，显示"正在加班加点更新中"
 // const ComingSoonPage = () => (
@@ -80,13 +81,17 @@ const router = createHashRouter([
         element: <VipPage />
       },
       {
+        path: 'profile',
+        element: <ProfilePage />
+      },
+      {
         path: 'login',
         element: <LoginPage />
       },
       {
         path: 'register',
         element: <RegisterPage />
-      }
+      },
     ]
   }
 ])

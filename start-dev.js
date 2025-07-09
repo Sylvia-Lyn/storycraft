@@ -1,39 +1,24 @@
-const { spawn } = require('child_process');
-const path = require('path');
+import { spawn } from 'child_process';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 
-console.log('🚀 启动开发环境...\n');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
-// 启动后端服务器
-console.log('📡 启动后端服务器 (端口 5173)...');
-const backend = spawn('node', ['src/server.ts'], {
+// 启动前端开发服务器
+const frontend = spawn('pnpm', ['dev'], {
+    cwd: __dirname,
     stdio: 'inherit',
-    shell: true,
-    env: {
-        ...process.env,
-        PORT: '5173'
-    }
+    shell: true
 });
 
-// 等待2秒后启动前端服务器
-setTimeout(() => {
-    console.log('🌐 启动前端服务器 (端口 3000)...');
-    const frontend = spawn('npm', ['run', 'dev'], {
-        stdio: 'inherit',
-        shell: true
-    });
+console.log('🚀 启动 StoryCraft 开发服务器...');
+console.log('📝 使用腾讯云 CloudBase 进行身份认证和数据库管理');
 
-    frontend.on('error', (error) => {
-        console.error('❌ 前端服务器启动失败:', error);
-    });
-}, 2000);
-
-backend.on('error', (error) => {
-    console.error('❌ 后端服务器启动失败:', error);
+frontend.on('error', (error) => {
+    console.error('❌ 启动失败:', error);
 });
 
-// 处理进程退出
-process.on('SIGINT', () => {
-    console.log('\n🛑 正在关闭服务器...');
-    backend.kill();
-    process.exit(0);
+frontend.on('close', (code) => {
+    console.log(`📋 开发服务器已关闭，退出码: ${code}`);
 }); 

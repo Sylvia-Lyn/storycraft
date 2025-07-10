@@ -38,6 +38,12 @@ declare module '@cloudbase/js-sdk' {
 
     export interface App {
         auth(): Auth;
+        callFunction(params: {
+            name: string;
+            data?: any;
+        }): Promise<{
+            result: any;
+        }>;
     }
 
     export interface Cloudbase {

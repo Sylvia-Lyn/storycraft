@@ -4,6 +4,10 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
 import downloadWork from './WorkDownloader'
 import { auth } from '../cloudbase'
+import worksService, { Work as CloudWork } from '../services/worksService'
+import CreateWorkModal from './CreateWorkModal'
+import { useAuth } from '../contexts/AuthContext'
+import { useWorks } from '../contexts/WorksContext'
 
 interface CreateKnowledgeModalProps {
   isOpen: boolean
@@ -88,11 +92,18 @@ interface Character {
 }
 
 interface Work {
-  id: string
+  _id?: string
+  id?: string
   name: string
+  content?: any
+  type?: 'script' | 'outline' | 'character'
+  createdAt?: Date
+  updatedAt?: Date
+  isSaved?: boolean
+  userId?: string
   lastVisitedView?: string
   characters?: Character[]
-  views: {
+  views?: {
     outline: boolean
     characters: boolean
     hostManual: boolean
@@ -109,6 +120,8 @@ interface KnowledgeItem {
 
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
+  const { works, currentWork, isLoading, setCurrentWork, createWork } = useWorks();
 
   const [expandedItems, setExpandedItems] = useState<ExpandedItems>({
     works: true,  // 默认展开作品集
@@ -117,35 +130,8 @@ const Sidebar: React.FC = () => {
     'work-1-char-1': true // 默认展开第一个角色
   })
 
-  const [works, setWorks] = useState<Work[]>([
-    {
-      id: 'work-1',
-      name: '剧本1',
-      views: {
-        outline: true,      // 大纲视图
-        characters: true,   // 角色剧本视图
-        hostManual: true,   // 主持人手册视图
-        materials: true     // 物料视图
-      },
-      characters: [
-        {
-          id: 'char-1',
-          name: '女1',
-          type: 'draft',
-          scripts: [
-            { id: 'script-1', name: '第一本' },
-            { id: 'script-2', name: '第二本' },
-            { id: 'script-3', name: '第三本' }
-          ]
-        },
-        {
-          id: 'char-2',
-          name: '女2',
-          type: 'draft'
-        }
-      ]
-    }
-  ])
+  const [isCreateWorkModalOpen, setIsCreateWorkModalOpen] = useState(false)
+
   // 从本地存储加载知识库数据
   const loadKnowledgeItems = (): KnowledgeItem[] => {
     try {
@@ -188,9 +174,26 @@ const Sidebar: React.FC = () => {
   }
 
   // 处理作品点击
-  const handleWorkClick = (work: Work) => {
-    const view = work.lastVisitedView || 'outline'
-    console.log(`Navigating to ${view} view for work: ${work.name}`)
+  const handleWorkClick = async (work: CloudWork) => {
+    try {
+      setCurrentWork(work)
+      const view = work.lastVisitedView || 'outline'
+      console.log(`Navigating to ${view} view for work: ${work.name}`)
+
+      // 获取完整的作品信息
+      const fullWork = await worksService.getWork(work._id || work.id || '')
+
+      // 通过自定义事件通知编辑器加载作品内容
+      const event = new CustomEvent('workSelected', {
+        detail: { work: fullWork }
+      })
+      window.dispatchEvent(event)
+
+      toast.success(`已加载作品: ${work.name}`)
+    } catch (error) {
+      console.error('加载作品失败:', error)
+      toast.error('加载作品失败，请重试')
+    }
   }
 
   // 处理作品名称双击编辑
@@ -202,13 +205,9 @@ const Sidebar: React.FC = () => {
   // 处理作品名称编辑保存
   const handleWorkEditSave = () => {
     if (editingWorkId) {
-      setWorks(prev =>
-        prev.map(work =>
-          work.id === editingWorkId
-            ? { ...work, name: editingWorkName }
-            : work
-        )
-      )
+      // 使用WorksContext中的updateWork方法
+      // 这里暂时注释掉，因为需要实现updateWork功能
+      // updateWork(editingWorkId, { name: editingWorkName })
       setEditingWorkId(null)
       setEditingWorkName('')
     }
@@ -231,7 +230,24 @@ const Sidebar: React.FC = () => {
 
   // 处理添加新作品
   const handleAddWork = () => {
-    navigate('/')
+    if (!isAuthenticated) {
+      toast.error('请先登录后再创建作品');
+      navigate('/login');
+      return;
+    }
+    setIsCreateWorkModalOpen(true)
+  }
+
+  // 处理创建作品确认
+  const handleCreateWorkConfirm = async (name: string) => {
+    try {
+      const newWork = await createWork(name)
+      setIsCreateWorkModalOpen(false)
+      toast.success('作品创建成功')
+    } catch (error) {
+      console.error('创建作品失败:', error)
+      toast.error('创建作品失败，请重试')
+    }
   }
 
   // 处理下载作品
@@ -415,6 +431,8 @@ const Sidebar: React.FC = () => {
     }
   }, [editingKnowledgeId])
 
+  // 组件加载时获取作品列表 - 现在由WorksContext自动处理
+
   // 点击外部关闭菜单
   useEffect(() => {
     const handleClickOutside = () => {
@@ -455,31 +473,76 @@ const Sidebar: React.FC = () => {
             <Icon icon="ri:arrow-down-s-line" className="w-5 h-5 mr-1 text-gray-500" />
             作品集
           </span>
-          <Icon
-            icon="ri:add-line"
-            className="w-5 h-5 text-gray-500 cursor-pointer"
-            onClick={handleAddWork}
-          />
+          {isAuthenticated && (
+            <Icon
+              icon="ri:add-line"
+              className="w-5 h-5 text-gray-500 cursor-pointer"
+              onClick={handleAddWork}
+            />
+          )}
         </div>
 
         {/* 剧本卡片式展示 */}
         <div className="space-y-2 mb-4 ml-4">
-          {works.map(work => (
-            <div key={work.id} className="flex items-center justify-between px-3 py-2 hover:bg-gray-100 cursor-pointer rounded-lg">
-              <div className="flex items-center">
-                <div className="bg-purple-100 rounded-lg p-2 mr-3">
-                  <Icon icon="ri:book-2-line" className="w-5 h-5 text-purple-400" />
-                </div>
-                <div>
-                  <div className="font-medium">{work.name}</div>
-                  <div className="text-xs text-gray-500">{work.characters ? work.characters.length : 0} 文档</div>
-                </div>
-              </div>
-              <div className="flex items-center space-x-1">
-                <Icon icon="ri:more-fill" className="w-5 h-5 text-gray-400 cursor-pointer" onClick={() => showToast()} />
-              </div>
+          {!isAuthenticated ? (
+            <div className="text-center py-4 text-gray-500">
+              <Icon icon="ri:lock-line" className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+              <p>请先登录</p>
+              <p className="text-xs">登录后可查看和管理作品</p>
+              <button
+                onClick={() => navigate('/login')}
+                className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-sm"
+              >
+                去登录
+              </button>
             </div>
-          ))}
+          ) : isLoading ? (
+            <div className="flex items-center justify-center py-4">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+              <span className="ml-2 text-gray-500">加载中...</span>
+            </div>
+          ) : works.length === 0 ? (
+            <div className="text-center py-4 text-gray-500">
+              <Icon icon="ri:book-2-line" className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+              <p>暂无作品</p>
+              <p className="text-xs">点击上方 + 号创建新作品</p>
+            </div>
+          ) : (
+            works.map(work => (
+              <div
+                key={work._id || work.id}
+                className={`flex items-center justify-between px-3 py-2 hover:bg-gray-100 cursor-pointer rounded-lg ${currentWork && (currentWork._id === (work._id || work.id) || currentWork.id === (work._id || work.id)) ? 'bg-blue-50 border border-blue-200' : ''
+                  }`}
+                onClick={() => handleWorkClick(work)}
+              >
+                <div className="flex items-center">
+                  <div className="bg-purple-100 rounded-lg p-2 mr-3">
+                    <Icon icon="ri:book-2-line" className="w-5 h-5 text-purple-400" />
+                  </div>
+                  <div>
+                    <div className="font-medium">{work.name}</div>
+                    <div className="text-xs text-gray-500">
+                      {work.type === 'script' ? '剧本' : work.type === 'outline' ? '大纲' : '角色'}
+                      {work.updatedAt && (
+                        <span className="ml-2">
+                          {new Date(work.updatedAt).toLocaleDateString()}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-1">
+                  {work.isSaved === false && (
+                    <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                  )}
+                  <Icon icon="ri:more-fill" className="w-5 h-5 text-gray-400 cursor-pointer" onClick={(e) => {
+                    e.stopPropagation()
+                    showToast()
+                  }} />
+                </div>
+              </div>
+            ))
+          )}
         </div>
 
         {/* 知识库部分 */}
@@ -590,6 +653,13 @@ const Sidebar: React.FC = () => {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onConfirm={handleKnowledgeBaseCreate}
+      />
+
+      {/* 创建作品模态窗口 */}
+      <CreateWorkModal
+        isOpen={isCreateWorkModalOpen}
+        onClose={() => setIsCreateWorkModalOpen(false)}
+        onConfirm={handleCreateWorkConfirm}
       />
 
       {/* 全局右键菜单 */}

@@ -12,13 +12,23 @@ interface EditorComponentProps {
   initialData?: any;
   onChange?: (data: any) => void;
   onSelect?: (selectedText: string, range: Range | null) => void;
+  currentWorkId?: string | null;
+  onSave?: (content: any) => Promise<void>;
+  onSaveAs?: (name: string, content: any) => Promise<void>;
 }
 
 export interface EditorComponentRef {
   insertText: (text: string) => Promise<void>;
 }
 
-const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({ initialData, onChange, onSelect }, ref) => {
+const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({
+  initialData,
+  onChange,
+  onSelect,
+  currentWorkId,
+  onSave,
+  onSaveAs
+}, ref) => {
   const appState = useAppState();
   const editorRef = useRef<EditorJS | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -43,6 +53,25 @@ const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({ 
   // 批注功能相关状态
   const [annotations, setAnnotations] = useState<Array<{ id: string, text: string, blockIndex: number }>>([]);
   const [showAnnotations, setShowAnnotations] = useState(true);
+
+  // 监听作品选择事件
+  useEffect(() => {
+    const handleWorkSelected = (event: CustomEvent) => {
+      const { work } = event.detail
+      if (work && work.content && editorRef.current) {
+        // 清空当前编辑器内容并加载新内容
+        editorRef.current.clear()
+        editorRef.current.render(work.content)
+        console.log('已加载作品内容:', work.content)
+      }
+    }
+
+    window.addEventListener('workSelected' as any, handleWorkSelected)
+
+    return () => {
+      window.removeEventListener('workSelected' as any, handleWorkSelected)
+    }
+  }, [])
 
   // 初始化编辑器
   useEffect(() => {
@@ -352,14 +381,27 @@ const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({ 
       setIsSaving(true);
       const savedData = await editorRef.current.save();
 
-      // 这里可以添加实际的保存逻辑，例如发送到服务器
-      // 模拟保存操作
-      await new Promise(resolve => setTimeout(resolve, 500));
+      if (currentWorkId && onSave) {
+        // 如果当前有选中的作品，直接保存
+        await onSave(savedData);
+        toast.success('作品已保存');
+      } else if (onSaveAs) {
+        // 如果没有选中的作品，弹出创建新作品的对话框
+        const workName = prompt('请输入作品名称：');
+        if (workName && workName.trim()) {
+          await onSaveAs(workName.trim(), savedData);
+          toast.success('新作品已创建并保存');
+        } else {
+          toast.error('请输入作品名称');
+        }
+      } else {
+        // 没有选中作品且没有onSaveAs回调时，提示用户先选中作品
+        toast.error('请先在侧边栏选中一个作品后再保存');
+        return;
+      }
 
       // 更新最后保存的数据
       setLastSavedData(savedData);
-
-      toast.success('内容已保存');
     } catch (error) {
       console.error('保存失败:', error);
       toast.error('保存失败，请重试');
@@ -523,7 +565,7 @@ const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({ 
 
           <button
             className="p-1.5 hover:bg-gray-200 rounded text-gray-600 flex items-center text-sm"
-            onClick={() => alert("暂未开放数据库，请手动保存或选择导出")}
+            onClick={handleSave}
             title="保存"
             disabled={isSaving}
           >

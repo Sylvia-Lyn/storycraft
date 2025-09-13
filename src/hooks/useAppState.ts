@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { generateDeepSeekContent } from '../services/deepseekService'
 import { generateGeminiContent } from '../services/geminiService'
 import { modelChangeEventBus } from './useOptimizationResults'
+import { useI18n } from '../contexts/I18nContext'
 
 export interface Message {
   text: string;
@@ -27,6 +28,7 @@ export interface OptimizedResult {
 }
 
 export function useAppState() {
+  const { language } = useI18n();
   // 尝试获取navigate，如果不在Router上下文中则使用一个空函数
   let navigate;
   try {
@@ -60,7 +62,7 @@ export function useAppState() {
     console.log(`[useAppState] 初始化selectedModel，从localStorage读取: ${savedModel}`);
     return savedModel && ['deepseek-r1', 'Gemini'].includes(savedModel) ? savedModel : 'Gemini';
   })
-  const models = ['Gemini', 'deepseek-r1']  // 修改顺序，Gemini在前
+  const models = ['Gemini', 'deepseek-r1']  // 支持Gemini与DeepSeek-R1
 
   // 添加useEffect来监控selectedModel的变化
   useEffect(() => {
@@ -141,8 +143,8 @@ export function useAppState() {
       if (selectedModel === 'deepseek-r1' || selectedModel === 'Gemini') {
         // 调用相应的API
         const response = selectedModel === 'deepseek-r1'
-          ? await generateDeepSeekContent(prompt)
-          : await generateGeminiContent(prompt); // 使用Gemini API
+          ? await generateDeepSeekContent(prompt, 'deepseek-chat', language)
+          : await generateGeminiContent(prompt, language); // 使用Gemini API
 
         // 直接将AI响应添加到消息中，而不解析为选项
         setMessages(prev => [...prev, {
@@ -267,8 +269,8 @@ export function useAppState() {
           console.log(`使用${selectedModel}模型生成场景总结`);
           if (selectedModel === 'deepseek-r1' || selectedModel === 'Gemini') {
             const response = selectedModel === 'deepseek-r1'
-              ? await generateDeepSeekContent(prompt)
-              : await generateGeminiContent(prompt); // 使用Gemini API
+              ? await generateDeepSeekContent(prompt, 'deepseek-chat', language)
+              : await generateGeminiContent(prompt, language); // 使用Gemini API
             summary = response;
           } else {
             // 如果没有选择有效模型，使用模拟数据
@@ -313,8 +315,8 @@ export function useAppState() {
 
         // 调用相应的API
         const response = selectedModel === 'deepseek-r1'
-          ? await generateDeepSeekContent(prompt)
-          : await generateGeminiContent(prompt); // 使用Gemini API
+          ? await generateDeepSeekContent(prompt, 'deepseek-chat', language)
+          : await generateGeminiContent(prompt, language); // 使用Gemini API
 
         const result = {
           id: Date.now().toString(),
@@ -398,8 +400,8 @@ export function useAppState() {
           // 调用相应的API
           console.log(`[useAppState] 开始调用API，使用模型: ${selectedModel}`);
           const response = selectedModel === 'deepseek-r1'
-            ? await generateDeepSeekContent(prompt)
-            : await generateGeminiContent(prompt);
+            ? await generateDeepSeekContent(prompt, 'deepseek-reasoner', language)
+            : await generateGeminiContent(prompt, language);
 
           console.log(`[useAppState] ${selectedModel} API响应: ${response}`);
 

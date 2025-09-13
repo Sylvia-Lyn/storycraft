@@ -1,25 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Descriptions, Button, Typography, Tag, Space, message, Spin } from 'antd';
-import { EyeOutlined, EyeInvisibleOutlined, UserOutlined, PhoneOutlined, MailOutlined, CrownOutlined, GiftOutlined, CalendarOutlined } from '@ant-design/icons';
+import { UserOutlined, MailOutlined, CrownOutlined, GiftOutlined, CalendarOutlined } from '@ant-design/icons';
 import { useAuth } from '../contexts/AuthContext';
+import { paymentService } from '../services/paymentService';
+import { useI18n } from '../contexts/I18nContext';
 
 const { Title, Text } = Typography;
 
 interface UserProfile {
-    user_id: number;
+    userId: string;
     user_name: string;
     user_email: string;
-    user_phonenumber: string;
-    user_plan: string;
-    user_piont: string;
-    created_at: string;
+    user_plan: 'free' | 'chinese' | 'multilingual';
+    user_point: string;
+    subscription_expires_at?: string | null;
+    subscription_status?: 'free' | 'active' | 'expired' | 'cancelled';
+    createdAt?: string;
+    updatedAt?: string;
+    password?: string; // 添加密码字段
 }
 
 const ProfilePage: React.FC = () => {
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
-    const [showPassword, setShowPassword] = useState(false);
     const { user, token } = useAuth();
+    const { t } = useI18n();
 
     useEffect(() => {
         fetchProfile();
@@ -27,21 +32,15 @@ const ProfilePage: React.FC = () => {
 
     const fetchProfile = async () => {
         try {
-            const response = await fetch('/api/auth/profile', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-
-            if (response.ok) {
-                const result = await response.json();
+            const result = await paymentService.getUserInfo();
+            if (result.success && result.data) {
                 setProfile(result.data);
             } else {
-                message.error('获取用户信息失败');
+                message.error(result.error || t('common.getInfoFailed'));
             }
         } catch (error) {
-            console.error('Fetch profile error:', error);
-            message.error('网络错误，请稍后重试');
+            console.error('获取用户信息失败:', error);
+            message.error(t('common.networkError'));
         } finally {
             setLoading(false);
         }
@@ -59,12 +58,12 @@ const ProfilePage: React.FC = () => {
 
     const getVipStatus = (plan: string) => {
         switch (plan) {
-            case 'vip':
-                return { text: 'VIP会员', color: 'gold' };
-            case 'premium':
-                return { text: '高级会员', color: 'purple' };
+            case 'chinese':
+                return { text: t('profile.chinesePro'), color: 'blue' };
+            case 'multilingual':
+                return { text: t('profile.multilingualPro'), color: 'purple' };
             default:
-                return { text: '免费用户', color: 'default' };
+                return { text: t('profile.freeUser'), color: 'default' };
         }
     };
 
@@ -79,7 +78,7 @@ const ProfilePage: React.FC = () => {
     if (!profile) {
         return (
             <div className="flex items-center justify-center h-[calc(100vh-64px)]">
-                <Text type="secondary">无法加载用户信息</Text>
+                <Text type="secondary">{t('profile.cannotLoadInfo')}</Text>
             </div>
         );
     }
@@ -89,79 +88,83 @@ const ProfilePage: React.FC = () => {
     return (
         <div className="p-6 bg-gray-50 min-h-[calc(100vh-64px)]">
             <div className="max-w-4xl mx-auto">
-                <Title level={2} className="mb-6">我的资料</Title>
+                <Title level={2} className="mb-6">{t('profile.title')}</Title>
 
                 <Card className="mb-6">
-                    <Descriptions title="基本信息" bordered column={2}>
-                        <Descriptions.Item label="用户ID" span={1}>
-                            <Text code>{profile.user_id}</Text>
+                    <Descriptions title={t('profile.basicInfo')} bordered column={2} labelStyle={{ width: '120px' }}>
+                        <Descriptions.Item label={t('profile.userId')} span={1}>
+                            <Text code>{profile.userId}</Text>
                         </Descriptions.Item>
-                        <Descriptions.Item label="用户名" span={1}>
+                        <Descriptions.Item label={t('profile.username')} span={1}>
                             <Space>
                                 <UserOutlined />
                                 <Text strong>{profile.user_name}</Text>
                             </Space>
                         </Descriptions.Item>
-                        <Descriptions.Item label="会员状态" span={1}>
+                        <Descriptions.Item label={t('profile.plan')} span={1}>
                             <Tag color={vipStatus.color} icon={<CrownOutlined />}>
                                 {vipStatus.text}
                             </Tag>
                         </Descriptions.Item>
-                        <Descriptions.Item label="积分" span={1}>
+                        <Descriptions.Item label={t('profile.points')} span={1}>
                             <Space>
                                 <GiftOutlined />
-                                <Text strong>{profile.user_piont || '0'}</Text>
+                                <Text strong>{profile.user_point || '0'}</Text>
                             </Space>
                         </Descriptions.Item>
-                        <Descriptions.Item label="注册时间" span={2}>
-                            <Space>
-                                <CalendarOutlined />
-                                <Text>{formatDate(profile.created_at)}</Text>
-                            </Space>
-                        </Descriptions.Item>
+                        {profile.subscription_expires_at && (
+                            <Descriptions.Item label={t('profile.subscriptionExpiry')} span={1}>
+                                <Space>
+                                    <CalendarOutlined />
+                                    <Text>{formatDate(profile.subscription_expires_at)}</Text>
+                                </Space>
+                            </Descriptions.Item>
+                        )}
+                        {profile.createdAt && (
+                            <Descriptions.Item label={t('profile.registrationTime')} span={1}>
+                                <Space>
+                                    <CalendarOutlined />
+                                    <Text>{formatDate(profile.createdAt)}</Text>
+                                </Space>
+                            </Descriptions.Item>
+                        )}
                     </Descriptions>
                 </Card>
 
                 <Card className="mb-6">
-                    <Descriptions title="联系方式" bordered column={2}>
-                        <Descriptions.Item label="手机号" span={1}>
-                            {profile.user_phonenumber ? (
-                                <Space>
-                                    <PhoneOutlined />
-                                    <Text>{profile.user_phonenumber}</Text>
-                                </Space>
-                            ) : (
-                                <Text type="secondary">暂未开通手机验证，请妥善保存账号密码</Text>
-                            )}
-                        </Descriptions.Item>
-                        <Descriptions.Item label="邮箱" span={1}>
+                    <Descriptions title={t('profile.contactInfo')} bordered column={2} labelStyle={{ width: '120px' }}>
+                        <Descriptions.Item label={t('profile.email')} span={2}>
                             {profile.user_email ? (
                                 <Space>
                                     <MailOutlined />
                                     <Text>{profile.user_email}</Text>
                                 </Space>
                             ) : (
-                                <Text type="secondary">暂未开通邮箱验证，请妥善保存账号密码</Text>
+                                <Text type="secondary">{t('profile.emailNotBound')}</Text>
                             )}
                         </Descriptions.Item>
                     </Descriptions>
                 </Card>
 
                 <Card>
-                    <Descriptions title="账号安全" bordered column={1}>
-                        <Descriptions.Item label="密码">
+                    <Descriptions title={t('profile.accountSecurity')} bordered column={1} labelStyle={{ width: '120px' }}>
+                        <Descriptions.Item label={t('profile.passwordStatus')}>
                             <Space>
-                                <Text type="secondary">
-                                    {showPassword ? '••••••••' : '••••••••••••••••'}
-                                </Text>
+                                <Text type="secondary">{t('profile.passwordSet')}</Text>
                                 <Button
-                                    type="text"
-                                    icon={showPassword ? <EyeInvisibleOutlined /> : <EyeOutlined />}
-                                    onClick={() => setShowPassword(!showPassword)}
+                                    type="link"
                                     size="small"
+                                    onClick={() => {
+                                        message.info(t('profile.passwordChangeInDevelopment'));
+                                    }}
                                 >
-                                    {showPassword ? '隐藏' : '显示'}
+                                    {t('profile.changePassword')}
                                 </Button>
+                            </Space>
+                        </Descriptions.Item>
+                        <Descriptions.Item label={t('profile.loginStatus')}>
+                            <Space>
+                                <Text type="success">{t('profile.loggedIn')}</Text>
                             </Space>
                         </Descriptions.Item>
                     </Descriptions>

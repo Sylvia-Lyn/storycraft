@@ -1,6 +1,6 @@
 declare module '@cloudbase/js-sdk' {
     export interface Auth {
-        getVerification(params: { phone_number: string }): Promise<{
+        getVerification(params: { phone_number?: string; email?: string }): Promise<{
             verification_id: string;
             is_user: boolean;
         }>;
@@ -15,7 +15,8 @@ declare module '@cloudbase/js-sdk' {
 
         // 注册用户
         signUp(params: {
-            phone_number: string;
+            phone_number?: string;
+            email?: string;
             verification_code: string;
             verification_token: string;
             username?: string;
@@ -41,6 +42,7 @@ declare module '@cloudbase/js-sdk' {
         callFunction(params: {
             name: string;
             data?: any;
+            headers?: any;
         }): Promise<{
             result: any;
         }>;

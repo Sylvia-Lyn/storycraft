@@ -3,16 +3,24 @@
  * 负责与DeepSeek API通信
  */
 
-// DeepSeek API密钥
-const DEEPSEEK_API_KEY = "sk-657e30eb77ba48e0834a0821dcd8279f";
-const API_URL = "https://api.deepseek.com/v1/chat/completions";
+import config from '../config';
+
+// DeepSeek API配置
+const DEEPSEEK_API_KEY = config.DEEPSEEK_API_KEY;
+const API_URL = `${config.DEEPSEEK_API_BASE}/chat/completions`;
 
 /**
  * 生成DeepSeek AI内容
  * @param prompt 用户输入的提示
+ * @param model AI模型
+ * @param language 当前语言
  * @returns 生成的文本内容
  */
-export const generateDeepSeekContent = async (prompt: string): Promise<string> => {
+export const generateDeepSeekContent = async (
+  prompt: string,
+  model: 'deepseek-chat' | 'deepseek-reasoner' | 'deepseek-r1' = 'deepseek-chat',
+  language: string = 'zh-CN'
+): Promise<string> => {
   console.log("[DeepSeek] 开始生成内容");
   console.log("[DeepSeek] 提示词:", prompt);
 
@@ -23,12 +31,26 @@ export const generateDeepSeekContent = async (prompt: string): Promise<string> =
       'Authorization': `Bearer ${DEEPSEEK_API_KEY.substring(0, 8)}...`
     });
 
+    // 兼容选择项与API型号的映射
+    const apiModel = model === 'deepseek-r1' ? 'deepseek-reasoner' : model;
+
+    // 根据语言添加语言指令
+    const languageNames: Record<string, string> = {
+      'zh-CN': '中文',
+      'en-US': 'English',
+      'ja-JP': '日本語',
+    };
+    
+    const languageName = languageNames[language] || '中文';
+    const languageInstruction = `请你以${languageName}回答。\n\n`;
+    const fullPrompt = languageInstruction + prompt;
+
     const requestBody = {
-      model: "deepseek-chat",
+      model: apiModel,
       messages: [
         {
           role: "user",
-          content: prompt
+          content: fullPrompt
         }
       ],
       temperature: 0.7,
@@ -51,6 +73,17 @@ export const generateDeepSeekContent = async (prompt: string): Promise<string> =
     if (!response.ok) {
       const errorText = await response.text();
       console.error("[DeepSeek] API错误响应:", errorText);
+      try {
+        const parsed = JSON.parse(errorText);
+        if (parsed?.error?.message?.includes('Insufficient Balance')) {
+          const err = new Error('DEEPSEEK_INSUFFICIENT_BALANCE');
+          // @ts-ignore
+          err.details = parsed.error;
+          throw err;
+        }
+      } catch (_) {
+        // ignore JSON parse failures
+      }
       throw new Error(`API请求失败: ${response.status} ${response.statusText}\n${errorText}`);
     }
 
@@ -62,7 +95,9 @@ export const generateDeepSeekContent = async (prompt: string): Promise<string> =
       throw new Error("API响应格式错误");
     }
 
-    const content = data.choices[0].message.content;
+    const message = data.choices[0].message;
+    // 仅返回最终正文，忽略深度思考(reasoning)内容
+    const content = message.content || '';
     console.log("[DeepSeek] 生成的内容:", content);
     return content;
   } catch (error) {

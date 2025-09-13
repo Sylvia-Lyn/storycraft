@@ -16,6 +16,9 @@ import LoginPage from './components/LoginPage'
 import RegisterPage from './components/RegisterPage'
 import VipPage from './components/VipPage'
 import ProfilePage from './components/ProfilePage'
+import PaymentPage from './components/PaymentPage'
+import PaymentSuccessPage from './components/PaymentSuccessPage'
+import ProtectedRoute from './components/ProtectedRoute'
 
 // 临时页面组件，显示"正在加班加点更新中"
 // const ComingSoonPage = () => (
@@ -81,8 +84,16 @@ const router = createHashRouter([
         element: <VipPage />
       },
       {
+        path: 'payment',
+        element: <PaymentPage />
+      },
+      {
+        path: 'payment/success',
+        element: <ProtectedRoute><PaymentSuccessPage /></ProtectedRoute>
+      },
+      {
         path: 'profile',
-        element: <ProfilePage />
+        element: <ProtectedRoute><ProfilePage /></ProtectedRoute>
       },
       {
         path: 'login',

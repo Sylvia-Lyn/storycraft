@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import appConfig from '../config';
 import { ChatService, ChatMessage, DocumentReference, ChatConfig } from '../services/chatService';
 
 interface AIChatProps {
@@ -44,7 +45,7 @@ export const AIChat: React.FC<AIChatProps> = ({ knowledgeBaseId }) => {
 
         try {
             const config: ChatConfig = {
-                model: 'gpt-3.5-turbo',
+                model: appConfig.CHAT_MODEL,
                 temperature: 0.7,
                 maxTokens: 1000,
                 topK: 3,

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Icon } from '@iconify/react';
+import { useI18n } from '../contexts/I18nContext';
 // 导入文件解析库
 import * as mammoth from 'mammoth';
 
@@ -34,6 +35,7 @@ import * as mammoth from 'mammoth';
 const KnowledgeUploadPage: React.FC = () => {
   const { knowledgeId } = useParams<{ knowledgeId: string }>();
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedTag, setSelectedTag] = useState('');
   const [knowledgeBaseName, setKnowledgeBaseName] = useState('');
@@ -59,13 +61,13 @@ const KnowledgeUploadPage: React.FC = () => {
     const getKnowledgeBaseName = () => {
       // 这里应该是API调用，现在用模拟数据
       const knowledgeBases = [
-        { id: 'knowledge-1', name: '测试' },
-        { id: 'knowledge-2', name: '对话记录' },
-        { id: 'knowledge-3', name: '角色剧本' }
+        { id: 'knowledge-1', name: t('knowledgeBase.testKnowledgeBase') },
+        { id: 'knowledge-2', name: t('knowledgeBase.conversationRecords') },
+        { id: 'knowledge-3', name: t('knowledgeBase.characterScript') }
       ];
       
       const found = knowledgeBases.find(kb => kb.id === knowledgeId);
-      setKnowledgeBaseName(found?.name || '未知知识库');
+      setKnowledgeBaseName(found?.name || t('knowledgeBase.unknownKnowledgeBase'));
     };
     
     getKnowledgeBaseName();
@@ -567,11 +569,11 @@ const KnowledgeUploadPage: React.FC = () => {
           <Icon icon="mdi:arrow-left" className="w-5 h-5" />
         </button>
         <div className="flex items-center">
-          <span className="text-gray-500 mr-2">知识库</span>
+          <span className="text-gray-500 mr-2">{t('sidebar.knowledgeBase')}</span>
           <Icon icon="mdi:chevron-right" className="w-4 h-4 text-gray-400" />
           <span className="text-gray-500 mx-2">{knowledgeBaseName}</span>
           <Icon icon="mdi:chevron-right" className="w-4 h-4 text-gray-400" />
-          <span className="font-medium ml-2">添加</span>
+          <span className="font-medium ml-2">{t('knowledgeBase.uploadTitle')}</span>
         </div>
       </div>
 
@@ -587,7 +589,7 @@ const KnowledgeUploadPage: React.FC = () => {
                 }`}>
                   {currentStep > 1 ? <Icon icon="ri:check-line" className="w-5 h-5" /> : '1'}
                 </div>
-                <div className="text-sm font-medium ml-2">上传</div>
+                <div className="text-sm font-medium ml-2">{t('knowledgeBase.step1')}</div>
               </div>
               
               <div className="w-24 h-1 mx-2 bg-gray-200">
@@ -603,7 +605,7 @@ const KnowledgeUploadPage: React.FC = () => {
                 }`}>
                   {currentStep > 2 ? <Icon icon="ri:check-line" className="w-5 h-5" /> : '2'}
                 </div>
-                <div className="text-sm font-medium ml-2">分段&清洗</div>
+                <div className="text-sm font-medium ml-2">{t('knowledgeBase.step2')}</div>
               </div>
               
               <div className="w-24 h-1 mx-2 bg-gray-200">
@@ -619,7 +621,7 @@ const KnowledgeUploadPage: React.FC = () => {
                 }`}>
                   3
                 </div>
-                <div className="text-sm font-medium ml-2">数据处理</div>
+                <div className="text-sm font-medium ml-2">{t('knowledgeBase.step3')}</div>
               </div>
             </div>
           </div>
@@ -630,7 +632,7 @@ const KnowledgeUploadPage: React.FC = () => {
               <div>
                 <div className="mb-6">
                   <div className="text-base font-medium text-gray-700 mb-2">
-                    数据标签 (非必填，用于给文档打标签，便于后续回归回溯)
+                    {t('knowledgeBase.dataLabelOptional')}
                   </div>
                   <div className="relative">
                     <div 
@@ -652,7 +654,7 @@ const KnowledgeUploadPage: React.FC = () => {
                             </button>
                           </div>
                         ) : (
-                          <span className="text-gray-400">请选择标签</span>
+                          <span className="text-gray-400">{t('knowledgeBase.selectTag')}</span>
                         )}
                       </div>
                       <Icon 
@@ -782,17 +784,17 @@ const KnowledgeUploadPage: React.FC = () => {
                       <Icon icon="ri:upload-cloud-2-line" className="w-full h-full" />
                     </div>
                     <p className="text-lg font-medium text-gray-700 mb-2">
-                      将文件拖到此区域，或<button type="button" onClick={handleClickUpload} className="text-indigo-600 hover:text-indigo-800">点击上传</button>
+                      {t('knowledgeBase.dragFilesHere')}<button type="button" onClick={handleClickUpload} className="text-indigo-600 hover:text-indigo-800">{t('knowledgeBase.clickToUpload')}</button>
                     </p>
                     <p className="text-sm text-gray-500 mb-4">
-                      支持 PDF、DOC、DOCX 最多上传 10 个文件
+                      {t('knowledgeBase.supportFormats')}
                     </p>
                   </div>
                 ) : (
                   <div className="border border-gray-200 rounded-lg overflow-hidden">
                     <div className="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
                       <div className="text-sm font-medium text-gray-700">
-                        已选择 {selectedFiles.length} 个文件
+                        {t('knowledgeBase.selectedFiles', { count: selectedFiles.length })}
                       </div>
                       <div className="flex items-center space-x-2">
                         <button 
@@ -801,7 +803,7 @@ const KnowledgeUploadPage: React.FC = () => {
                           onClick={handleClickUpload}
                         >
                           <Icon icon="ri:add-line" className="w-4 h-4 mr-1" />
-                          添加文件
+                          {t('knowledgeBase.addFile')}
                         </button>
                       </div>
                     </div>
@@ -998,7 +1000,7 @@ const KnowledgeUploadPage: React.FC = () => {
               className="px-4 py-2 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 rounded-md text-sm"
               onClick={() => currentStep > 1 ? setCurrentStep(currentStep - 1) : navigate(-1)}
             >
-              {currentStep > 1 ? '上一步' : '取消'}
+              {currentStep > 1 ? t('knowledgeBase.previousStep') : t('knowledgeBase.cancel')}
             </button>
             
             <div>
@@ -1008,7 +1010,7 @@ const KnowledgeUploadPage: React.FC = () => {
                   onClick={handleNextStep}
                   disabled={currentStep === 1 && selectedFiles.length === 0}
                 >
-                  下一步
+                  {t('knowledgeBase.nextStep')}
                 </button>
               )}
               
@@ -1017,7 +1019,7 @@ const KnowledgeUploadPage: React.FC = () => {
                   className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-sm"
                   onClick={() => navigate(`/knowledge/${knowledgeId}`)}
                 >
-                  完成
+                  {t('knowledgeBase.complete')}
                 </button>
               )}
             </div>

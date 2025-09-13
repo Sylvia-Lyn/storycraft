@@ -1,11 +1,12 @@
-import { app } from '../cloudbase';
+import { app, getAuthHeader } from '../cloudbase';
+import { apiInterceptor } from './apiInterceptor';
 
 export interface Work {
     _id?: string;
     id?: string;
     name: string;
     content?: any;
-    type?: 'script' | 'outline' | 'character';
+    type?: 'script' | 'outline' | 'character' | 'web_novel';
     createdAt?: Date;
     updatedAt?: Date;
     isSaved?: boolean;
@@ -16,14 +17,14 @@ export interface Work {
 export interface CreateWorkData {
     name: string;
     content?: any;
-    type?: 'script' | 'outline' | 'character';
+    type?: 'script' | 'outline' | 'character' | 'web_novel';
 }
 
 export interface UpdateWorkData {
     id: string;
     name?: string;
     content?: any;
-    type?: 'script' | 'outline' | 'character';
+    type?: 'script' | 'outline' | 'character' | 'web_novel';
 }
 
 export interface SaveWorkContentData {
@@ -44,6 +45,30 @@ export class WorksService {
         return WorksService.instance;
     }
 
+    // 辅助方法：调用云函数并传递认证头
+    private async callFunctionWithAuth(name: string, data: any) {
+        const authHeader = getAuthHeader();
+        const headers: any = {};
+        
+        if (authHeader) {
+            headers.authorization = authHeader;
+            console.log('使用认证头调用云函数:', { name, authHeader: authHeader.substring(0, 20) + '...' });
+        } else {
+            console.warn('没有找到认证头，可能影响云函数调用');
+        }
+
+        console.log('准备调用云函数:', { name, data, headers });
+        
+        // 使用API拦截器包装云函数调用
+        return await apiInterceptor.callFunctionWithInterceptor(() => 
+            app.callFunction({
+                name,
+                data,
+                headers
+            })
+        );
+    }
+
     // 获取用户token
     private async getUserToken(): Promise<string | null> {
         try {
@@ -59,19 +84,16 @@ export class WorksService {
     // 创建新作品
     async createWork(data: CreateWorkData): Promise<Work> {
         try {
-            const result = await app.callFunction({
-                name: 'works_manager',
-                data: {
-                    action: 'createWork',
-                    data
-                }
+            const result = await this.callFunctionWithAuth('works_manager', {
+                action: 'createWork',
+                data
             });
 
-            if (!result.result.success) {
-                throw new Error(result.result.error || '创建作品失败');
+            if (!result.success) {
+                throw new Error(result.error || '创建作品失败');
             }
 
-            return result.result.data;
+            return result.data as Work;
         } catch (error) {
             console.error('创建作品失败:', error);
             throw error;
@@ -81,19 +103,16 @@ export class WorksService {
     // 更新作品
     async updateWork(data: UpdateWorkData): Promise<{ id: string }> {
         try {
-            const result = await app.callFunction({
-                name: 'works_manager',
-                data: {
-                    action: 'updateWork',
-                    data
-                }
+            const result = await this.callFunctionWithAuth('works_manager', {
+                action: 'updateWork',
+                data
             });
 
-            if (!result.result.success) {
-                throw new Error(result.result.error || '更新作品失败');
+            if (!result.success) {
+                throw new Error(result.error || '更新作品失败');
             }
 
-            return result.result.data;
+            return result.data as { id: string };
         } catch (error) {
             console.error('更新作品失败:', error);
             throw error;
@@ -103,19 +122,16 @@ export class WorksService {
     // 删除作品
     async deleteWork(id: string): Promise<{ id: string }> {
         try {
-            const result = await app.callFunction({
-                name: 'works_manager',
-                data: {
-                    action: 'deleteWork',
-                    data: { id }
-                }
+            const result = await this.callFunctionWithAuth('works_manager', {
+                action: 'deleteWork',
+                data: { id }
             });
 
-            if (!result.result.success) {
-                throw new Error(result.result.error || '删除作品失败');
+            if (!result.success) {
+                throw new Error(result.error || '删除作品失败');
             }
 
-            return result.result.data;
+            return result.data as { id: string };
         } catch (error) {
             console.error('删除作品失败:', error);
             throw error;
@@ -125,18 +141,15 @@ export class WorksService {
     // 获取用户的所有作品
     async getWorks(): Promise<Work[]> {
         try {
-            const result = await app.callFunction({
-                name: 'works_manager',
-                data: {
-                    action: 'getWorks'
-                }
+            const result = await this.callFunctionWithAuth('works_manager', {
+                action: 'getWorks'
             });
 
-            if (!result.result.success) {
-                throw new Error(result.result.error || '获取作品列表失败');
+            if (!result.success) {
+                throw new Error(result.error || '获取作品列表失败');
             }
 
-            return result.result.data;
+            return result.data as Work[];
         } catch (error) {
             console.error('获取作品列表失败:', error);
             throw error;
@@ -146,15 +159,12 @@ export class WorksService {
     // 获取单个作品详情
     async getWork(id: string): Promise<Work> {
         try {
-            const result = await app.callFunction({
-                name: 'works_manager',
-                data: {
-                    action: 'getWork',
-                    data: { id }
-                }
+            const result = await this.callFunctionWithAuth('works_manager', {
+                action: 'getWork',
+                data: { id }
             });
 
-            return result.result.data;
+            return result.data as Work;
         } catch (error) {
             console.error('获取作品详情失败:', error);
             throw error;
@@ -164,19 +174,21 @@ export class WorksService {
     // 保存作品内容
     async saveWorkContent(data: SaveWorkContentData): Promise<{ id: string; isAutoSave: boolean }> {
         try {
-            const result = await app.callFunction({
-                name: 'works_manager',
-                data: {
-                    action: 'saveWorkContent',
-                    data
-                }
+            console.log('worksService.saveWorkContent 调用:', data);
+            const result = await this.callFunctionWithAuth('works_manager', {
+                action: 'saveWorkContent',
+                data
             });
 
-            if (!result.result.success) {
-                throw new Error(result.result.error || '保存作品内容失败');
+            console.log('worksService.saveWorkContent 云函数返回:', result);
+            console.log('云函数返回的完整结果:', JSON.stringify(result, null, 2));
+
+            if (!result.success) {
+                console.error('云函数保存失败，错误详情:', result);
+                throw new Error(result.error || '保存作品内容失败');
             }
 
-            return result.result.data;
+            return result.data as { id: string; isAutoSave: boolean };
         } catch (error) {
             console.error('保存作品内容失败:', error);
             throw error;

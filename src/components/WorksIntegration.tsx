@@ -3,8 +3,10 @@ import { toast } from 'react-hot-toast';
 import worksService, { Work } from '../services/worksService';
 import EditorComponent, { EditorComponentRef } from './EditorComponent';
 import Sidebar from './Sidebar';
+import { useI18n } from '../contexts/I18nContext';
 
 const WorksIntegration: React.FC = () => {
+    const { t } = useI18n();
     const [currentWork, setCurrentWork] = useState<Work | null>(null);
     const [editorRef, setEditorRef] = useState<EditorComponentRef | null>(null);
 
@@ -21,14 +23,14 @@ const WorksIntegration: React.FC = () => {
             }
         } catch (error) {
             console.error('加载作品失败:', error);
-            toast.error('加载作品失败');
+            toast.error(t('common.workLoadFailed'));
         }
     };
 
     // 处理保存作品
     const handleSaveWork = async (content: any) => {
         if (!currentWork) {
-            toast.error('没有选中的作品');
+            toast.error(t('common.noWorkSelected'));
             return;
         }
 
@@ -39,10 +41,10 @@ const WorksIntegration: React.FC = () => {
                 isAutoSave: false
             });
 
-            toast.success('作品保存成功');
+            toast.success(t('common.workSaved'));
         } catch (error) {
             console.error('保存作品失败:', error);
-            toast.error('保存作品失败');
+            toast.error(t('common.workSaveFailed'));
         }
     };
 
@@ -56,10 +58,10 @@ const WorksIntegration: React.FC = () => {
             });
 
             setCurrentWork(newWork);
-            toast.success('新作品创建成功');
+            toast.success(t('common.workCreated'));
         } catch (error) {
             console.error('创建新作品失败:', error);
-            toast.error('创建新作品失败');
+            toast.error(t('common.workCreateFailed'));
         }
     };
 
@@ -90,8 +92,7 @@ const WorksIntegration: React.FC = () => {
                             <button
                                 onClick={() => {
                                     if (editorRef) {
-                                        // 这里可以触发编辑器保存
-                                        console.log('触发编辑器保存');
+                                        editorRef.save().catch(console.error);
                                     }
                                 }}
                                 className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"

@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { Form, Input, Button, Typography, Card, message, Select, Space } from 'antd';
-import { LockOutlined, UserOutlined, PhoneOutlined } from '@ant-design/icons';
+import { LockOutlined, UserOutlined, PhoneOutlined, MailOutlined} from '@ant-design/icons';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { auth } from '../cloudbase';
+import { auth, getAuthHeader } from '../cloudbase';
+import { paymentService } from '../services/paymentService';
+import { useI18n } from '../contexts/I18nContext';
+import { log } from 'console';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -58,13 +61,18 @@ function formatPhoneNumber(phone, countryCode = '+86') {
     return p;
 }
 
+const emailValidationRules = {
+    pattern: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, // 简单的邮箱正则表达式
+};
+
 const LoginPage: React.FC = () => {
-    const [mode, setMode] = useState<'phone' | 'account'>('phone');
+    const [mode, setMode] = useState<'phone' | 'account' | 'email'>('phone');
     const [countryCode, setCountryCode] = useState('+86');
     const [phone, setPhone] = useState('');
     const [code, setCode] = useState('');
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [email, setEmail] = useState('');
     const [verification, setVerification] = useState<any>(null);
     const [verificationTokenRes, setVerificationTokenRes] = useState<any>(null);
     const [loading, setLoading] = useState(false);
@@ -72,16 +80,47 @@ const LoginPage: React.FC = () => {
     const [debugPhone, setDebugPhone] = useState('');
     const navigate = useNavigate();
     const { login } = useAuth();
+    const { t } = useI18n();
+
+    // 获取用户信息并更新AuthContext
+    const fetchAndUpdateUserInfo = async (authHeader: string) => {
+        try {
+            const userInfoResult = await paymentService.getUserInfo();
+            if (userInfoResult.success && userInfoResult.data) {
+                const userData = userInfoResult.data;
+                // 将云函数返回的用户数据转换为AuthContext期望的格式
+                const authUserData = {
+                    user_id: userData.user_id || 0,
+                    user_name: userData.user_name || '用户',
+                    user_email: userData.user_email || '',
+                    user_plan: userData.user_plan || 'free',
+                    user_piont: userData.user_piont || '0',
+                    subscription_expires_at: userData.subscription_expires_at,
+                    subscription_status: userData.subscription_status,
+                    userId: userData.userId
+                };
+                login(authUserData, authHeader);
+                return true;
+            }
+        } catch (error) {
+            console.error('获取用户信息失败:', error);
+        }
+        return false;
+    };
 
     // 在手机号输入时，实时显示格式化后的手机号
     React.useEffect(() => {
         setDebugPhone(formatPhoneNumber(phone, countryCode));
     }, [phone, countryCode]);
 
+    const validateEmail = (email: string) => {
+        return emailValidationRules.pattern.test(email);
+    };
+
     // 获取验证码
     const handleGetCode = async () => {
         if (!phone) {
-            message.error('请输入手机号');
+            message.error(t('login.phoneRequired'));
             return;
         }
 
@@ -90,9 +129,9 @@ const LoginPage: React.FC = () => {
             const cc = countryCode.replace(/^\+/, '');
             const rule = phoneValidationRules[cc];
             if (rule) {
-                message.error(`请输入正确的${countryCode}手机号格式（${rule.length}位数字）`);
+                message.error(t('login.pleaseEnterValidPhone'));
             } else {
-                message.error('请输入正确的手机号格式');
+                message.error(t('login.pleaseEnterValidPhone'));
             }
             return;
         }
@@ -104,13 +143,13 @@ const LoginPage: React.FC = () => {
             console.log('发送验证码到:', phoneNumber);
             const verification = await auth.getVerification({ phone_number: phoneNumber });
             setVerification(verification);
-            setMsg('验证码已发送，请查收短信');
-            message.success('验证码已发送');
+            setMsg(t('login.codeSentMessage'));
+            message.success(t('login.codeSent'));
         } catch (e) {
             console.error('发送验证码失败:', e);
-            const errorMsg = e.message || '获取验证码失败';
-            setMsg(`获取验证码失败: ${errorMsg}`);
-            message.error(`获取验证码失败: ${errorMsg}`);
+            const errorMsg = e.message || t('login.getCodeFailed');
+            setMsg(`${t('login.getCodeFailed')}: ${errorMsg}`);
+            message.error(`${t('login.getCodeFailed')}: ${errorMsg}`);
         }
         setLoading(false);
     };
@@ -118,12 +157,12 @@ const LoginPage: React.FC = () => {
     // 手机号验证码登录
     const handlePhoneLogin = async () => {
         if (!phone || !code) {
-            message.error('请填写完整信息');
+            message.error(t('login.pleaseFillCompleteInfo'));
             return;
         }
 
         if (!verification) {
-            message.error('请先获取验证码');
+            message.error(t('login.pleaseGetCodeFirst'));
             return;
         }
 
@@ -145,27 +184,32 @@ const LoginPage: React.FC = () => {
                 verification_token: verificationTokenRes.verification_token,
             });
 
-            setMsg('登录成功');
-            message.success('登录成功');
-
-            // 登录成功后跳转
-            if (login) {
-                // 这里需要获取用户信息，暂时使用模拟数据
+            setMsg(t('login.loginSuccess'));
+            message.success(t('login.loginSuccess'));
+            const authHeader = getAuthHeader();
+            
+            // 获取用户信息并更新AuthContext
+            const userInfoUpdated = await fetchAndUpdateUserInfo(authHeader);
+            if (userInfoUpdated) {
+                navigate('/');
+            } else {
+                // 如果获取用户信息失败，使用默认信息
                 const userInfo = {
                     user_id: 1,
                     user_name: phoneNumber,
                     user_email: '',
-                    user_plan: 'free',
+                    user_plan: 'free' as const,
                     user_piont: '0'
                 };
-                login(userInfo, 'token');
+                console.log('手机号登录 - 使用默认用户信息:', userInfo);
+                login(userInfo, authHeader);
                 navigate('/');
             }
         } catch (e) {
             console.error('登录失败:', e);
-            const errorMsg = e.message || '登录失败，请检查信息';
-            setMsg(`登录失败: ${errorMsg}`);
-            message.error(`登录失败: ${errorMsg}`);
+            const errorMsg = e.message || t('common.loginFailed');
+            setMsg(`${t('common.loginFailed')}: ${errorMsg}`);
+            message.error(`${t('common.loginFailed')}: ${errorMsg}`);
         }
         setLoading(false);
     };
@@ -173,7 +217,7 @@ const LoginPage: React.FC = () => {
     // 用户名密码登录
     const handleAccountLogin = async () => {
         if (!username || !password) {
-            message.error('请填写完整信息');
+            message.error(t('common.pleaseFillCompleteInfo'));
             return;
         }
 
@@ -184,26 +228,76 @@ const LoginPage: React.FC = () => {
                 username,
                 password,
             });
-            setMsg('登录成功');
-            message.success('登录成功');
+            setMsg(t('common.loginSuccess'));
+            message.success(t('common.loginSuccess'));
 
-            // 登录成功后跳转
-            if (login) {
+            const authHeader = getAuthHeader();
+            
+            // 获取用户信息并更新AuthContext
+            const userInfoUpdated = await fetchAndUpdateUserInfo(authHeader);
+            if (userInfoUpdated) {
+                navigate('/');
+            } else {
+                // 如果获取用户信息失败，使用默认信息
                 const userInfo = {
                     user_id: 1,
                     user_name: username,
                     user_email: '',
-                    user_plan: 'free',
+                    user_plan: 'free' as const,
                     user_piont: '0'
                 };
-                login(userInfo, 'token');
+                console.log('用户名密码登录 - 使用默认用户信息:', userInfo);
+                login(userInfo, authHeader);
                 navigate('/');
             }
         } catch (e) {
             console.error('登录失败:', e);
-            const errorMsg = e.message || '登录失败，请检查账号密码';
-            setMsg(`登录失败: ${errorMsg}`);
-            message.error(`登录失败: ${errorMsg}`);
+            const errorMsg = e.message || t('common.loginFailed');
+            setMsg(`${t('common.loginFailed')}: ${errorMsg}`);
+            message.error(`${t('common.loginFailed')}: ${errorMsg}`);
+        }
+        setLoading(false);
+    };
+    const handleEmailLogin = async () => {
+        if (!email || !password) {
+            message.error(t('common.pleaseFillCompleteInfo'));
+            return;
+        }
+
+        if (!validateEmail(email)) {
+            message.error(t('common.pleaseEnterValidEmail'));
+            return;
+        }
+
+        setLoading(true);
+        try {
+            await auth.signIn({
+                username: email,
+                password,
+            });
+            message.success(t('common.loginSuccess'));
+            const authHeader = getAuthHeader();
+            
+            // 获取用户信息并更新AuthContext
+            const userInfoUpdated = await fetchAndUpdateUserInfo(authHeader);
+            if (userInfoUpdated) {
+                navigate('/');
+            } else {
+                // 如果获取用户信息失败，使用默认信息
+                const userInfo = {
+                    user_id: 1,
+                    user_name: email,
+                    user_email: email,
+                    user_plan: 'free' as const,
+                    user_piont: '0',
+                };
+                console.log('邮箱登录 - 使用默认用户信息:', userInfo);
+                login(userInfo, authHeader);
+                navigate('/');
+            }
+        } catch (e) {
+            console.error('登录失败:', e);
+            message.error(t('common.loginFailed'));
         }
         setLoading(false);
     };
@@ -213,10 +307,10 @@ const LoginPage: React.FC = () => {
     return (
 
         <div className="h-[calc(100vh-64px)] flex items-center justify-center bg-gradient-to-br from-[#f0f2f5] to-[#e6eaf3]">
-            <Card variant="outlined" style={{ width: 380, boxShadow: '0 4px 24px rgba(0,0,0,0.08)' }}>
+            <Card variant="outlined" style={{ width: 480, boxShadow: '0 4px 24px rgba(0,0,0,0.08)' }}>
                 <div style={{ textAlign: 'center', marginBottom: 32 }}>
-                    <Title level={2} style={{ marginBottom: 0 }}>欢迎登录</Title>
-                    <Text type="secondary">StoryCraft 账号登录</Text>
+                    <Title level={2} style={{ marginBottom: 0 }}>{t('login.welcomeTitle')}</Title>
+                    <Text type="secondary">{t('login.subtitle')}</Text>
                 </div>
                 <div style={{ display: 'flex', marginBottom: 16 }}>
                     <button
@@ -230,7 +324,7 @@ const LoginPage: React.FC = () => {
                             cursor: 'pointer'
                         }}
                     >
-                        手机号验证码登录
+                        {t('login.phoneLogin')}
                     </button>
                     <button
                         onClick={() => setMode('account')}
@@ -243,13 +337,26 @@ const LoginPage: React.FC = () => {
                             cursor: 'pointer'
                         }}
                     >
-                        用户名密码登录
+                        {t('login.accountLogin')}
+                    </button>
+                    <button
+                        onClick={() => setMode('email')} // 增加邮箱登录按钮
+                        style={{
+                            flex: 1,
+                            background: mode === 'email' ? '#1890ff' : '#eee',
+                            color: mode === 'email' ? '#fff' : '#333',
+                            border: 'none',
+                            padding: '8px',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        {t('login.emailLogin')}
                     </button>
                 </div>
                 {mode === 'phone' ? (
                     <>
-                        <Form.Item label="手机号" required>
-                            <Space.Compact>
+                        <Form.Item label={t('login.phoneNumber')} required>
+                            <Space.Compact style={{width: '100%' }}>
                                 <Select
                                     showSearch
                                     value={countryCode}
@@ -260,14 +367,14 @@ const LoginPage: React.FC = () => {
                                         String(option?.children).toLowerCase().includes(input.toLowerCase())
                                     }
                                 >
-                                    <Option value="+86">+86 中国大陆</Option>
-                                    <Option value="+852">+852 香港</Option>
-                                    <Option value="+853">+853 澳门</Option>
-                                    <Option value="+886">+886 台湾</Option>
+                                    <Option value="+86">{t('login.countryOptions.china')}</Option>
+                                    <Option value="+852">{t('login.countryOptions.hongkong')}</Option>
+                                    <Option value="+853">{t('login.countryOptions.macau')}</Option>
+                                    <Option value="+886">{t('login.countryOptions.taiwan')}</Option>
                                 </Select>
                                 <Input
-                                    style={{ width: 200 }}
-                                    placeholder="请输入手机号"
+                                    style={{ flex: 1 }}
+                                    placeholder={t('login.enterPhoneNumber')}
                                     prefix={<PhoneOutlined />}
                                     value={phone}
                                     onChange={e => setPhone(e.target.value)}
@@ -276,51 +383,74 @@ const LoginPage: React.FC = () => {
                         </Form.Item>
                         {/* 手机号格式调试信息 */}
                         <div style={{ marginBottom: 8, color: '#888', fontSize: 12 }}>
-                            格式化后手机号: <span style={{ color: '#333' }}>{debugPhone}</span>
+                            {t('login.formattedPhoneNumber')}: <span style={{ color: '#333' }}>{debugPhone}</span>
                         </div>
-                        <Form.Item label="验证码" required>
-                            <Space.Compact>
+                        <Form.Item label={t('login.verificationCode')} required>
+                            <Space.Compact style={{ width: '100%' }}>
                                 <Input
-                                    style={{ width: 200 }}
-                                    placeholder="请输入验证码"
+                                    style={{ flex: 1 }}
+                                    placeholder={t('login.enterVerificationCode')}
                                     value={code}
                                     onChange={e => setCode(e.target.value)}
                                 />
                                 <Button style={{ width: 120 }} onClick={handleGetCode} disabled={loading || !phone} loading={loading}>
-                                    获取验证码
+                                    {t('login.sendCode')}
                                 </Button>
                             </Space.Compact>
                         </Form.Item>
                         <Button type="primary" block loading={loading} onClick={handlePhoneLogin} disabled={loading || !phone || !code}>
-                            登录
+                            {t('login.login')}
                         </Button>
                     </>
-                ) : (
+                ) :  mode === 'account' ? (
                     <>
-                        <Form.Item label="用户名" required>
+                        <Form.Item label={t('login.username')} required>
                             <Input
                                 prefix={<UserOutlined />}
-                                placeholder="请输入用户名"
+                                placeholder={t('login.enterUsername')}
                                 value={username}
                                 onChange={e => setUsername(e.target.value)}
                             />
                         </Form.Item>
-                        <Form.Item label="密码" required>
+                        <Form.Item label={t('login.password')} required>
                             <Input.Password
                                 prefix={<LockOutlined />}
-                                placeholder="请输入密码"
+                                placeholder={t('login.enterPassword')}
                                 value={password}
                                 onChange={e => setPassword(e.target.value)}
                             />
                         </Form.Item>
                         <Button type="primary" block loading={loading} onClick={handleAccountLogin} disabled={loading || !username || !password}>
-                            登录
+                            {t('login.login')}
+                        </Button>
+                    </>
+                ) : (
+                    <>
+                        {/* 邮箱登录表单 */}
+                        <Form.Item label={t('login.email')} required>
+                            <Input
+                                prefix={<MailOutlined />}
+                                placeholder={t('login.enterEmail')}
+                                value={email}
+                                onChange={e => setEmail(e.target.value)}
+                            />
+                        </Form.Item>
+                        <Form.Item label={t('login.password')} required>
+                            <Input.Password
+                                prefix={<LockOutlined />}
+                                placeholder={t('login.enterPassword')}
+                                value={password}
+                                onChange={e => setPassword(e.target.value)}
+                            />
+                        </Form.Item>
+                        <Button type="primary" block loading={loading} onClick={handleEmailLogin} disabled={loading || !email || !password}>
+                            {t('login.login')}
                         </Button>
                     </>
                 )}
                 {msg && <div style={{ marginTop: 16, color: msg.includes('成功') ? 'green' : 'red' }}>{msg}</div>}
                 <Form.Item style={{ marginBottom: 0, textAlign: 'center' }}>
-                    <Text type="secondary">还没有账号？ <Link to="/register">立即注册</Link></Text>
+                    <Text type="secondary">{t('login.noAccount')} <Link to="/register">{t('login.registerNow')}</Link></Text>
                 </Form.Item>
             </Card>
         </div>

@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { useAuth } from './AuthContext';
 import worksService, { Work } from '../services/worksService';
 import { toast } from 'react-hot-toast';
+import { useI18n } from './I18nContext';
 
 interface WorksContextType {
     currentWork: Work | null;
@@ -9,10 +10,10 @@ interface WorksContextType {
     isLoading: boolean;
     setCurrentWork: (work: Work | null) => void;
     loadWorks: () => Promise<void>;
-    createWork: (name: string, content?: any) => Promise<Work>;
+    createWork: (name: string, content?: any, type?: string) => Promise<Work>;
     updateWork: (id: string, updates: Partial<Work>) => Promise<void>;
     deleteWork: (id: string) => Promise<void>;
-    saveWorkContent: (id: string, content: any) => Promise<void>;
+    saveWorkContent: (id: string, content: any, isAutoSave?: boolean) => Promise<void>;
 }
 
 const WorksContext = createContext<WorksContextType | undefined>(undefined);
@@ -31,37 +32,43 @@ interface WorksProviderProps {
 
 export const WorksProvider: React.FC<WorksProviderProps> = ({ children }) => {
     const { isAuthenticated } = useAuth();
+    const { t } = useI18n();
     const [currentWork, setCurrentWork] = useState<Work | null>(null);
     const [works, setWorks] = useState<Work[]>([]);
     const [isLoading, setIsLoading] = useState(false);
 
     // 加载用户的所有作品
     const loadWorks = async () => {
+        console.log('loadWorks 被调用, isAuthenticated:', isAuthenticated);
+        
         if (!isAuthenticated) {
+            console.log('用户未认证，清空作品列表');
             setWorks([]);
             setCurrentWork(null);
             return;
         }
 
         try {
+            console.log('开始加载作品列表...');
             setIsLoading(true);
             const worksData = await worksService.getWorks();
+            console.log('作品列表加载成功:', worksData);
             setWorks(worksData);
         } catch (error) {
             console.error('加载作品列表失败:', error);
-            toast.error('加载作品列表失败');
+            toast.error(t('common.workListLoadFailed'));
         } finally {
             setIsLoading(false);
         }
     };
 
     // 创建新作品
-    const createWork = async (name: string, content?: any): Promise<Work> => {
+    const createWork = async (name: string, content?: any, type: string = 'script'): Promise<Work> => {
         try {
             const newWork = await worksService.createWork({
                 name,
                 content,
-                type: 'script'
+                type: type as 'script' | 'outline' | 'character' | 'web_novel'
             });
 
             // 更新作品列表
@@ -73,7 +80,7 @@ export const WorksProvider: React.FC<WorksProviderProps> = ({ children }) => {
             return newWork;
         } catch (error) {
             console.error('创建作品失败:', error);
-            toast.error('创建作品失败');
+            toast.error(t('common.workCreateFailed'));
             throw error;
         }
     };
@@ -94,7 +101,7 @@ export const WorksProvider: React.FC<WorksProviderProps> = ({ children }) => {
             }
         } catch (error) {
             console.error('更新作品失败:', error);
-            toast.error('更新作品失败');
+            toast.error(t('common.workUpdateFailed'));
             throw error;
         }
     };
@@ -113,15 +120,17 @@ export const WorksProvider: React.FC<WorksProviderProps> = ({ children }) => {
             }
         } catch (error) {
             console.error('删除作品失败:', error);
-            toast.error('删除作品失败');
+            toast.error(t('common.workDeleteFailed'));
             throw error;
         }
     };
 
     // 保存作品内容
-    const saveWorkContent = async (id: string, content: any) => {
+    const saveWorkContent = async (id: string, content: any, isAutoSave: boolean = false) => {
         try {
-            await worksService.saveWorkContent({ id, content });
+            console.log('开始保存作品内容:', { id, content, isAutoSave });
+            const result = await worksService.saveWorkContent({ id, content, isAutoSave });
+            console.log('保存作品内容成功:', result);
 
             // 更新本地状态
             setWorks(prev => prev.map(work =>
@@ -134,7 +143,7 @@ export const WorksProvider: React.FC<WorksProviderProps> = ({ children }) => {
             }
         } catch (error) {
             console.error('保存作品内容失败:', error);
-            toast.error('保存作品内容失败');
+            // 不在这里显示错误提示，让调用方处理
             throw error;
         }
     };

@@ -18,12 +18,13 @@ interface Config {
     MAX_CONTEXT_LENGTH: number;
     MAX_TOKENS: number;
     TEMPERATURE: number;
+    STRIPE_PUBLISHABLE_KEY: string;
 }
 
 const config: Config = {
-    DEEPSEEK_API_KEY: import.meta.env.VITE_DEEPSEEK_API_KEY || 'sk-657e30eb77ba48e0834a0821dcd8279f',
+    DEEPSEEK_API_KEY: import.meta.env.VITE_DEEPSEEK_API_KEY || 'sk-3c50dc547bcc443cbfd8f34e7ee5f138',
     DEEPSEEK_API_BASE: import.meta.env.VITE_DEEPSEEK_API_BASE || 'https://api.deepseek.com/v1',
-    GEMINI_API_KEY: import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyCt99dDlxwATM16d3YeqnhayuaSKe3ehOw',
+    GEMINI_API_KEY: import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyCtg3qPLGvCeXGn3ixraod6MvDVxa-6SpA',
     GEMINI_API_BASE: import.meta.env.VITE_GEMINI_API_BASE || 'https://generativelanguage.googleapis.com',
     QDRANT_URL: import.meta.env.VITE_QDRANT_URL || 'https://eb24099c-54e1-4fd9-9a66-1a0dcc65d895.eu-west-2-0.aws.cloud.qdrant.io',
     QDRANT_API_KEY: import.meta.env.VITE_QDRANT_API_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3MiOiJtIn0.L7WJflCWFN1-XanTthshcDqXFjD8usge2Hwfli8YYJY',
@@ -39,7 +40,8 @@ const config: Config = {
     VECTOR_WEIGHT: 0.6,
     MAX_CONTEXT_LENGTH: 2000,
     MAX_TOKENS: 1000,
-    TEMPERATURE: 0.6
+    TEMPERATURE: 0.6,
+    STRIPE_PUBLISHABLE_KEY: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_your_stripe_publishable_key'
 };
 
 export function validateConfig(): boolean {

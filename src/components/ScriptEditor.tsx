@@ -6,6 +6,7 @@ import EditorComponent, { EditorComponentRef } from './EditorComponent'
 import { Button, Select } from 'antd'
 import { useWorks } from '../contexts/WorksContext'
 import { useAuth } from '../contexts/AuthContext'
+import { useI18n } from '../contexts/I18nContext'
 import { toast } from 'react-hot-toast'
 
 // 主要编辑区域组件
@@ -21,18 +22,13 @@ function ContentArea() {
   // 从WorksContext获取作品管理功能
   const { currentWork, saveWorkContent, createWork } = useWorks();
   const { isAuthenticated } = useAuth();
+  const { t } = useI18n();
 
-  // 初稿内容状态
-  const [editorData, setEditorData] = useState<any>(() => {
-    const draft = localStorage.getItem('draft_content');
-    if (draft && draft.trim()) {
-      // 清空localStorage，避免下次重复
-      localStorage.removeItem('draft_content');
-      return {
-        blocks: [{ type: 'paragraph', data: { text: draft } }]
-      };
-    }
-    return { blocks: [{ type: 'paragraph', data: { text: '' } }] };
+  // 初稿内容状态 - 初始化为空内容
+  const [editorData, setEditorData] = useState<any>({ 
+    time: Date.now(),
+    blocks: [],
+    version: '2.31.0'
   });
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -41,28 +37,98 @@ function ContentArea() {
 
   // 编辑器引用
   const editorRef = useRef<EditorComponentRef>(null);
+  
+  // 用于跟踪当前编辑的内容，用于自动保存
+  const [currentEditingContent, setCurrentEditingContent] = useState<any>(null);
 
-  // 当选中作品改变时，加载作品内容
+  // 用于跟踪上一个作品，用于自动保存
+  const [previousWork, setPreviousWork] = useState<any>(null);
+
+  // 当选中作品改变时，先保存上一个作品的内容，然后加载新作品内容
   useEffect(() => {
-    if (currentWork && currentWork.content) {
-      setEditorData(currentWork.content);
-      console.log('已加载作品内容:', currentWork.content);
+    // 如果有上一个作品且有编辑内容，自动保存
+    if (previousWork && currentEditingContent && previousWork._id !== currentWork?._id) {
+      console.log('自动保存上一个作品内容:', previousWork.name);
+      handleSaveWork(currentEditingContent, previousWork._id || previousWork.id).catch(error => {
+        console.error('自动保存失败:', error);
+      });
     }
+
+    // 加载新作品内容
+    console.log('ScriptEditor: 作品切换，当前作品:', currentWork?.name, '内容:', currentWork?.content);
+    
+    if (currentWork) {
+      if (currentWork.content) {
+        // 处理字符串类型的 content
+        let editorContent;
+        if (typeof currentWork.content === 'string') {
+          // 如果是字符串，转换为 EditorJS 格式
+          editorContent = {
+            time: Date.now(),
+            blocks: currentWork.content.trim() ? 
+              [{ type: 'paragraph', data: { text: currentWork.content } }] : 
+              [],
+            version: '2.31.0'
+          };
+        } else {
+          // 如果是对象，直接使用
+          editorContent = currentWork.content;
+        }
+        
+        console.log('ScriptEditor: 设置编辑器内容:', editorContent);
+        setEditorData(editorContent);
+        setCurrentEditingContent(editorContent);
+      } else {
+        // 如果作品没有内容，清空编辑器
+        const emptyContent = { 
+          time: Date.now(),
+          blocks: [],
+          version: '2.31.0'
+        };
+        console.log('ScriptEditor: 作品无内容，设置空内容:', emptyContent);
+        setEditorData(emptyContent);
+        setCurrentEditingContent(emptyContent);
+      }
+    } else {
+      // 如果没有选中作品，清空编辑器
+      const emptyContent = { 
+        time: Date.now(),
+        blocks: [],
+        version: '2.31.0'
+      };
+      console.log('ScriptEditor: 未选中作品，设置空内容:', emptyContent);
+      setEditorData(emptyContent);
+      setCurrentEditingContent(emptyContent);
+    }
+
+    // 更新上一个作品引用
+    setPreviousWork(currentWork);
   }, [currentWork]);
 
   // 处理保存作品
-  const handleSaveWork = async (content: any) => {
-    if (!currentWork) {
-      toast.error('请先在侧边栏选中一个作品');
+  const handleSaveWork = async (content: any, workId?: string) => {
+    const targetWorkId = workId || currentWork?._id || currentWork?.id;
+    const isAutoSave = !!workId; // 如果传入了workId，说明是自动保存
+    
+    // 保存作品内容
+    
+    if (!targetWorkId) {
+      if (!isAutoSave) {
+        toast.error(t('common.pleaseSelectWork'));
+      }
       return;
     }
 
     try {
-      await saveWorkContent(currentWork._id || currentWork.id || '', content);
-      toast.success('作品已保存');
+      await saveWorkContent(targetWorkId, content, isAutoSave);
+      if (!isAutoSave) { // 只有在手动保存时才显示成功提示
+        toast.success(t('common.workSaved'));
+      }
     } catch (error) {
       console.error('保存作品失败:', error);
-      toast.error('保存作品失败');
+      if (!isAutoSave) { // 只有在手动保存时才显示错误提示
+        toast.error(t('common.workSaveFailed'));
+      }
     }
   };
 
@@ -70,10 +136,10 @@ function ContentArea() {
   const handleSaveAs = async (name: string, content: any) => {
     try {
       await createWork(name, content);
-      toast.success('新作品已创建并保存');
+      toast.success(t('common.workCreated'));
     } catch (error) {
       console.error('创建新作品失败:', error);
-      toast.error('创建新作品失败');
+      toast.error(t('common.workCreateFailed'));
     }
   };
 
@@ -98,7 +164,7 @@ function ContentArea() {
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `剧本_${new Date().toLocaleDateString()}.${format}`;
+    link.download = `${t('common.workTypes.script')}_${new Date().toLocaleDateString(t('common.dateFormat.locale'), t('common.dateFormat.options') as Intl.DateTimeFormatOptions)}.${format}`;
 
     // 触发下载
     document.body.appendChild(link);
@@ -134,9 +200,11 @@ function ContentArea() {
     };
   }, []);
 
-  // 处理编辑器内容变化
+  // 处理编辑器内容变化 - 只更新当前编辑内容，不更新 editorData
   const handleEditorChange = (data: any) => {
-    setEditorData(data);
+    // 只更新当前编辑内容，用于自动保存
+    setCurrentEditingContent(data);
+    // 不再实时更新 editorData，只在作品切换时更新
   };
 
   // 处理文本选择
@@ -195,11 +263,15 @@ function ContentArea() {
       {/* 顶部操作区 - 按原型图重构 */}
       <div className="flex items-center justify-between mb-3">
         <div className="font-bold text-lg">
-          {currentWork ? `编辑: ${currentWork.name}` : '初稿编辑'}
+          {currentWork ? (
+            <>
+              {t(`common.workTypes.${currentWork.type}`)}编辑: {currentWork.name}
+            </>
+          ) : t('editor.draftEditing')}
         </div>
         {currentWork && (
           <div className="text-sm text-gray-500">
-            最后更新: {currentWork.updatedAt ? new Date(currentWork.updatedAt).toLocaleString() : '未知'}
+            {t('editor.lastUpdated', { date: currentWork.updatedAt ? new Date(currentWork.updatedAt).toLocaleString() : t('editor.unknown') })}
           </div>
         )}
       </div>
@@ -246,6 +318,7 @@ function ContentArea() {
 
 function ScriptEditor() {
   const { isAuthenticated } = useAuth();
+  const { t } = useI18n();
 
   // 如果用户未登录，显示登录提示
   if (!isAuthenticated) {
@@ -253,13 +326,13 @@ function ScriptEditor() {
       <div className="h-[calc(100vh-64px)] flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="text-6xl mb-4">🔒</div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">请先登录</h2>
-          <p className="text-gray-600 mb-4">登录后可查看和管理您的作品</p>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">{t('editor.pleaseLoginFirst')}</h2>
+          <p className="text-gray-600 mb-4">{t('editor.loginToViewWorks')}</p>
           <button
             onClick={() => window.location.href = '/login'}
             className="px-6 py-3 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
           >
-            去登录
+            {t('editor.goToLogin')}
           </button>
         </div>
       </div>

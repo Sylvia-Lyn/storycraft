@@ -8,7 +8,7 @@ import config from '../config';
 // Gemini API配置
 const GEMINI_API_KEY = config.GEMINI_API_KEY;
 const API_BASE_URL = config.GEMINI_API_BASE;
-const GEMINI_MODEL = "models/gemini-2.5-flash-preview-04-17"; // 使用Gemini 2.5 Flash Preview模型
+const GEMINI_MODEL = "gemini-2.0-flash"; // 使用最新的Gemini 2.0 Flash模型
 
 /**
  * 选择Gemini模型
@@ -43,9 +43,19 @@ function parseRetryDelay(errorText: string): number {
 /**
  * 生成Gemini AI内容
  * @param prompt 用户输入的提示
+ * @param language 当前语言
  * @returns 生成的文本内容
  */
-export async function generateGeminiContent(prompt: string): Promise<string> {
+export async function generateGeminiContent(prompt: string, language: string = 'zh-CN'): Promise<string> {
+  // 首先检查配置
+  if (!GEMINI_API_KEY) {
+    throw new Error('Gemini API密钥未配置，请在环境变量中设置 VITE_GEMINI_API_KEY');
+  }
+  
+  if (!API_BASE_URL) {
+    throw new Error('Gemini API基础URL未配置，请在环境变量中设置 VITE_GEMINI_API_BASE');
+  }
+
   let retryCount = 0;
   const MAX_RETRIES = 3;
 
@@ -54,25 +64,39 @@ export async function generateGeminiContent(prompt: string): Promise<string> {
       // 使用固定模型
       const selectedModel = GEMINI_MODEL;
 
-      // 使用v1beta版本的API
-      const API_URL = `${API_BASE_URL}/v1beta/${selectedModel}:generateContent?key=${GEMINI_API_KEY}`;
+      // 根据语言添加语言指令
+      const languageNames: Record<string, string> = {
+        'zh-CN': '中文',
+        'en-US': 'English',
+        'ja-JP': '日本語',
+      };
+      
+      const languageName = languageNames[language] || '中文';
+      const languageInstruction = `请你以${languageName}回答。\n\n`;
+      const fullPrompt = languageInstruction + prompt;
+
+      // 使用v1beta版本的API，API密钥通过头部传递
+      const API_URL = `${API_BASE_URL}/v1beta/models/${selectedModel}:generateContent`;
 
       console.log(`发送到Gemini API的请求 (尝试 ${retryCount + 1}/${MAX_RETRIES}):`, {
         url: API_URL,
         model: selectedModel,
-        prompt: prompt
+        prompt: fullPrompt,
+        apiKey: GEMINI_API_KEY ? `${GEMINI_API_KEY.substring(0, 10)}...` : '未设置',
+        baseUrl: API_BASE_URL
       });
 
       const response = await fetch(API_URL, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'X-goog-api-key': GEMINI_API_KEY
         },
         body: JSON.stringify({
           contents: [{
             role: "user",
             parts: [{
-              text: prompt
+              text: fullPrompt
             }]
           }],
           generationConfig: {
@@ -151,9 +175,22 @@ export async function generateGeminiContent(prompt: string): Promise<string> {
       }
     } catch (error) {
       console.error(`Gemini API调用失败 (尝试 ${retryCount + 1}/${MAX_RETRIES}):`, error);
+      
+      // 检查是否是网络错误
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        console.error('网络连接错误，可能是CORS问题或网络不可达');
+        throw new Error('网络连接失败，请检查网络连接或尝试使用代理');
+      }
+      
+      // 检查是否是API密钥问题
+      if (error instanceof Error && error.message.includes('API key')) {
+        console.error('API密钥错误');
+        throw new Error('API密钥无效，请检查配置');
+      }
+      
       retryCount++;
       if (retryCount === MAX_RETRIES) {
-        throw error;
+        throw new Error(`Gemini API调用失败: ${error instanceof Error ? error.message : '未知错误'}`);
       }
       // 等待一段时间后重试
       await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
@@ -169,8 +206,45 @@ export async function generateGeminiContent(prompt: string): Promise<string> {
  */
 export async function checkGeminiApiStatus(): Promise<boolean> {
   try {
-    // 直接返回true，因为我们使用固定模型
-    return true;
+    console.log('检查Gemini API状态...');
+    
+    // 检查API密钥是否设置
+    if (!GEMINI_API_KEY) {
+      console.error('Gemini API密钥未设置');
+      return false;
+    }
+    
+    // 发送一个简单的测试请求
+    const testPrompt = "Hello";
+    const API_URL = `${API_BASE_URL}/v1beta/models/${GEMINI_MODEL}:generateContent`;
+    
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-goog-api-key': GEMINI_API_KEY
+      },
+      body: JSON.stringify({
+        contents: [{
+          role: "user",
+          parts: [{
+            text: testPrompt
+          }]
+        }],
+        generationConfig: {
+          maxOutputTokens: 10
+        }
+      })
+    });
+    
+    if (response.ok) {
+      console.log('Gemini API连接正常');
+      return true;
+    } else {
+      const errorText = await response.text();
+      console.error('Gemini API连接失败:', response.status, errorText);
+      return false;
+    }
   } catch (error) {
     console.error("Gemini API状态检查失败:", error);
     return false;
@@ -180,19 +254,21 @@ export async function checkGeminiApiStatus(): Promise<boolean> {
 /**
  * 使用Gemini生成场景内容
  * @param sceneDescription 场景描述
+ * @param language 当前语言
  * @returns 生成的场景内容
  */
-export async function generateSceneContent(sceneDescription: string): Promise<string> {
+export async function generateSceneContent(sceneDescription: string, language: string = 'zh-CN'): Promise<string> {
   const prompt = `请根据以下场景描述，生成一段详细的场景内容：\n\n${sceneDescription}`;
-  return generateGeminiContent(prompt);
+  return generateGeminiContent(prompt, language);
 }
 
 /**
  * 使用Gemini润色文本内容
  * @param content 需要润色的内容
+ * @param language 当前语言
  * @returns 润色后的内容
  */
-export async function polishContent(content: string): Promise<string> {
+export async function polishContent(content: string, language: string = 'zh-CN'): Promise<string> {
   const prompt = `请对以下文本内容进行润色，使其更加生动、流畅，同时保持原意：\n\n${content}`;
-  return generateGeminiContent(prompt);
+  return generateGeminiContent(prompt, language);
 }

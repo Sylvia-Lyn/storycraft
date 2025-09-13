@@ -4,6 +4,7 @@ import { VectorStore } from '../services/vectorStore';
 import { EmbeddingManager } from '../services/embeddingManager';
 import { toast } from 'react-hot-toast';
 import config from '../config';
+import { useI18n } from '../contexts/I18nContext';
 
 interface Message {
     role: 'user' | 'assistant';
@@ -20,6 +21,7 @@ interface ChatInterfaceProps {
 }
 
 export const ChatInterface: React.FC<ChatInterfaceProps> = ({ knowledgeBaseName }) => {
+    const { t } = useI18n();
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -84,7 +86,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ knowledgeBaseName 
             }
         } catch (error) {
             console.error('对话生成失败:', error);
-            toast.error('对话生成失败，请重试');
+            toast.error(t('common.chatGenerationFailed'));
         } finally {
             setIsLoading(false);
         }

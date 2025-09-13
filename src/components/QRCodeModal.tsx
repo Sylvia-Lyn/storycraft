@@ -1,5 +1,6 @@
 import React from 'react';
 import { Icon } from '@iconify/react';
+import { useI18n } from '../contexts/I18nContext';
 
 interface QRCodeModalProps {
   open: boolean;
@@ -8,6 +9,7 @@ interface QRCodeModalProps {
 }
 
 const QRCodeModal: React.FC<QRCodeModalProps> = ({ open, onClose, qrCodeImage }) => {
+  const { t } = useI18n();
   if (!open) return null;
 
   return (
@@ -20,7 +22,7 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({ open, onClose, qrCodeImage })
         <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
           <div className="p-6">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-bold">公告二维码</h2>
+              <h2 className="text-lg font-bold">{t('announcementBar.qrCodeTitle')}</h2>
               <button
                 onClick={onClose}
                 className="text-gray-400 hover:text-gray-600"
@@ -31,7 +33,7 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({ open, onClose, qrCodeImage })
             <div className="flex justify-center">
               <img
                 src={qrCodeImage}
-                alt="公告二维码"
+                alt={t('announcementBar.qrCodeAlt')}
                 className="max-w-full max-h-[600px]"
               />
             </div>

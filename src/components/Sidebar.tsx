@@ -8,6 +8,7 @@ import worksService, { Work as CloudWork } from '../services/worksService'
 import CreateWorkModal from './CreateWorkModal'
 import { useAuth } from '../contexts/AuthContext'
 import { useWorks } from '../contexts/WorksContext'
+import { useI18n } from '../contexts/I18nContext'
 
 interface CreateKnowledgeModalProps {
   isOpen: boolean
@@ -18,6 +19,7 @@ interface CreateKnowledgeModalProps {
 const CreateKnowledgeModal = ({ isOpen, onClose, onConfirm }: CreateKnowledgeModalProps) => {
   const [knowledgeName, setKnowledgeName] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
+  const { t } = useI18n()
 
   useEffect(() => {
     if (isOpen && inputRef.current) {
@@ -39,17 +41,17 @@ const CreateKnowledgeModal = ({ isOpen, onClose, onConfirm }: CreateKnowledgeMod
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-80 shadow-xl">
-        <h3 className="text-lg font-bold mb-4">创建知识库</h3>
+        <h3 className="text-lg font-bold mb-4">{t('sidebar.createKnowledgeTitle')}</h3>
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">知识库名称</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('sidebar.knowledgeName')}</label>
             <input
               ref={inputRef}
               type="text"
               value={knowledgeName}
               onChange={(e) => setKnowledgeName(e.target.value)}
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="请输入知识库名称"
+              placeholder={t('sidebar.enterKnowledgeName')}
             />
           </div>
           <div className="flex justify-end space-x-2">
@@ -58,14 +60,14 @@ const CreateKnowledgeModal = ({ isOpen, onClose, onConfirm }: CreateKnowledgeMod
               onClick={onClose}
               className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
             >
-              取消
+              {t('sidebar.cancel')}
             </button>
             <button
               type="submit"
               className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50"
               disabled={!knowledgeName.trim()}
             >
-              确定
+              {t('sidebar.confirm')}
             </button>
           </div>
         </form>
@@ -96,7 +98,7 @@ interface Work {
   id?: string
   name: string
   content?: any
-  type?: 'script' | 'outline' | 'character'
+  type?: 'script' | 'outline' | 'character' | 'web_novel'
   createdAt?: Date
   updatedAt?: Date
   isSaved?: boolean
@@ -121,7 +123,16 @@ interface KnowledgeItem {
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
-  const { works, currentWork, isLoading, setCurrentWork, createWork } = useWorks();
+  const { works, currentWork, isLoading, setCurrentWork, createWork, deleteWork } = useWorks();
+  const { t, language } = useI18n();
+  
+  // 调试信息
+  console.log('Sidebar 渲染状态:', { 
+    worksLength: works.length, 
+    isLoading, 
+    isAuthenticated,
+    works: works 
+  });
 
   const [expandedItems, setExpandedItems] = useState<ExpandedItems>({
     works: true,  // 默认展开作品集
@@ -149,6 +160,18 @@ const Sidebar: React.FC = () => {
   }
 
   const [knowledgeItems, setKnowledgeItems] = useState<KnowledgeItem[]>(loadKnowledgeItems())
+
+  // 当语言变化时，更新默认知识库的名称
+  useEffect(() => {
+    const hasDefaultKnowledge = knowledgeItems.some(item => item.id === 'knowledge-1')
+    if (hasDefaultKnowledge) {
+      setKnowledgeItems(prev => prev.map(item => 
+        item.id === 'knowledge-1' 
+          ? { ...item, name: t('sidebar.knowledgeBase') }
+          : item
+      ))
+    }
+  }, [t, language])
   const [showKnowledgeItems, setShowKnowledgeItems] = useState(true)
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null)
   const [editingKnowledgeId, setEditingKnowledgeId] = useState<string | null>(null)
@@ -159,12 +182,24 @@ const Sidebar: React.FC = () => {
 
   const [editingWorkId, setEditingWorkId] = useState<string | null>(null)
   const [editingWorkName, setEditingWorkName] = useState('')
+  const [activeWorkMenuId, setActiveWorkMenuId] = useState<string | null>(null)
+  const [workMenuPosition, setWorkMenuPosition] = useState({ x: 0, y: 0 })
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [workToDelete, setWorkToDelete] = useState<CloudWork | null>(null)
 
   // 处理展开/折叠功能
   const toggleExpand = (key: string) => {
     setExpandedItems((prev: Record<string, boolean>) => ({
       ...prev,
       [key]: !prev[key]
+    }))
+  }
+
+  // 添加处理作品集展开/收起的函数
+  const handleWorksToggle = () => {
+    setExpandedItems(prev => ({
+      ...prev,
+      works: !prev.works
     }))
   }
 
@@ -177,8 +212,8 @@ const Sidebar: React.FC = () => {
   const handleWorkClick = async (work: CloudWork) => {
     try {
       setCurrentWork(work)
-      const view = work.lastVisitedView || 'outline'
-      console.log(`Navigating to ${view} view for work: ${work.name}`)
+      const view = work.lastVisitedView
+      console.log(`Navigating to ${view || 'default'} view for work: ${work.name}, type: ${work.type}`)
 
       // 获取完整的作品信息
       const fullWork = await worksService.getWork(work._id || work.id || '')
@@ -189,10 +224,41 @@ const Sidebar: React.FC = () => {
       })
       window.dispatchEvent(event)
 
-      toast.success(`已加载作品: ${work.name}`)
+      // 根据作品类型或上次访问的视图进行页面导航
+      // 优先使用lastVisitedView，如果没有则根据作品类型决定
+      if (view === 'outline') {
+        navigate('/outline')
+      } else if (view === 'script' || view === 'editor') {
+        navigate('/editor')
+      } else if (view === 'characters') {
+        navigate('/characters')
+      } else if (view === 'relations') {
+        navigate('/relations')
+      } else if (view === 'chapters') {
+        navigate('/chapters')
+      } else if (view === 'scenes') {
+        navigate('/scenes')
+      } else if (work.type === 'web_novel') {
+        // 网文类型默认导航到编辑器页面
+        navigate('/editor')
+      } else if (work.type === 'script') {
+        // 剧本类型默认导航到编辑器页面
+        navigate('/editor')
+      } else if (work.type === 'outline') {
+        // 大纲类型默认导航到大纲页面
+        navigate('/outline')
+      } else if (work.type === 'character') {
+        // 角色类型默认导航到角色页面
+        navigate('/characters')
+      } else {
+        // 其他情况默认导航到大纲页面
+        navigate('/outline')
+      }
+
+      toast.success(t('common.workLoaded', { name: work.name }))
     } catch (error) {
       console.error('加载作品失败:', error)
-      toast.error('加载作品失败，请重试')
+      toast.error(t('common.workLoadFailed'))
     }
   }
 
@@ -231,7 +297,7 @@ const Sidebar: React.FC = () => {
   // 处理添加新作品
   const handleAddWork = () => {
     if (!isAuthenticated) {
-      toast.error('请先登录后再创建作品');
+      toast.error(t('common.pleaseLogin'));
       navigate('/login');
       return;
     }
@@ -239,14 +305,14 @@ const Sidebar: React.FC = () => {
   }
 
   // 处理创建作品确认
-  const handleCreateWorkConfirm = async (name: string) => {
+  const handleCreateWorkConfirm = async (name: string, type: string = 'script') => {
     try {
-      const newWork = await createWork(name)
+      const newWork = await createWork(name, undefined, type)
       setIsCreateWorkModalOpen(false)
-      toast.success('作品创建成功')
+      toast.success(t('common.workCreated'))
     } catch (error) {
       console.error('创建作品失败:', error)
-      toast.error('创建作品失败，请重试')
+      toast.error(t('common.workCreateFailed'))
     }
   }
 
@@ -294,13 +360,13 @@ const Sidebar: React.FC = () => {
       console.log('知识库保存成功:', updatedItems)
     } catch (error) {
       console.error('保存知识库失败:', error)
-      toast.error('知识库保存失败，请重试')
+      toast.error(t('common.knowledgeBaseSaveFailed'))
       return
     }
 
     setShowKnowledgeItems(true)
     setIsCreateModalOpen(false)
-    toast.success('知识库创建成功')
+    toast.success(t('common.knowledgeBaseCreated'))
   }
 
   // 处理工作流其他按钮点击
@@ -309,10 +375,10 @@ const Sidebar: React.FC = () => {
     navigate('/story-settings')
   }
 
-  // 处理知识库项点击
+  // 修改知识库点击处理函数，实现真正的展开/收起切换
   const handleKnowledgeItemClick = (e: React.MouseEvent) => {
     e.stopPropagation()
-    setShowKnowledgeItems(false)  // 默认收起知识库
+    setShowKnowledgeItems(prev => !prev)  // 切换展开/收起状态
     setActiveMenuId(null)
   }
 
@@ -372,10 +438,10 @@ const Sidebar: React.FC = () => {
       // 保存到本地存储
       try {
         localStorage.setItem('knowledgeItems', JSON.stringify(updatedItems))
-        toast.success('知识库已更新')
+        toast.success(t('common.knowledgeBaseUpdated'))
       } catch (error) {
         console.error('保存知识库失败:', error)
-        toast.error('知识库更新失败，请重试')
+        toast.error(t('common.knowledgeBaseUpdateFailed'))
       }
     }
     setEditingKnowledgeId(null)
@@ -398,10 +464,10 @@ const Sidebar: React.FC = () => {
     // 保存到本地存储
     try {
       localStorage.setItem('knowledgeItems', JSON.stringify(updatedItems))
-      toast.success('知识库已删除')
+      toast.success(t('common.knowledgeBaseDeleted'))
     } catch (error) {
       console.error('保存知识库失败:', error)
-      toast.error('知识库删除失败，请重试')
+      toast.error(t('common.knowledgeBaseDeleteFailed'))
     }
   }
 
@@ -417,6 +483,55 @@ const Sidebar: React.FC = () => {
   // 处理脚本点击
   const handleScriptClick = () => {
     showToast()
+  }
+
+  // 处理作品操作菜单点击
+  const handleWorkMenuClick = (e: React.MouseEvent, work: CloudWork) => {
+    e.stopPropagation()
+    
+    if (activeWorkMenuId === work._id || activeWorkMenuId === work.id) {
+      setActiveWorkMenuId(null)
+      return
+    }
+
+    // 计算菜单位置
+    const rect = (e.target as HTMLElement).getBoundingClientRect()
+    setWorkMenuPosition({
+      x: rect.right - 100, // 菜单宽度大约100px，所以向左偏移
+      y: rect.bottom + 5
+    })
+
+    setActiveWorkMenuId(work._id || work.id || '')
+  }
+
+  // 处理作品删除
+  const handleWorkDelete = async (work: CloudWork) => {
+    try {
+      await deleteWork(work._id || work.id || '')
+      
+      setActiveWorkMenuId(null)
+      setShowDeleteConfirm(false)
+      setWorkToDelete(null)
+      
+      toast.success(t('common.workDeleted'))
+    } catch (error) {
+      console.error('删除作品失败:', error)
+      toast.error(t('common.workDeleteFailed'))
+    }
+  }
+
+  // 处理删除确认
+  const handleDeleteConfirm = () => {
+    if (workToDelete) {
+      handleWorkDelete(workToDelete)
+    }
+  }
+
+  // 处理删除取消
+  const handleDeleteCancel = () => {
+    setShowDeleteConfirm(false)
+    setWorkToDelete(null)
+    setActiveWorkMenuId(null)
   }
 
   useEffect(() => {
@@ -437,10 +552,12 @@ const Sidebar: React.FC = () => {
   useEffect(() => {
     const handleClickOutside = () => {
       setActiveMenuId(null)
+      setActiveWorkMenuId(null)
     }
 
     const handleScroll = () => {
       setActiveMenuId(null)
+      setActiveWorkMenuId(null)
     }
 
     document.addEventListener('click', handleClickOutside)
@@ -468,10 +585,16 @@ const Sidebar: React.FC = () => {
         </div> */}
 
         {/* 作品集部分 */}
-        <div className="font-bold text-lg mb-6 flex justify-between items-center">
-          <span className="cursor-pointer flex items-center">
-            <Icon icon="ri:arrow-down-s-line" className="w-5 h-5 mr-1 text-gray-500" />
-            作品集
+        <div className="font-bold text-lg mt-6 mb-2 flex justify-between items-center hover:bg-gray-50 p-2 rounded-md">
+          <span className="cursor-pointer flex items-center" onClick={handleWorksToggle}>
+            <Icon 
+              icon={expandedItems.works ? "ri:arrow-down-s-line" : "ri:arrow-right-s-line"} 
+              className="w-5 h-5 mr-1 text-gray-500" 
+            />
+            {t('sidebar.works')}
+            {isAuthenticated && works.length > 0 && (
+              <span className="ml-2 text-sm font-normal text-gray-500">({works.length})</span>
+            )}
           </span>
           {isAuthenticated && (
             <Icon
@@ -482,68 +605,83 @@ const Sidebar: React.FC = () => {
           )}
         </div>
 
-        {/* 剧本卡片式展示 */}
-        <div className="space-y-2 mb-4 ml-4">
-          {!isAuthenticated ? (
-            <div className="text-center py-4 text-gray-500">
-              <Icon icon="ri:lock-line" className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-              <p>请先登录</p>
-              <p className="text-xs">登录后可查看和管理作品</p>
-              <button
-                onClick={() => navigate('/login')}
-                className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-sm"
-              >
-                去登录
-              </button>
-            </div>
-          ) : isLoading ? (
-            <div className="flex items-center justify-center py-4">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
-              <span className="ml-2 text-gray-500">加载中...</span>
-            </div>
-          ) : works.length === 0 ? (
-            <div className="text-center py-4 text-gray-500">
-              <Icon icon="ri:book-2-line" className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-              <p>暂无作品</p>
-              <p className="text-xs">点击上方 + 号创建新作品</p>
-            </div>
-          ) : (
-            works.map(work => (
-              <div
-                key={work._id || work.id}
-                className={`flex items-center justify-between px-3 py-2 hover:bg-gray-100 cursor-pointer rounded-lg ${currentWork && (currentWork._id === (work._id || work.id) || currentWork.id === (work._id || work.id)) ? 'bg-blue-50 border border-blue-200' : ''
-                  }`}
-                onClick={() => handleWorkClick(work)}
-              >
-                <div className="flex items-center">
-                  <div className="bg-purple-100 rounded-lg p-2 mr-3">
-                    <Icon icon="ri:book-2-line" className="w-5 h-5 text-purple-400" />
-                  </div>
-                  <div>
-                    <div className="font-medium">{work.name}</div>
-                    <div className="text-xs text-gray-500">
-                      {work.type === 'script' ? '剧本' : work.type === 'outline' ? '大纲' : '角色'}
-                      {work.updatedAt && (
-                        <span className="ml-2">
-                          {new Date(work.updatedAt).toLocaleDateString()}
-                        </span>
-                      )}
+        {/* 剧本卡片式展示 - 只在展开时显示 */}
+        {expandedItems.works && (
+          <div className="max-h-96 overflow-y-auto overflow-x-hidden space-y-2 mb-4 ml-4 pr-2">
+            {!isAuthenticated ? (
+              <div className="text-center py-4 text-gray-500">
+                <Icon icon="ri:lock-line" className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                <p>{t('common.pleaseLogin')}</p>
+                <p className="text-xs">{t('sidebar.loginToView')}</p>
+                <button
+                  onClick={() => navigate('/login')}
+                  className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-sm"
+                >
+                  {t('sidebar.goToLogin')}
+                </button>
+              </div>
+            ) : isLoading ? (
+              <div className="flex items-center justify-center py-4">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+                <span className="ml-2 text-gray-500">{t('sidebar.loading')}</span>
+              </div>
+            ) : works.length === 0 ? (
+              <div className="text-center py-4 text-gray-500">
+                <Icon icon="ri:book-2-line" className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                <p>{t('sidebar.noWorks')}</p>
+                <p className="text-xs">{t('sidebar.clickToCreate')}</p>
+              </div>
+            ) : (
+              // 按更新时间排序，最新的在前
+              [...works].sort((a, b) => {
+                const dateA = new Date(a.updatedAt || a.createdAt || 0).getTime()
+                const dateB = new Date(b.updatedAt || b.createdAt || 0).getTime()
+                return dateB - dateA
+              }).map(work => (
+                <div
+                  key={work._id || work.id}
+                  className={`flex items-center justify-between px-3 py-2 hover:bg-gray-100 cursor-pointer rounded-lg ${currentWork && (currentWork._id === (work._id || work.id) || currentWork.id === (work._id || work.id)) ? 'bg-blue-50 border border-blue-200' : ''
+                    }`}
+                  onClick={() => handleWorkClick(work)}
+                >
+                  <div className="flex items-center flex-1 min-w-0">
+                    <div className={`rounded-lg p-2 mr-3 flex-shrink-0 ${
+                      work.type === 'web_novel' 
+                        ? 'bg-blue-100' 
+                        : 'bg-purple-100'
+                    }`}>
+                      <Icon 
+                        icon={work.type === 'web_novel' ? 'ri:article-line' : 'ri:book-2-line'} 
+                        className={`w-5 h-5 ${
+                          work.type === 'web_novel' 
+                            ? 'text-blue-400' 
+                            : 'text-purple-400'
+                        }`} 
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium break-words overflow-hidden">{work.name}</div>
+                      <div className="text-xs text-gray-500 truncate">
+                        {t(`common.workTypes.${work.type}`)}
+                        {work.updatedAt && (
+                          <span className="ml-2">
+                            {new Date(work.updatedAt).toLocaleDateString(t('common.dateFormat.locale'), t('common.dateFormat.options') as Intl.DateTimeFormatOptions)}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
+                  <div className="flex items-center space-x-1 flex-shrink-0">
+                    {work.isSaved === false && (
+                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                    )}
+                    <Icon icon="ri:more-fill" className="w-5 h-5 text-gray-400 cursor-pointer" onClick={(e) => handleWorkMenuClick(e, work)} />
+                  </div>
                 </div>
-                <div className="flex items-center space-x-1">
-                  {work.isSaved === false && (
-                    <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                  )}
-                  <Icon icon="ri:more-fill" className="w-5 h-5 text-gray-400 cursor-pointer" onClick={(e) => {
-                    e.stopPropagation()
-                    showToast()
-                  }} />
-                </div>
-              </div>
-            ))
-          )}
-        </div>
+              ))
+            )}
+          </div>
+        )}
 
         {/* 知识库部分 */}
         <div className="font-bold text-lg mt-6 mb-2 flex justify-between items-center hover:bg-gray-50 p-2 rounded-md">
@@ -555,7 +693,7 @@ const Sidebar: React.FC = () => {
               icon={showKnowledgeItems ? "ri:arrow-down-s-line" : "ri:arrow-right-s-line"}
               className="w-5 h-5 mr-1 text-gray-500"
             />
-            知识库
+            {t('sidebar.knowledgeBase')}
           </span>
           <Icon
             icon="ri:add-line"
@@ -591,7 +729,7 @@ const Sidebar: React.FC = () => {
                   <div className="flex-grow">
                     <div className="font-medium">{item.name}</div>
                     <div className="text-xs text-gray-500">
-                      {item.documents ?? 0} 文档 {(item.ideas && item.ideas > 0) ? `${item.ideas} 笔记 IDEAs` : ''}
+                      {item.documents ?? 0} {t('sidebar.documents')} {(item.ideas && item.ideas > 0) ? `${item.ideas} ${t('sidebar.ideas')}` : ''}
                     </div>
                   </div>
                 )}
@@ -619,7 +757,7 @@ const Sidebar: React.FC = () => {
               icon="ri:arrow-right-s-line"
               className="w-5 h-5 mr-1 text-gray-500"
             />
-            工作流
+            {t('sidebar.workflow')}
           </span>
           <Icon
             icon="ri:add-line"
@@ -641,7 +779,7 @@ const Sidebar: React.FC = () => {
               icon="ri:user-line"
               className="w-5 h-5 mr-1 text-gray-500"
             />
-            我的
+            {t('sidebar.myProfile')}
           </span>
         </div>
 
@@ -662,7 +800,7 @@ const Sidebar: React.FC = () => {
         onConfirm={handleCreateWorkConfirm}
       />
 
-      {/* 全局右键菜单 */}
+      {/* 知识库右键菜单 */}
       {activeMenuId && (
         <div
           className="fixed bg-white shadow-lg rounded-md py-1 z-50 w-24"
@@ -679,14 +817,66 @@ const Sidebar: React.FC = () => {
             }}
           >
             <Icon icon="ri:edit-line" className="w-4 h-4 mr-2" />
-            <span>修改</span>
+            <span>{t('sidebar.modify')}</span>
           </div>
           <div
             className="px-3 py-2 hover:bg-gray-100 cursor-pointer flex items-center text-red-500"
             onClick={(e) => handleKnowledgeDelete(e, activeMenuId)}
           >
             <Icon icon="ri:delete-bin-line" className="w-4 h-4 mr-2" />
-            <span>删除</span>
+            <span>{t('sidebar.delete')}</span>
+          </div>
+        </div>
+      )}
+
+      {/* 作品操作菜单 */}
+      {activeWorkMenuId && (
+        <div
+          className="fixed bg-white shadow-lg rounded-md py-1 z-50 w-24"
+          style={{
+            left: `${workMenuPosition.x}px`,
+            top: `${workMenuPosition.y}px`
+          }}
+        >
+          <div
+            className="px-3 py-2 hover:bg-gray-100 cursor-pointer flex items-center text-red-500"
+            onClick={(e) => {
+              e.stopPropagation()
+              const work = works.find(w => (w._id === activeWorkMenuId || w.id === activeWorkMenuId))
+              if (work) {
+                setWorkToDelete(work)
+                setShowDeleteConfirm(true)
+              }
+            }}
+          >
+            <Icon icon="ri:delete-bin-line" className="w-4 h-4 mr-2" />
+            <span>{t('sidebar.delete')}</span>
+          </div>
+        </div>
+      )}
+
+      {/* 删除确认对话框 */}
+      {showDeleteConfirm && workToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-80 shadow-xl">
+            <h3 className="text-lg font-bold mb-4 text-red-600">{t('sidebar.deleteWork')}</h3>
+            <p className="text-gray-700 mb-6">
+              {t('sidebar.deleteWorkConfirm', { name: workToDelete.name })}
+            </p>
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={handleDeleteCancel}
+                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+              >
+                {t('sidebar.cancel')}
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+              >
+                {t('sidebar.delete')}
+              </button>
+            </div>
           </div>
         </div>
       )}

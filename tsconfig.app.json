@@ -7,6 +7,7 @@
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
 
     /* Bundler mode */
     "moduleResolution": "node",
@@ -27,5 +28,6 @@
     "strictFunctionTypes": false,
     "strictPropertyInitialization": false
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["node_modules/@types/d3-dispatch", "node_modules/@types/d3", "**/node_modules/@types/d3-dispatch/**"]
 }

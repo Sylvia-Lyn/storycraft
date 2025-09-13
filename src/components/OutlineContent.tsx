@@ -2,8 +2,14 @@ import { Icon } from '@iconify/react';
 import { Link } from 'react-router-dom';
 import { useState, useRef, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
+import { useWorks } from '../contexts/WorksContext';
+import { useI18n } from '../contexts/I18nContext';
 
 function OutlineContent() {
+  // 从WorksContext获取当前作品
+  const { currentWork } = useWorks();
+  const { t } = useI18n();
+  
   // 添加状态管理
   const [inputText, setInputText] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -29,6 +35,36 @@ function OutlineContent() {
     '优化背景设定的逻辑性',
     '增加玩家互动性'
   ];
+
+  // 监听作品选择事件，加载作品内容
+  useEffect(() => {
+    const handleWorkSelected = (event: CustomEvent) => {
+      const { work } = event.detail;
+      if (work && work.content) {
+        // 如果作品有大纲内容，加载到背景内容区域
+        if (work.content.outline) {
+          setBackgroundContent(work.content.outline);
+        }
+        console.log('大纲页面已加载作品内容:', work.content);
+      }
+    };
+
+    window.addEventListener('workSelected' as any, handleWorkSelected);
+
+    return () => {
+      window.removeEventListener('workSelected' as any, handleWorkSelected);
+    };
+  }, []);
+
+  // 当currentWork改变时，也加载内容
+  useEffect(() => {
+    if (currentWork && currentWork.content) {
+      if (currentWork.content.outline) {
+        setBackgroundContent(currentWork.content.outline);
+      }
+      console.log('大纲页面已加载当前作品内容:', currentWork.content);
+    }
+  }, [currentWork]);
 
   // 根据输入内容生成建议
   useEffect(() => {
@@ -85,7 +121,7 @@ function OutlineContent() {
 
     } catch (error) {
       console.error('处理输入失败:', error);
-      toast.error('处理失败，请重试');
+      toast.error(t('common.fileProcessFailed'));
     } finally {
       setIsGenerating(false);
       setInputText('');

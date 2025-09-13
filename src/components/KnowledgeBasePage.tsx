@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Icon } from '@iconify/react';
 import AnnouncementBar from './AnnouncementBar';
+import { useI18n } from '../contexts/I18nContext';
 
 interface KnowledgeFile {
   id: string;
@@ -15,6 +16,7 @@ interface KnowledgeFile {
 const KnowledgeBasePage: React.FC = () => {
   const { knowledgeId } = useParams<{ knowledgeId: string }>();
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [knowledgeBase, setKnowledgeBase] = useState<{ id: string; name: string } | null>(null);
   const [files, setFiles] = useState<KnowledgeFile[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -33,11 +35,11 @@ const KnowledgeBasePage: React.FC = () => {
 
         // 模拟知识库数据
         if (knowledgeId === 'knowledge-1') {
-          setKnowledgeBase({ id: 'knowledge-1', name: '测试知识库' });
+          setKnowledgeBase({ id: 'knowledge-1', name: t('knowledgeBase.testKnowledgeBase') });
         } else if (knowledgeId === 'knowledge-2') {
-          setKnowledgeBase({ id: 'knowledge-2', name: '对话记录' });
+          setKnowledgeBase({ id: 'knowledge-2', name: t('knowledgeBase.conversationRecords') });
         } else if (knowledgeId === 'knowledge-3') {
-          setKnowledgeBase({ id: 'knowledge-3', name: '角色剧本' });
+          setKnowledgeBase({ id: 'knowledge-3', name: t('knowledgeBase.characterScript') });
         } else {
           // 从 localStorage 获取知识库数据
           try {
@@ -75,24 +77,24 @@ const KnowledgeBasePage: React.FC = () => {
         const demoFiles = [
           {
             id: '1',
-            name: '示例文档1.pdf',
-            type: 'PDF',
+            name: t('knowledgeBase.exampleDoc1'),
+            type: t('knowledgeBase.pdf'),
             size: 1024,
             uploadTime: '2025-06-01 10:30',
             updateTime: '2025-06-01 10:30'
           },
           {
             id: '2',
-            name: '示例文档2.docx',
-            type: 'Word',
+            name: t('knowledgeBase.exampleDoc2'),
+            type: t('knowledgeBase.word'),
             size: 512,
             uploadTime: '2025-06-01 11:15',
             updateTime: '2025-06-01 11:15'
           },
           {
             id: '3',
-            name: '参考资料.txt',
-            type: '文本',
+            name: t('knowledgeBase.referenceMaterial'),
+            type: t('knowledgeBase.text'),
             size: 128,
             uploadTime: '2025-06-01 12:00',
             updateTime: '2025-06-01 12:00'
@@ -137,7 +139,7 @@ const KnowledgeBasePage: React.FC = () => {
   return (
     <div className="flex flex-col h-full bg-gray-50">
       {/* 公告栏 */}
-      <AnnouncementBar featureName="知识库管理" />
+      <AnnouncementBar featureName={t('knowledgeBase.title')} />
       {/* 顶部导航 */}
       <div className="flex items-center p-4 border-b border-gray-200 bg-white">
         <button
@@ -147,9 +149,9 @@ const KnowledgeBasePage: React.FC = () => {
           <Icon icon="mdi:arrow-left" className="w-5 h-5" />
         </button>
         <div className="flex items-center">
-          <span className="text-gray-500 mr-2">知识库</span>
+          <span className="text-gray-500 mr-2">{t('sidebar.knowledgeBase')}</span>
           <Icon icon="mdi:chevron-right" className="w-4 h-4 text-gray-400" />
-          <span className="font-medium ml-2">{knowledgeBase?.name || '加载中...'}</span>
+          <span className="font-medium ml-2">{knowledgeBase?.name || t('knowledgeBase.loading')}</span>
         </div>
       </div>
 
@@ -164,14 +166,14 @@ const KnowledgeBasePage: React.FC = () => {
             {/* 工具栏 */}
             <div className="flex justify-between items-center p-4 border-b border-gray-200 bg-gray-50">
               <div className="text-base font-medium text-gray-700">
-                {knowledgeBase?.name || '加载中...'}
+                {knowledgeBase?.name || t('knowledgeBase.loading')}
               </div>
 
               <div className="flex items-center space-x-3">
                 <div className="relative">
                   <input
                     type="text"
-                    placeholder="请输入文件名"
+                    placeholder={t('knowledgeBase.search')}
                     className="w-60 border border-gray-200 rounded-md pl-3 pr-9 py-1.5 focus:outline-none focus:border-gray-300 text-sm bg-white shadow-sm"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -187,7 +189,7 @@ const KnowledgeBasePage: React.FC = () => {
                   onClick={handleFileUpload}
                 >
                   <Icon icon="ri:add-line" className="w-4 h-4 mr-1" />
-                  <span>添加</span>
+                  <span>{t('knowledgeBase.upload')}</span>
                 </button>
               </div>
             </div>
@@ -200,46 +202,46 @@ const KnowledgeBasePage: React.FC = () => {
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       <div className="flex items-center">
                         <input type="checkbox" className="mr-2" />
-                        文件名
+                        {t('knowledgeBase.fileName')}
                       </div>
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       <div className="flex items-center">
-                        文件类型
+                        {t('knowledgeBase.fileType')}
                         <Icon icon="mdi:unfold-more-horizontal" className="w-4 h-4 ml-1" />
                       </div>
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       <div className="flex items-center">
-                        数据标签
+                        {t('knowledgeBase.dataLabel')}
                       </div>
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       <div className="flex items-center">
-                        数据大小
+                        {t('knowledgeBase.dataSize')}
                         <Icon icon="mdi:unfold-more-horizontal" className="w-4 h-4 ml-1" />
                       </div>
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       <div className="flex items-center">
-                        访问次数
+                        {t('knowledgeBase.accessCount')}
                         <Icon icon="mdi:unfold-more-horizontal" className="w-4 h-4 ml-1" />
                       </div>
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       <div className="flex items-center">
-                        上传时间
+                        {t('knowledgeBase.uploadTime')}
                         <Icon icon="mdi:unfold-more-horizontal" className="w-4 h-4 ml-1" />
                       </div>
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       <div className="flex items-center">
-                        更新时间
+                        {t('knowledgeBase.updateTime')}
                         <Icon icon="mdi:unfold-more-horizontal" className="w-4 h-4 ml-1" />
                       </div>
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      操作
+                      {t('knowledgeBase.operation')}
                     </th>
                   </tr>
                 </thead>
@@ -277,7 +279,7 @@ const KnowledgeBasePage: React.FC = () => {
                   ) : (
                     <tr>
                       <td colSpan={8} className="px-6 py-16 text-center text-gray-500">
-                        没有数据
+                        {t('knowledgeBase.noData')}
                       </td>
                     </tr>
                   )}
@@ -288,7 +290,7 @@ const KnowledgeBasePage: React.FC = () => {
             {/* 分页控制 */}
             <div className="flex items-center justify-between px-6 py-4 bg-white border-t border-gray-200">
               <div className="text-sm text-gray-700">
-                共 <span className="font-medium">{files.length}</span> 条数据
+                {t('knowledgeBase.totalData', { count: files.length })}
               </div>
 
               <div className="flex items-center">
@@ -297,7 +299,7 @@ const KnowledgeBasePage: React.FC = () => {
                   onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                   disabled={currentPage === 1}
                 >
-                  上一页
+                  {t('knowledgeBase.previousPage')}
                 </button>
 
                 <div className="flex items-center bg-gray-100 rounded-md overflow-hidden">
@@ -313,11 +315,11 @@ const KnowledgeBasePage: React.FC = () => {
                   onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                   disabled={currentPage === totalPages || totalPages === 0}
                 >
-                  下一页
+                  {t('knowledgeBase.nextPage')}
                 </button>
 
                 <div className="ml-4 flex items-center">
-                  <span className="text-sm text-gray-700 mr-2">每页显示:</span>
+                  <span className="text-sm text-gray-700 mr-2">{t('knowledgeBase.itemsPerPage')}</span>
                   <select
                     className="border border-gray-300 rounded-md px-2 py-1 text-sm"
                     value={itemsPerPage}

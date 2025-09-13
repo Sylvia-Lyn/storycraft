@@ -6,7 +6,15 @@ import Paragraph from '@editorjs/paragraph';
 import Marker from '@editorjs/marker';
 import { Icon } from '@iconify/react';
 import { useAppState } from '../hooks/useAppState';
+import { useI18n } from '../contexts/I18nContext';
 import { toast } from 'react-hot-toast';
+
+// 扩展 Window 接口以支持防抖定时器
+declare global {
+  interface Window {
+    editorChangeTimeout?: NodeJS.Timeout;
+  }
+}
 
 interface EditorComponentProps {
   initialData?: any;
@@ -19,9 +27,10 @@ interface EditorComponentProps {
 
 export interface EditorComponentRef {
   insertText: (text: string) => Promise<void>;
+  save: () => Promise<any>;
 }
 
-const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({
+const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({ 
   initialData,
   onChange,
   onSelect,
@@ -30,6 +39,7 @@ const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({
   onSaveAs
 }, ref) => {
   const appState = useAppState();
+  const { t } = useI18n();
   const editorRef = useRef<EditorJS | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [selection, setSelection] = useState<{ text: string, range: Range | null }>({ text: '', range: null });
@@ -42,117 +52,157 @@ const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 预设的模板句式
-  const templateSentences = [
-    "这是一个转折点，主角开始意识到自己的使命。",
-    "黎明前的黑暗总是最深重的，此刻主角面临着前所未有的挑战。",
-    "一个不经意的相遇，却彻底改变了两个人的命运轨迹。",
-    "回忆如潮水般涌来，过往的点滴在心头激荡。",
-    "环顾四周，这里的一切都变得陌生而遥远。"
-  ];
+  const templateSentences = (t('editor.templateSentences', { returnObjects: true } as any) as unknown) as string[];
 
   // 批注功能相关状态
   const [annotations, setAnnotations] = useState<Array<{ id: string, text: string, blockIndex: number }>>([]);
   const [showAnnotations, setShowAnnotations] = useState(true);
 
-  // 监听作品选择事件
+  // 清理防抖定时器
   useEffect(() => {
-    const handleWorkSelected = (event: CustomEvent) => {
-      const { work } = event.detail
-      if (work && work.content && editorRef.current) {
-        // 清空当前编辑器内容并加载新内容
-        editorRef.current.clear()
-        editorRef.current.render(work.content)
-        console.log('已加载作品内容:', work.content)
+    return () => {
+      if (window.editorChangeTimeout) {
+        clearTimeout(window.editorChangeTimeout);
       }
     }
-
-    window.addEventListener('workSelected' as any, handleWorkSelected)
-
-    return () => {
-      window.removeEventListener('workSelected' as any, handleWorkSelected)
-    }
   }, [])
+  // 暴露方法给父组件
+  useImperativeHandle(ref, () => ({
+    insertText: async (text: string) => {
+      if (!editorRef.current) return;
+      const current = await editorRef.current.save();
+      current.blocks.push({ type: 'paragraph', data: { text } });
+      await editorRef.current.render(current);
+    },
+    save: async () => {
+      if (!editorRef.current) return null;
+      const savedData = await editorRef.current.save();
+      console.log('EditorJS save() 返回的数据 (通过 ref):', savedData);
+      return savedData;
+    }
+  }));
 
-  // 初始化编辑器
+  // 初始化编辑器 - 只在组件挂载时执行一次
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!containerRef.current) {
+      console.error('容器元素不存在，无法初始化 EditorJS');
+      return;
+    }
+
+    // 如果已经存在编辑器实例，不要重复创建
+    if (editorRef.current) {
+      console.log('EditorJS 实例已存在，跳过重复初始化');
+      return;
+    }
+
+    console.log('🚀 开始初始化 EditorJS，容器元素:', containerRef.current);
+    console.log('📊 初始数据:', initialData);
+    console.log('🆔 当前作品ID:', currentWorkId);
 
     const editor = new EditorJS({
       holder: containerRef.current,
       tools: {
-        header: {
-          class: Header,
-          inlineToolbar: true,
-          config: {
-            levels: [1, 2, 3, 4],
-            defaultLevel: 3
-          }
-        },
-        list: {
-          class: List,
-          inlineToolbar: true,
-        },
         paragraph: {
           class: Paragraph,
           inlineToolbar: true,
         },
-        marker: {
-          class: Marker,
-          shortcut: 'CMD+SHIFT+M',
-        },
       },
-      data: initialData || { blocks: [{ type: 'paragraph', data: { text: '' } }] },
-      placeholder: '请输入初稿内容...',
-      onChange: async () => {
-        if (editorRef.current) {
-          try {
-            const savedData = await editorRef.current.save();
-
-            // 只有当内容确实发生变化时才添加到历史记录
-            const currentContent = JSON.stringify(savedData);
-            const lastContent = editorHistory.length > 0 ?
-              JSON.stringify(editorHistory[currentHistoryIndex]) : '';
-
-            if (currentContent !== lastContent) {
-              // 如果当前不在历史记录的最后，则清除当前位置之后的所有历史
-              if (currentHistoryIndex < editorHistory.length - 1) {
-                setEditorHistory(prev => prev.slice(0, currentHistoryIndex + 1));
-              }
-
-              // 添加新的历史记录
-              setEditorHistory(prev => [...prev, savedData]);
-              setCurrentHistoryIndex(prev => prev + 1);
-
-              console.log('添加历史记录:', savedData);
-            }
-
-            if (onChange) {
-              onChange(savedData);
-            }
-          } catch (error) {
-            console.error('保存编辑器内容时出错:', error);
+      data: initialData || { 
+        time: Date.now(),
+        blocks: [],
+        version: '2.31.0'
+      },
+      placeholder: t('editor.placeholder'),
+      minHeight: 0,
+      autofocus: false,
+      onChange: () => {
+        // 使用防抖机制，但只在需要时触发 onChange 回调
+        if (onChange) {
+          // 清除之前的定时器
+          if (window.editorChangeTimeout) {
+            clearTimeout(window.editorChangeTimeout);
           }
+          
+          // 设置新的定时器，延迟执行 onChange 回调
+          window.editorChangeTimeout = setTimeout(async () => {
+            if (editorRef.current) {
+              try {
+                const savedData = await editorRef.current.save();
+
+                // 只有当内容确实发生变化时才添加到历史记录
+                const currentContent = JSON.stringify(savedData);
+                const lastContent = editorHistory.length > 0 ?
+                  JSON.stringify(editorHistory[currentHistoryIndex]) : '';
+
+                if (currentContent !== lastContent) {
+                  // 如果当前不在历史记录的最后，则清除当前位置之后的所有历史
+                  if (currentHistoryIndex < editorHistory.length - 1) {
+                    setEditorHistory(prev => prev.slice(0, currentHistoryIndex + 1));
+                  }
+
+                  // 添加新的历史记录
+                  setEditorHistory(prev => [...prev, savedData]);
+                  setCurrentHistoryIndex(prev => prev + 1);
+                }
+
+                onChange(savedData);
+              } catch (error) {
+                console.error('保存编辑器内容时出错:', error);
+              }
+            }
+          }, 500); // 500ms 防抖延迟
         }
       }
     });
 
     editorRef.current = editor;
+    console.log('✅ EditorJS 实例已创建:', editor);
 
     // 初始化时保存初始状态到历史记录
     editor.isReady.then(() => {
+      console.log('EditorJS 已准备就绪');
       editor.save().then(initialSavedData => {
+        console.log('EditorJS 初始保存数据:', initialSavedData);
         setEditorHistory([initialSavedData]);
         setCurrentHistoryIndex(0);
         console.log('初始化历史记录:', initialSavedData);
+        
       });
     });
 
     return () => {
       if (editorRef.current && editorRef.current.destroy) {
+        console.log('🗑️ 销毁 EditorJS 实例');
         editorRef.current.destroy();
+        editorRef.current = null;
       }
     };
-  }, []);
+  }, []); // 移除currentWorkId依赖，只在组件挂载时执行一次
+
+  // 处理initialData变化 - 通过blocks API更新内容而不是重新创建实例
+  useEffect(() => {
+    if (editorRef.current && initialData) {
+      console.log('🔄 更新EditorJS内容:', initialData);
+      
+      // 等待编辑器准备就绪
+      editorRef.current.isReady.then(() => {
+        // 清空现有内容
+        return editorRef.current!.blocks.clear();
+      }).then(() => {
+        // 插入新内容
+        if (initialData.blocks && initialData.blocks.length > 0) {
+          const insertPromises = initialData.blocks.map((block: any, index: number) => {
+            return editorRef.current!.blocks.insert(block.type, block.data, {}, index);
+          });
+          return Promise.all(insertPromises);
+        }
+      }).then(() => {
+        console.log('✅ EditorJS内容更新完成');
+      }).catch(error => {
+        console.error('❌ EditorJS内容更新失败:', error);
+      });
+    }
+  }, [initialData]); // 只监听initialData的变化
 
   // 监听选中文本
   useEffect(() => {
@@ -256,7 +306,7 @@ const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({
     range.insertNode(tempHighlightNode);
 
     // 显示提示信息
-    toast.success('已将选中文本设置为 Capilot 上文');
+    toast.success(t('common.textSetAsContext'));
 
     // 2秒后移除高亮效果
     setTimeout(() => {
@@ -363,40 +413,52 @@ const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({
         // 更新历史索引
         setCurrentHistoryIndex(prevHistoryIndex);
 
-        toast.success('已撤销上一步操作');
+        toast.success(t('common.operationUndone'));
       } catch (error) {
         console.error('撤销操作失败:', error);
-        toast.error('撤销失败，请重试');
+        toast.error(t('common.undoFailed'));
       }
     } else {
-      toast.error('没有可撤销的操作');
+      toast.error(t('common.noUndoOperation'));
     }
   };
 
   // 保存操作
   const handleSave = async () => {
-    if (!editorRef.current) return;
+    if (!editorRef.current) {
+      console.error('EditorJS 实例不存在');
+      return;
+    }
 
     try {
       setIsSaving(true);
+      
+      // 检查编辑器状态
+      console.log('EditorJS 实例状态:', editorRef.current);
+      console.log('容器元素:', containerRef.current);
+      
       const savedData = await editorRef.current.save();
+      
+      console.log('EditorJS save() 返回的数据:', savedData);
+      console.log('savedData.blocks 长度:', savedData?.blocks?.length);
+      console.log('savedData 完整结构:', JSON.stringify(savedData, null, 2));
 
       if (currentWorkId && onSave) {
         // 如果当前有选中的作品，直接保存
         await onSave(savedData);
-        toast.success('作品已保存');
+        toast.success(t('common.workSaved'));
       } else if (onSaveAs) {
         // 如果没有选中的作品，弹出创建新作品的对话框
-        const workName = prompt('请输入作品名称：');
+        const workName = prompt(t('common.pleaseEnterWorkName'));
         if (workName && workName.trim()) {
           await onSaveAs(workName.trim(), savedData);
-          toast.success('新作品已创建并保存');
+          toast.success(t('common.workCreated'));
         } else {
-          toast.error('请输入作品名称');
+          toast.error(t('common.pleaseEnterWorkName'));
         }
       } else {
         // 没有选中作品且没有onSaveAs回调时，提示用户先选中作品
-        toast.error('请先在侧边栏选中一个作品后再保存');
+        toast.error(t('common.pleaseSelectWork'));
         return;
       }
 
@@ -404,7 +466,7 @@ const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({
       setLastSavedData(savedData);
     } catch (error) {
       console.error('保存失败:', error);
-      toast.error('保存失败，请重试');
+      toast.error(t('common.workSaveFailed'));
     } finally {
       setIsSaving(false);
     }
@@ -432,7 +494,7 @@ const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `剧本_${new Date().toLocaleDateString()}.${format}`;
+      link.download = `${t('common.workTypes.script')}_${new Date().toLocaleDateString(t('common.dateFormat.locale'), t('common.dateFormat.options') as Intl.DateTimeFormatOptions)}.${format}`;
 
       // 触发下载
       document.body.appendChild(link);
@@ -489,7 +551,7 @@ const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({
         }
       } catch (error) {
         console.error('导入文件失败:', error);
-        toast.error('导入文件失败，请重试');
+        toast.error(t('common.fileImportFailed'));
       }
     };
 
@@ -515,6 +577,17 @@ const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({
       } catch (error) {
         console.error('插入文本失败:', error);
       }
+    },
+    // 保存方法
+    save: async () => {
+      if (!editorRef.current) {
+        throw new Error('编辑器未初始化');
+      }
+      
+      // 直接调用 EditorJS 的 save 方法并返回数据
+      const savedData = await editorRef.current.save();
+      console.log('EditorJS save() 返回的数据 (通过 ref):', savedData);
+      return savedData;
     }
   }));
 
@@ -527,20 +600,20 @@ const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({
             <button
               className="p-1.5 hover:bg-gray-200 rounded text-gray-600 flex items-center text-sm"
               onClick={() => alert("开发中功能")}
-              title="插入模板句式"
+              title={t('editor.insertTemplateTitle')}
             >
               <Icon icon="mdi:text-box-plus-outline" className="mr-1" />
-              <span>插入模板</span>
+              <span>{t('editor.insertTemplate')}</span>
             </button>
           </div>
 
           <button
             className="p-1.5 hover:bg-gray-200 rounded text-gray-600 flex items-center text-sm"
             onClick={() => alert("开发中功能")}
-            title="删除当前段落"
+            title={t('editor.deleteParagraphTitle')}
           >
             <Icon icon="mdi:text-box-remove-outline" className="mr-1" />
-            <span>删除段落</span>
+            <span>{t('editor.deleteParagraph')}</span>
           </button>
 
           <button
@@ -550,27 +623,27 @@ const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({
             disabled={!selection.text}
           >
             <Icon icon="mdi:marker" className="mr-1" />
-            <span>高亮选中</span>
+            <span>{t('editor.highlightSelected')}</span>
           </button>
 
           <button
             className="p-1.5 hover:bg-gray-200 rounded text-gray-600 flex items-center text-sm"
             onClick={() => alert("开发中功能")}
-            title="撤销"
+            title={t('editor.undo')}
             disabled={currentHistoryIndex <= 0}
           >
             <Icon icon="mdi:undo" className="mr-1" />
-            <span>撤销</span>
+            <span>{t('editor.undo')}</span>
           </button>
 
           <button
             className="p-1.5 hover:bg-gray-200 rounded text-gray-600 flex items-center text-sm"
             onClick={handleSave}
-            title="保存"
+            title={t('editor.save')}
             disabled={isSaving}
           >
             <Icon icon="mdi:content-save-outline" className="mr-1" />
-            <span>{isSaving ? '保存中...' : '保存'}</span>
+            <span>{isSaving ? t('editor.saving') : t('editor.save')}</span>
           </button>
 
           {/* 导入按钮 */}
@@ -584,11 +657,11 @@ const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({
             />
             <button
               className="p-1.5 hover:bg-gray-200 rounded text-gray-600 flex items-center text-sm"
-              title="导入文件"
+              title={t('editor.importFile')}
               onClick={() => fileInputRef.current?.click()}
             >
               <Icon icon="mdi:file-import-outline" className="mr-1" />
-              <span>导入</span>
+              <span>{t('editor.import')}</span>
             </button>
           </div>
 
@@ -596,11 +669,11 @@ const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({
           <div className="relative export-menu-container">
             <button
               className="p-1.5 hover:bg-gray-200 rounded text-gray-600 flex items-center text-sm"
-              title="导出文件"
+              title={t('editor.exportFile')}
               onClick={() => setShowExportMenu(!showExportMenu)}
             >
               <Icon icon="mdi:file-export-outline" className="mr-1" />
-              <span>导出</span>
+              <span>{t('editor.export')}</span>
             </button>
             {showExportMenu && (
               <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded shadow-lg z-50">
@@ -611,7 +684,7 @@ const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({
                   }}
                   className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
                 >
-                  导出为 TXT
+                  {t('editor.exportAsTxt')}
                 </button>
                 <button
                   onClick={() => {
@@ -620,7 +693,7 @@ const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({
                   }}
                   className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
                 >
-                  导出为 MD
+                  {t('editor.exportAsMd')}
                 </button>
               </div>
             )}
@@ -642,13 +715,13 @@ const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({
         {showAnnotations && annotations.length > 0 && (
           <div className="w-64 border-l border-gray-200 overflow-y-auto p-2 bg-gray-50">
             <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium">批注 ({annotations.length})</h3>
+              <h3 className="text-sm font-medium">{t('editor.annotations')} ({annotations.length})</h3>
               <button
                 className="text-xs text-gray-500 hover:text-red-500"
                 onClick={() => setAnnotations([])}
-                title="清除所有批注"
+                title={t('editor.clearAllAnnotations')}
               >
-                清除全部
+                {t('editor.clearAll')}
               </button>
             </div>
 
@@ -656,7 +729,7 @@ const EditorComponent = forwardRef<EditorComponentRef, EditorComponentProps>(({
               {annotations.map((annotation) => (
                 <div key={annotation.id} className="p-2 bg-white border border-gray-200 rounded text-xs">
                   <div className="flex justify-between items-start mb-1">
-                    <div className="font-medium">批注 #{annotation.id.slice(-4)}</div>
+                    <div className="font-medium">{t('editor.annotationNumber', { number: annotation.id.slice(-4) })}</div>
                     <button
                       className="text-gray-400 hover:text-red-500"
                       onClick={() => deleteAnnotation(annotation.id)}

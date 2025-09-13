@@ -1,12 +1,23 @@
-const cloudbase = require('@cloudbase/node-sdk');
+// 尝试不同的导入方式
+let cloudbase, app, db, auth;
 
-// 初始化云开发
-const app = cloudbase.init({
-    env: 'stroycraft-1ghmi4ojd3b4a20b'
-});
-
-const db = app.database();
-const auth = app.auth();
+try {
+    cloudbase = require('@cloudbase/node-sdk');
+    console.log('成功导入 @cloudbase/node-sdk');
+    
+    // 初始化云开发
+    app = cloudbase.init({
+        env: 'stroycraft-1ghmi4ojd3b4a20b'
+    });
+    console.log('成功初始化云开发应用');
+    
+    db = app.database();
+    auth = app.auth();
+    console.log('云函数初始化完成，数据库和认证对象已创建');
+} catch (error) {
+    console.error('云函数初始化失败:', error);
+    throw error;
+}
 
 // 作品集合名称
 const WORKS_COLLECTION = 'works';
@@ -27,9 +38,22 @@ exports.main = async (event, context) => {
                 const userInfo = await auth.getUserInfo({ token });
                 if (userInfo && userInfo.uid) {
                     userId = userInfo.uid;
+                    console.log('从请求头成功获取用户信息:', userId);
                 }
             } catch (error) {
-                console.log('从请求头获取用户信息失败:', error);
+                console.log('从请求头获取用户信息失败:', error.message);
+                // 如果是token过期错误，返回更明确的错误信息
+                if (error.message && (
+                    error.message.includes('token') || 
+                    error.message.includes('expired') || 
+                    error.message.includes('invalid')
+                )) {
+                    return {
+                        success: false,
+                        error: '登录已过期，请重新登录',
+                        code: 401
+                    };
+                }
             }
         }
 
@@ -80,6 +104,8 @@ exports.main = async (event, context) => {
                 return await getWork(userId, data);
             case 'saveWorkContent':
                 return await saveWorkContent(userId, data);
+            case 'createUser':
+                return await createUser(data);
             default:
                 return {
                     success: false,
@@ -285,7 +311,11 @@ async function getWork(userId, data) {
 
 // 保存作品内容（用于自动保存或手动保存）
 async function saveWorkContent(userId, data) {
+    console.log('saveWorkContent 接收到的参数:', { userId, data });
+    
     const { id, content, isAutoSave = false } = data;
+    
+    console.log('解构后的参数:', { id, content, isAutoSave });
 
     if (!id) {
         return {
@@ -295,24 +325,77 @@ async function saveWorkContent(userId, data) {
     }
 
     try {
+        console.log('查询条件:', { _id: id, userId: userId });
+        
+        // 先查询一下记录是否存在
+        const existingRecord = await db.collection(WORKS_COLLECTION)
+            .where({
+                _id: id,
+                userId: userId
+            })
+            .get();
+            
+        console.log('查询到的记录数量:', existingRecord.data.length);
+        if (existingRecord.data.length > 0) {
+            console.log('现有记录内容:', JSON.stringify(existingRecord.data[0], null, 2));
+        }
+        
+        // 将 EditorJS 内容转换为纯文本字符串
+        let contentText = '';
+        if (content && content.blocks && Array.isArray(content.blocks)) {
+            // 提取所有文本内容
+            contentText = content.blocks
+                .map(block => {
+                    if (block.type === 'paragraph' && block.data && block.data.text) {
+                        return block.data.text;
+                    }
+                    return '';
+                })
+                .filter(text => text.trim() !== '')
+                .join('\n');
+        }
+        
+        console.log('原始 EditorJS 内容:', JSON.stringify(content, null, 2));
+        console.log('提取的文本内容:', contentText);
+        
+        // 使用 update 操作，只更新 content 字段为字符串类型
         const updateData = {
-            content,
+            content: contentText, // 存储为字符串而不是对象
             updatedAt: new Date(),
             isSaved: true
         };
-
+        
+        console.log('准备更新的字段:', JSON.stringify(updateData, null, 2));
+        console.log('现有记录的完整内容:', JSON.stringify(existingRecord.data[0], null, 2));
+        
         const result = await db.collection(WORKS_COLLECTION)
             .where({
                 _id: id,
                 userId: userId
             })
             .update(updateData);
-
+            
+        console.log('update 操作结果:', result);
+        
+        // 检查更新是否成功
         if (result.updated === 0) {
+            console.error('没有记录被更新，可能记录不存在或无权限');
             return {
                 success: false,
                 error: '作品不存在或无权限修改'
             };
+        }
+        
+        // 验证更新后的记录
+        const updatedRecord = await db.collection(WORKS_COLLECTION)
+            .where({
+                _id: id,
+                userId: userId
+            })
+            .get();
+            
+        if (updatedRecord.data.length > 0) {
+            console.log('更新后的完整记录:', JSON.stringify(updatedRecord.data[0], null, 2));
         }
 
         return {
@@ -327,6 +410,63 @@ async function saveWorkContent(userId, data) {
         return {
             success: false,
             error: '保存作品内容失败'
+        };
+    }
+}
+
+// 创建用户记录
+async function createUser(data) {
+    const { userId, username, email, phone } = data;
+
+    if (!userId) {
+        return {
+            success: false,
+            error: '用户ID不能为空'
+        };
+    }
+
+    try {
+        // 检查用户是否已存在
+        const existingUser = await db.collection(USERS_COLLECTION)
+            .where({
+                userId: userId
+            })
+            .get();
+
+        if (existingUser.data.length > 0) {
+            return {
+                success: false,
+                error: '用户已存在'
+            };
+        }
+
+        // 创建用户记录
+        const userData = {
+            userId: userId,
+            user_name: username || '用户',
+            user_email: email || '',
+            user_plan: 'free',
+            user_point: '0',
+            subscription_expires_at: null,
+            subscription_status: 'free',
+            createdAt: new Date(),
+            updatedAt: new Date()
+        };
+
+        const result = await db.collection(USERS_COLLECTION).add(userData);
+
+        return {
+            success: true,
+            data: {
+                id: result.id,
+                ...userData
+            }
+        };
+    } catch (error) {
+        console.error('创建用户记录失败:', error);
+        return {
+            success: false,
+            error: '创建用户记录失败'
         };
     }
 } 

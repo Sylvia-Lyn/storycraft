@@ -2,6 +2,7 @@ import { useState, useRef, useCallback } from 'react';
 import { useAppState } from './useAppState';
 import { generateDeepSeekContent } from '../services/deepseekService';
 import { generateGeminiContent } from '../services/geminiService';
+import { useI18n } from '../contexts/I18nContext';
 
 interface OptimizationResult {
   id: string;
@@ -22,6 +23,7 @@ export const modelChangeEventBus = {
 
 export function useOptimizationResults() {
   const { selectedModel } = useAppState();
+  const { language } = useI18n();
   const [isGenerating, setIsGenerating] = useState(false);
   const [optimizationResults, setOptimizationResults] = useState<OptimizationResult[]>([]);
   const [responseCache, setResponseCache] = useState<{ [key: string]: OptimizationResult[] }>({});
@@ -143,10 +145,10 @@ export function useOptimizationResults() {
       let response;
       if (currentModel === 'deepseek-r1') {
         console.log(`[useOptimizationResults] 调用DeepSeek API... 尝试 ${retryCount + 1}/${MAX_RETRIES + 1}`);
-        response = await generateDeepSeekContent(prompt);
+        response = await generateDeepSeekContent(prompt, 'deepseek-reasoner', language);
       } else if (currentModel === 'Gemini') {
         console.log(`[useOptimizationResults] 调用Gemini API... 尝试 ${retryCount + 1}/${MAX_RETRIES + 1}`);
-        response = await generateGeminiContent(prompt);
+        response = await generateGeminiContent(prompt, language);
       } else {
         throw new Error(`不支持的模型: ${currentModel}`);
       }

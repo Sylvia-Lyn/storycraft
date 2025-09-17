@@ -11,11 +11,13 @@ function OutlinePage() {
 
   return (
     <div className="flex-1 flex flex-col relative">
-      {/* 公告栏 */}
-      <AnnouncementBar
-        onTabClick={handleTabChange}
-        featureName="大纲生成"
-      />
+      {/* 公告栏 - 暂时隐藏 */}
+      {false && (
+        <AnnouncementBar
+          onTabClick={handleTabChange}
+          featureName="大纲生成"
+        />
+      )}
 
       {/* 导航栏 */}
       <div className="flex w-full pl-10 mt-12">

@@ -10,7 +10,7 @@ const SuperinputPage: React.FC = () => {
     const [selectedCard, setSelectedCard] = useState<string | null>(null);
 
     const handleStartCreate = () => {
-        navigate('/editor');
+        navigate('/story-settings');
     };
 
     return (
@@ -22,11 +22,11 @@ const SuperinputPage: React.FC = () => {
                     </h1>
                     <p className="text-center text-gray-500 mb-10">{t('home.subtitle')}</p>
 
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+                    <div className="grid grid-cols-1 md:grid-cols-3 justify-items-center gap-6 mb-10">
                         {/* Card 1: 网文小说创作 */}
                         <div
-                            className={`bg-white p-6 rounded-lg border transition-shadow cursor-pointer hover:shadow-lg ${selectedCard === 'novel' ? 'border-2 border-blue-500 shadow-lg' : 'border-gray-200'}`}
-                            onClick={() => setSelectedCard('novel')}
+                            className={`w-full max-w-[320px] bg-white p-6 rounded-lg border transition-shadow cursor-pointer hover:shadow-lg ${selectedCard === 'novel' ? 'border-2 border-blue-500 shadow-lg' : 'border-gray-200'}`}
+                            onClick={() => { setSelectedCard('novel'); navigate('/editor'); }}
                         >
                             <Icon icon="ph:book-open-text" className="w-8 h-8 text-blue-500 mb-3" />
                             <h3 className="font-semibold text-lg mb-1">{t('home.novelCreation')}</h3>
@@ -35,26 +35,28 @@ const SuperinputPage: React.FC = () => {
 
                         {/* Card 2: 短剧剧本创作 */}
                         <div
-                            className={`bg-white p-6 rounded-lg border transition-shadow cursor-pointer hover:shadow-lg ${selectedCard === 'shortplay' ? 'border-2 border-blue-500 shadow-lg' : 'border-gray-200'}`}
-                            onClick={() => setSelectedCard('shortplay')}
+                            className={`w-full max-w-[320px] bg-white p-6 rounded-lg border transition-shadow cursor-pointer hover:shadow-lg ${selectedCard === 'shortplay' ? 'border-2 border-blue-500 shadow-lg' : 'border-gray-200'}`}
+                            onClick={() => { setSelectedCard('shortplay'); navigate('/outline'); }}
                         >
                             <Icon icon="ph:video" className="w-8 h-8 text-green-500 mb-3" />
                             <h3 className="font-semibold text-lg mb-1">{t('home.shortPlayCreation')}</h3>
                             <p className="text-gray-500 text-sm">{t('home.shortPlayDesc')}</p>
                         </div>
 
-                        {/* Card 3: 剧本杀剧本创作 */}
-                        <div
-                            className={`bg-white p-6 rounded-lg border transition-shadow cursor-pointer hover:shadow-lg ${selectedCard === 'jubensha' ? 'border-2 border-blue-500 shadow-lg' : 'border-gray-200'}`}
-                            onClick={() => setSelectedCard('jubensha')}
-                        >
-                            <Icon icon="ph:headphones" className="w-8 h-8 text-purple-500 mb-3" />
-                            <h3 className="font-semibold text-lg mb-1">{t('home.scriptKillCreation')}</h3>
-                            <p className="text-gray-500 text-sm">{t('home.scriptKillDesc')}</p>
-                        </div>
+                        {/* Card 3: 剧本杀剧本创作（暂时隐藏） */}
+                        {false && (
+                            <div
+                                className={`bg-white p-6 rounded-lg border transition-shadow cursor-pointer hover:shadow-lg ${selectedCard === 'jubensha' ? 'border-2 border-blue-500 shadow-lg' : 'border-gray-200'}`}
+                                onClick={() => setSelectedCard('jubensha')}
+                            >
+                                <Icon icon="ph:headphones" className="w-8 h-8 text-purple-500 mb-3" />
+                                <h3 className="font-semibold text-lg mb-1">{t('home.scriptKillCreation')}</h3>
+                                <p className="text-gray-500 text-sm">{t('home.scriptKillDesc')}</p>
+                            </div>
+                        )}
 
                         {/* Card 4: 短剧 (Disabled) */}
-                        <div className="bg-gray-100 p-6 rounded-lg border border-gray-200 cursor-not-allowed flex flex-col items-center justify-center">
+                        <div className="w-full max-w-[320px] bg-gray-100 p-6 rounded-lg border border-gray-200 cursor-not-allowed flex flex-col items-center justify-center">
                             <Icon icon="ph:lock" className="w-8 h-8 text-gray-400 mb-3" />
                             <h3 className="font-semibold text-lg text-gray-400">{t('home.shortDrama')}</h3>
                         </div>

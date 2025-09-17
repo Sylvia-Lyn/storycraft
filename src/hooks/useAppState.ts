@@ -74,6 +74,9 @@ export function useAppState() {
   const [selectedStyle, setSelectedStyle] = useState('简洁')
   const styles = ['简洁', '细腻', '幽默', '悬疑', '浪漫']
 
+  // 模式状态管理
+  const [selectedMode, setSelectedMode] = useState<'continue' | 'create'>('continue')
+
   // 剧情选项管理
   const [generatingScenarios, setGeneratingScenarios] = useState(false)
   const [scenarioOptions, setScenarioOptions] = useState<ScenarioOption[]>([])
@@ -480,6 +483,10 @@ export function useAppState() {
     selectedStyle,
     selectStyle,
     styles,
+
+    // 模式相关
+    selectedMode,
+    setSelectedMode,
 
     // 剧情选项相关
     generatingScenarios,

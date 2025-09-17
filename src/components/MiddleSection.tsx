@@ -26,6 +26,11 @@ function MiddleSection() {
     selectModel,
     models,
     selectedStyle,
+    selectStyle,
+    styles,
+    selectedMode,
+    setSelectedMode,
+    handleKeyDown
   } = useAppState();
 
   // 使用优化结果hook
@@ -48,7 +53,6 @@ function MiddleSection() {
   ]);
   const [userInput, setUserInput] = useState("");
   const [showModelDropdown, setShowModelDropdown] = useState(false);
-  const [selectedMode, setSelectedMode] = useState<'continue' | 'create'>('continue');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -203,10 +207,6 @@ function MiddleSection() {
     }, 0);
   };
 
-  // 处理模式切换
-  const handleModeChange = (mode: 'continue' | 'create') => {
-    setSelectedMode(mode);
-  };
 
   // 处理锁定功能点击
   const handleLockedFeatureClick = () => {
@@ -239,7 +239,7 @@ function MiddleSection() {
                   <Button 
                     type={selectedMode === 'continue' ? 'primary' : 'text'} 
                     size="small"
-                    onClick={() => handleModeChange('continue')}
+                    onClick={() => setSelectedMode('continue')}
                     className={`px-3 py-1 h-8 border-0 rounded-none text-xs ${
                       selectedMode === 'continue' 
                         ? 'bg-blue-500 text-white shadow-sm' 
@@ -251,7 +251,7 @@ function MiddleSection() {
                   <Button 
                     type={selectedMode === 'create' ? 'primary' : 'text'} 
                     size="small"
-                    onClick={() => handleModeChange('create')}
+                    onClick={() => setSelectedMode('create')}
                     className={`px-3 py-1 h-8 border-0 rounded-none text-xs ${
                       selectedMode === 'create' 
                         ? 'bg-blue-500 text-white shadow-sm' 

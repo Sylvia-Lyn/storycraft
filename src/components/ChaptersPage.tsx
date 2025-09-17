@@ -41,11 +41,13 @@ const ChaptersPage: React.FC = () => {
   return (
     <div className="h-full">
       <div className="p-8">
-        {/* 公告栏 */}
-        <AnnouncementBar
-          onTabClick={handleTabChange}
-          featureName="章节生成"
-        />
+        {/* 公告栏 - 暂时隐藏 */}
+        {false && (
+          <AnnouncementBar
+            onTabClick={handleTabChange}
+            featureName="章节生成"
+          />
+        )}
 
         {/* 顶部导航和角色选择 */}
         <div className="flex items-center mb-6 mt-12">

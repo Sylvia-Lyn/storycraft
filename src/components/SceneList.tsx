@@ -123,10 +123,12 @@ export default function SceneList() {
       {/* 中间内容区域 */}
       <div className="flex-1 flex flex-col h-full max-w-[calc(100vw-300px)]">
         {/* 公告栏 */}
-        <AnnouncementBar
-          onTabClick={handleTabChange}
-          featureName="分幕生成"
-        />
+        {false && (
+          <AnnouncementBar
+            onTabClick={handleTabChange}
+            featureName="分幕生成"
+          />
+        )}
 
         <div className="flex items-center px-4 pt-4 mt-12">
           {/* 顶部导航 */}

@@ -22,7 +22,7 @@ export const modelChangeEventBus = {
 };
 
 export function useOptimizationResults() {
-  const { selectedModel } = useAppState();
+  const { selectedModel, selectedMode } = useAppState();
   const { language } = useI18n();
   const [isGenerating, setIsGenerating] = useState(false);
   const [optimizationResults, setOptimizationResults] = useState<OptimizationResult[]>([]);
@@ -132,11 +132,21 @@ export function useOptimizationResults() {
     // 添加用户输入
     prompt += `用户要求：${feedbackText}\n\n`;
 
-    // 添加指令
-    prompt += `你是一名擅长写作的大师，正在辅助用户进行创作。请在阅读并理解以上上文以及用户要求后，严格根据以下指令做出回复：
-    1. 如果用户要求续写，则接续上文内容，根据用户要求续写。必须直接返回续写的文本内容，不需要包括上文内容或者解释。
-    2. 如果用户要求优化或改写，则根据用户要求优化或改写。必须直接返回优化或改写后的文本内容，不需要多余的上文或者解释。
-    3. 如果用户要讨论剧情或思路，则基于要求和前文内容，正常对话。`;
+    // 添加指令 - 根据模式设置不同的prompt
+    // 暂时注释掉原有的通用指令
+    // prompt += `你是一名擅长写作的大师，正在辅助用户进行创作。请在阅读并理解以上上文以及用户要求后，严格根据以下指令做出回复：
+    // 1. 如果用户要求续写，则接续上文内容，根据用户要求续写。必须直接返回续写的文本内容，不需要包括上文内容或者解释。
+    // 2. 如果用户要求优化或改写，则根据用户要求优化或改写。必须直接返回优化或改写后的文本内容，不需要多余的上文或者解释。
+    // 3. 如果用户要讨论剧情或思路，则基于要求和前文内容，正常对话。`;
+
+    // 根据模式设置不同的prompt
+    if (selectedMode === 'create') {
+      // 创作模式
+      prompt += `你是一名擅长写作的大师，正在辅助用户进行创作。如果用户有要求，则根据用户要求优化或改写。必须直接返回优化或改写后的文本内容，不需要多余的上文或者解释。`;
+    } else if (selectedMode === 'continue') {
+      // 续写模式
+      prompt += `你是一名擅长写作的大师，正在辅助用户进行创作。接续上文内容，根据用户要求续写。必须直接返回续写的文本内容，不需要包括上文内容或者解释。`;
+    }
 
     try {
       console.log(`[useOptimizationResults] 准备调用API，使用模型: ${currentModel}`);

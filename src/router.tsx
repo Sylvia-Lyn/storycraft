@@ -7,6 +7,7 @@ import CharactersPage from './components/CharactersPage'
 import RelationsPage from './components/RelationsPage'
 import ChaptersPage from './components/ChaptersPage'
 import HomePage from './components/HomePage'
+import WelcomePage from './components/WelcomePage'
 import KnowledgeBasePage from './components/KnowledgeBasePage'
 import KnowledgeUploadPage from './components/KnowledgeUploadPage'
 import StorySettingsPage from './components/StorySettingsPage'
@@ -19,6 +20,7 @@ import ProfilePage from './components/ProfilePage'
 import PaymentPage from './components/PaymentPage'
 import PaymentSuccessPage from './components/PaymentSuccessPage'
 import ProtectedRoute from './components/ProtectedRoute'
+import ShortplayEntryPage from './components/ShortplayEntryPage'
 
 // 临时页面组件，显示"正在加班加点更新中"
 // const ComingSoonPage = () => (
@@ -33,11 +35,19 @@ import ProtectedRoute from './components/ProtectedRoute'
 const router = createHashRouter([
   {
     path: '/',
+    element: <WelcomePage />
+  },
+  {
+    path: '/app',
     element: <App />,
     children: [
       {
-        index: true,
+        path: 'home',
         element: <HomePage />
+      },
+      {
+        path: 'shortplay-entry',
+        element: <ShortplayEntryPage />
       },
       {
         path: 'editor',

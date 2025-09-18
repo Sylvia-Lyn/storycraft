@@ -245,13 +245,15 @@ class ApiInterceptor {
             };
         } catch (error: any) {
             console.error('云函数调用失败:', error);
-            
+
             // 检查错误信息中是否包含token过期相关的内容
             const errorMessage = error.message || error.toString();
-            if (this.isTokenExpiredError(
-                { status: 401 } as Response, 
+            // 注意：网络错误不应被强制当作401
+            const isExpired = this.isTokenExpiredError(
+                { status: 0 } as Response,
                 { error: errorMessage }
-            )) {
+            );
+            if (isExpired) {
                 console.log('云函数调用检测到token过期，尝试刷新token');
                 
                 // 先尝试刷新token

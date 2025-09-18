@@ -1,4 +1,4 @@
-import { app, getAuthHeader } from '../cloudbase';
+import { getCloudbaseApp, getAuthHeader } from '../cloudbase';
 import { apiInterceptor } from './apiInterceptor';
 
 export interface UserData {
@@ -37,7 +37,7 @@ export class UserService {
         error?: string;
     }> {
         const result = await apiInterceptor.callFunctionWithInterceptor(() =>
-            app.callFunction({
+            getCloudbaseApp().callFunction({
                 name: 'works_manager',
                 data: {
                     action: 'createUser',
@@ -57,7 +57,7 @@ export class UserService {
     }> {
         const authHeader = getAuthHeader();
         const result = await apiInterceptor.callFunctionWithInterceptor(() =>
-            app.callFunction({
+            getCloudbaseApp().callFunction({
                 name: 'payment_manager',
                 data: {
                     action: 'getUserInfo'

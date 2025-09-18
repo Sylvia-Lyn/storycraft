@@ -3,7 +3,7 @@ import { Form, Input, Button, Typography, Card, message, Select, Space } from 'a
 import { LockOutlined, UserOutlined, PhoneOutlined, MailOutlined} from '@ant-design/icons';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { auth, getAuthHeader } from '../cloudbase';
+import { getCloudbaseAuth, getAuthHeader } from '../cloudbase';
 import { paymentService } from '../services/paymentService';
 import { useI18n } from '../contexts/I18nContext';
 import { log } from 'console';
@@ -141,7 +141,7 @@ const LoginPage: React.FC = () => {
         try {
             const phoneNumber = formatPhoneNumber(phone, countryCode);
             console.log('发送验证码到:', phoneNumber);
-            const verification = await auth.getVerification({ phone_number: phoneNumber });
+            const verification = await getCloudbaseAuth().getVerification({ phone_number: phoneNumber });
             setVerification(verification);
             setMsg(t('login.codeSentMessage'));
             message.success(t('login.codeSent'));
@@ -172,14 +172,14 @@ const LoginPage: React.FC = () => {
             const phoneNumber = formatPhoneNumber(phone, countryCode);
 
             // 1. 校验验证码
-            const verificationTokenRes = await auth.verify({
+            const verificationTokenRes = await getCloudbaseAuth().verify({
                 verification_id: verification.verification_id,
                 verification_code: code,
             });
             setVerificationTokenRes(verificationTokenRes);
 
             // 2. 登录
-            await auth.signIn({
+            await getCloudbaseAuth().signIn({
                 username: phoneNumber,
                 verification_token: verificationTokenRes.verification_token,
             });
@@ -191,7 +191,7 @@ const LoginPage: React.FC = () => {
             // 获取用户信息并更新AuthContext
             const userInfoUpdated = await fetchAndUpdateUserInfo(authHeader);
             if (userInfoUpdated) {
-                navigate('/');
+                navigate('/app/home');
             } else {
                 // 如果获取用户信息失败，使用默认信息
                 const userInfo = {
@@ -203,7 +203,7 @@ const LoginPage: React.FC = () => {
                 };
                 console.log('手机号登录 - 使用默认用户信息:', userInfo);
                 login(userInfo, authHeader);
-                navigate('/');
+                navigate('/app/home');
             }
         } catch (e) {
             console.error('登录失败:', e);
@@ -224,7 +224,7 @@ const LoginPage: React.FC = () => {
         setLoading(true);
         setMsg('');
         try {
-            await auth.signIn({
+            await getCloudbaseAuth().signIn({
                 username,
                 password,
             });
@@ -236,7 +236,7 @@ const LoginPage: React.FC = () => {
             // 获取用户信息并更新AuthContext
             const userInfoUpdated = await fetchAndUpdateUserInfo(authHeader);
             if (userInfoUpdated) {
-                navigate('/');
+                navigate('/app/home');
             } else {
                 // 如果获取用户信息失败，使用默认信息
                 const userInfo = {
@@ -248,7 +248,7 @@ const LoginPage: React.FC = () => {
                 };
                 console.log('用户名密码登录 - 使用默认用户信息:', userInfo);
                 login(userInfo, authHeader);
-                navigate('/');
+                navigate('/app/home');
             }
         } catch (e) {
             console.error('登录失败:', e);
@@ -271,7 +271,7 @@ const LoginPage: React.FC = () => {
 
         setLoading(true);
         try {
-            await auth.signIn({
+            await getCloudbaseAuth().signIn({
                 username: email,
                 password,
             });
@@ -281,7 +281,7 @@ const LoginPage: React.FC = () => {
             // 获取用户信息并更新AuthContext
             const userInfoUpdated = await fetchAndUpdateUserInfo(authHeader);
             if (userInfoUpdated) {
-                navigate('/');
+                navigate('/app/home');
             } else {
                 // 如果获取用户信息失败，使用默认信息
                 const userInfo = {
@@ -293,7 +293,7 @@ const LoginPage: React.FC = () => {
                 };
                 console.log('邮箱登录 - 使用默认用户信息:', userInfo);
                 login(userInfo, authHeader);
-                navigate('/');
+                navigate('/app/home');
             }
         } catch (e) {
             console.error('登录失败:', e);

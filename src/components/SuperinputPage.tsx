@@ -5,12 +5,14 @@ import { useState } from 'react';
 import { useI18n } from '../contexts/I18nContext';
 
 const SuperinputPage: React.FC = () => {
+    const [draftContent, setDraftContent] = useState<string>('');
+    const [selectedMode, setSelectedMode] = useState<string | null>(null);
     const navigate = useNavigate();
     const { t } = useI18n();
     const [selectedCard, setSelectedCard] = useState<string | null>(null);
 
     const handleStartCreate = () => {
-        navigate('/story-settings');
+        navigate('/app/story-settings');
     };
 
     return (
@@ -26,7 +28,7 @@ const SuperinputPage: React.FC = () => {
                         {/* Card 1: 网文小说创作 */}
                         <div
                             className={`w-full max-w-[320px] bg-white p-6 rounded-lg border transition-shadow cursor-pointer hover:shadow-lg ${selectedCard === 'novel' ? 'border-2 border-blue-500 shadow-lg' : 'border-gray-200'}`}
-                            onClick={() => { setSelectedCard('novel'); navigate('/editor'); }}
+                            onClick={() => { setSelectedCard('novel'); navigate('/app/editor'); }}
                         >
                             <Icon icon="ph:book-open-text" className="w-8 h-8 text-blue-500 mb-3" />
                             <h3 className="font-semibold text-lg mb-1">{t('home.novelCreation')}</h3>
@@ -36,7 +38,7 @@ const SuperinputPage: React.FC = () => {
                         {/* Card 2: 短剧剧本创作 */}
                         <div
                             className={`w-full max-w-[320px] bg-white p-6 rounded-lg border transition-shadow cursor-pointer hover:shadow-lg ${selectedCard === 'shortplay' ? 'border-2 border-blue-500 shadow-lg' : 'border-gray-200'}`}
-                            onClick={() => { setSelectedCard('shortplay'); navigate('/outline'); }}
+                            onClick={() => { setSelectedCard('shortplay'); navigate('/app/shortplay-entry'); }}
                         >
                             <Icon icon="ph:video" className="w-8 h-8 text-green-500 mb-3" />
                             <h3 className="font-semibold text-lg mb-1">{t('home.shortPlayCreation')}</h3>
@@ -62,13 +64,49 @@ const SuperinputPage: React.FC = () => {
                         </div>
                     </div>
 
-                    
-                    <button
-                        className="w-full bg-black text-white py-2 rounded-md text-lg font-semibold hover:bg-gray-900 transition-colors"
-                        onClick={handleStartCreate}
-                    >
-                        {t('home.startCreation')}
-                    </button>                    
+                    <div className="bg-white p-6 rounded-lg border border-gray-200">
+                        <div className="flex flex-wrap items-center gap-2 mb-3">
+                            <select className="bg-gray-900 text-white rounded px-2 py-1 text-xs font-semibold h-7">
+                                <option>Gemini-2.5-pro</option>
+                            </select>
+                            <button
+                                className={`px-2 py-1 border rounded text-xs h-7 ${selectedMode === 'continue' ? 'border-blue-500 text-blue-500' : 'border-gray-300 text-gray-600'}`}
+                                onClick={() => setSelectedMode('continue')}
+                                type="button"
+                            >
+                                续写模式
+                            </button>
+                            <button
+                                className={`px-2 py-1 border rounded text-xs h-7 ${selectedMode === 'create' ? 'border-blue-500 text-blue-500' : 'border-gray-300 text-gray-600'}`}
+                                onClick={() => setSelectedMode('create')}
+                                type="button"
+                            >
+                                创作模式
+                            </button>
+                            <select className="border border-gray-300 rounded px-2 py-1 text-xs text-gray-600 h-7">
+                                <option>文风参考</option>
+                            </select>
+                            <select className="border border-gray-300 rounded px-2 py-1 text-xs text-gray-600 h-7">
+                                <option>提示词</option>
+                            </select>
+                            <select className="border border-gray-300 rounded px-2 py-1 text-xs text-gray-600 h-7">
+                                <option>角色</option>
+                            </select>
+                        </div>
+                        <textarea
+                            className="w-full h-40 border border-gray-200 rounded-md p-4 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="请输入你要续写的内容"
+                            value={draftContent}
+                            onChange={e => setDraftContent(e.target.value)}
+                        ></textarea>
+                        <button
+                            className="w-full bg-black text-white py-2 rounded-md text-lg font-semibold hover:bg-gray-900 transition-colors"
+                            onClick={handleStartCreate}
+                        >
+                            {t('home.startCreation')}
+                        </button>
+                    </div>
+                   
                 </div>
 
                 <footer className="mt-auto pt-10">

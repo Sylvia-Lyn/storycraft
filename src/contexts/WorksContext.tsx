@@ -128,21 +128,29 @@ export const WorksProvider: React.FC<WorksProviderProps> = ({ children }) => {
     // 保存作品内容
     const saveWorkContent = async (id: string, content: any, isAutoSave: boolean = false) => {
         try {
-            console.log('开始保存作品内容:', { id, content, isAutoSave });
+            console.log('[WorksContext] 开始保存作品内容:', { id, content, isAutoSave });
             const result = await worksService.saveWorkContent({ id, content, isAutoSave });
-            console.log('保存作品内容成功:', result);
+            console.log('[WorksContext] 保存作品内容成功:', result);
 
             // 更新本地状态
-            setWorks(prev => prev.map(work =>
-                (work._id === id || work.id === id) ? { ...work, content, updatedAt: new Date() } : work
-            ));
+            setWorks(prev => {
+                const updated = prev.map(work =>
+                    (work._id === id || work.id === id) ? { ...work, content, updatedAt: new Date() } : work
+                );
+                console.log('[WorksContext] 更新作品列表:', updated);
+                return updated;
+            });
 
             // 如果保存的是当前作品，也要更新当前作品状态
             if (currentWork && (currentWork._id === id || currentWork.id === id)) {
-                setCurrentWork(prev => prev ? { ...prev, content, updatedAt: new Date() } : null);
+                const updatedCurrentWork = { ...currentWork, content, updatedAt: new Date() };
+                console.log('[WorksContext] 更新当前作品状态:', updatedCurrentWork);
+                setCurrentWork(updatedCurrentWork);
+            } else {
+                console.log('[WorksContext] 保存的不是当前作品，当前作品ID:', currentWork?._id || currentWork?.id);
             }
         } catch (error) {
-            console.error('保存作品内容失败:', error);
+            console.error('[WorksContext] 保存作品内容失败:', error);
             // 不在这里显示错误提示，让调用方处理
             throw error;
         }

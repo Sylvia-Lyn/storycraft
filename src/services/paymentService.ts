@@ -1,4 +1,4 @@
-import { app, getAuthHeader } from '../cloudbase';
+import { getCloudbaseApp, getAuthHeader } from '../cloudbase';
 import { apiInterceptor } from './apiInterceptor';
 
 export interface OrderData {
@@ -72,7 +72,7 @@ export class PaymentService {
         }
 
         const result = await apiInterceptor.callFunctionWithInterceptor(() =>
-            app.callFunction({
+            getCloudbaseApp().callFunction({
                 name: this.functionName,
                 data: {
                     action,
@@ -114,7 +114,7 @@ export class PaymentService {
                 };
             }
 
-            const result = await app.callFunction({
+            const result = await getCloudbaseApp().callFunction({
                 name: this.functionName,
                 data: {
                     action: 'getUserOrders'
@@ -139,7 +139,7 @@ export class PaymentService {
      */
     async handlePaymentCallback(params: PaymentCallbackParams): Promise<{ success: boolean; data?: any; error?: string }> {
         try {
-            const result = await app.callFunction({
+            const result = await getCloudbaseApp().callFunction({
                 name: this.functionName,
                 data: {
                     action: 'handlePaymentCallback',
@@ -170,7 +170,7 @@ export class PaymentService {
                 };
             }
 
-            const result = await app.callFunction({
+            const result = await getCloudbaseApp().callFunction({
                 name: this.functionName,
                 data: {
                     action: 'getUserSubscription'
@@ -203,7 +203,7 @@ export class PaymentService {
                 };
             }
 
-            const result = await app.callFunction({
+            const result = await getCloudbaseApp().callFunction({
                 name: this.functionName,
                 data: {
                     action: 'cancelSubscription'
@@ -275,7 +275,7 @@ export class PaymentService {
     }> {
         try {
             const authHeader = getAuthHeader();
-            const result = await app.callFunction({
+            const result = await getCloudbaseApp().callFunction({
                 name: 'payment_manager',
                 data: {
                     action: 'getUserInfo'
@@ -303,7 +303,7 @@ export class PaymentService {
     }> {
         try {
             const authHeader = getAuthHeader();
-            const result = await app.callFunction({
+            const result = await getCloudbaseApp().callFunction({
                 name: 'payment_manager',
                 data: {
                     action: 'simulatePaymentSuccess',

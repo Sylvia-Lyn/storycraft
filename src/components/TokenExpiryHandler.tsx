@@ -21,7 +21,7 @@ const TokenExpiryHandler: React.FC<TokenExpiryHandlerProps> = ({ children }) => 
         const handleTokenExpired = () => {
             console.log('Token过期处理组件：检测到token过期');
             logout();
-            navigate('/login', { replace: true });
+            navigate('/app/login', { replace: true });
         };
 
         // 设置API拦截器的token刷新回调

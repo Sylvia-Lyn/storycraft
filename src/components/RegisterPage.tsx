@@ -1,7 +1,7 @@
 import { LockOutlined, PhoneOutlined, UserOutlined, MailOutlined } from '@ant-design/icons';
 import { Button, Card, Form, Input, Select, Space, Typography, message, Modal } from 'antd';
 import { useEffect, useState } from 'react';
-import { auth } from '../cloudbase';
+import { getCloudbaseAuth } from '../cloudbase';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { userService } from '../services/userService';
@@ -125,7 +125,7 @@ const RegisterPage = () => {
             setLoading(true);
             setMsg('');
             try {
-                const verification = await auth.getVerification({ email });
+                const verification = await getCloudbaseAuth().getVerification({ email });
                 setVerification(verification);
                 setMsg('验证码已发送，请查收邮箱');
                 message.success(t('login.codeSent'));
@@ -157,7 +157,7 @@ const RegisterPage = () => {
             try {
                 const phoneNumber = formatPhoneNumber(phone, countryCode);
                 console.log('发送验证码到:', phoneNumber);
-                const verification = await auth.getVerification({ phone_number: phoneNumber });
+                const verification = await getCloudbaseAuth().getVerification({ phone_number: phoneNumber });
                 setVerification(verification);
                 setMsg('验证码已发送，请查收短信');
                 message.success(t('login.codeSent'));
@@ -204,7 +204,7 @@ const RegisterPage = () => {
         try {
             const phoneNumber = formatPhoneNumber(phone, countryCode);
             // 1. 校验验证码
-            const verificationTokenRes = await auth.verify({
+            const verificationTokenRes = await getCloudbaseAuth().verify({
                 verification_id: verification.verification_id,
                 verification_code: code,
             });
@@ -218,7 +218,7 @@ const RegisterPage = () => {
                 return;
             } else {
                 // 不存在，注册
-                const signUpResult = await auth.signUp({
+                const signUpResult = await getCloudbaseAuth().signUp({
                     phone_number: phoneNumber,
                     verification_code: code,
                     verification_token: verificationTokenRes.verification_token,
@@ -277,7 +277,7 @@ const RegisterPage = () => {
         setMsg('');
         try {
             // 校验邮箱验证码
-            const verificationTokenRes = await auth.verify({
+            const verificationTokenRes = await getCloudbaseAuth().verify({
                 verification_id: verification.verification_id,
                 verification_code: code,
             });
@@ -291,7 +291,7 @@ const RegisterPage = () => {
                 return;
             } else {
                 // 不存在，注册
-                const signUpResult = await auth.signUp({
+                const signUpResult = await getCloudbaseAuth().signUp({
                     email: email,
                     verification_code: code,
                     verification_token: verificationTokenRes.verification_token,
@@ -339,7 +339,7 @@ const RegisterPage = () => {
         setLoading(true);
         try {
             const phoneNumber = formatPhoneNumber(phone, countryCode);
-            await auth.signIn({
+            await getCloudbaseAuth().signIn({
                 username: phoneNumber,
                 verification_token: verificationTokenRes.verification_token,
             });
@@ -355,7 +355,7 @@ const RegisterPage = () => {
                     user_piont: '0'
                 };
                 login(userInfo, 'token');
-                navigate('/');
+                navigate('/app/home');
             }
         } catch (e) {
             console.error('直接登录失败:', e);

@@ -1,5 +1,11 @@
 declare module '@cloudbase/js-sdk' {
     export interface Auth {
+        // 登录状态
+        getLoginState?: () => Promise<any>;
+        // 匿名登录
+        signInAnonymously?: () => Promise<any>;
+        // 设置持久化
+        persistence?: (mode: 'local' | 'session' | 'none') => void;
         getVerification(params: { phone_number?: string; email?: string }): Promise<{
             verification_id: string;
             is_user: boolean;

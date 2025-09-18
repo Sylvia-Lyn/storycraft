@@ -19,6 +19,8 @@ function OutlineContent() {
   const [referenceCase, setReferenceCase] = useState('《古相思曲》- 大纲');
   const [selectedModel, setSelectedModel] = useState('deepseekr1');
   const [backgroundContent, setBackgroundContent] = useState('');
+  const [charactersContent, setCharactersContent] = useState('');
+  const [scenesContent, setScenesContent] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [inputSuggestions, setInputSuggestions] = useState<string[]>([]);
 
@@ -36,35 +38,108 @@ function OutlineContent() {
     '增加玩家互动性'
   ];
 
-  // 监听作品选择事件，加载作品内容
+  // 注释掉原有的作品选择事件监听逻辑
+  // useEffect(() => {
+  //   const handleWorkSelected = (event: CustomEvent) => {
+  //     const { work } = event.detail;
+  //     console.log('[OutlineContent] 收到作品选择事件:', work);
+  //     if (work && work.content) {
+  //       // 如果作品有大纲内容，加载到背景内容区域
+  //       if (work.content.outline) {
+  //         setBackgroundContent(work.content.outline);
+  //       }
+  //       if (work.content.charactersText) {
+  //         setCharactersContent(work.content.charactersText);
+  //       }
+  //       if (work.content.scenesText) {
+  //         setScenesContent(work.content.scenesText);
+  //       }
+  //       console.log('[OutlineContent] 大纲页面已加载作品内容:', work.content);
+  //     }
+  //   };
+
+  //   window.addEventListener('workSelected' as any, handleWorkSelected);
+
+  //   return () => {
+  //     window.removeEventListener('workSelected' as any, handleWorkSelected);
+  //   };
+  // }, []);
+
+  // 注释掉原有的currentWork监听逻辑
+  // useEffect(() => {
+  //     console.log('[OutlineContent] currentWork 变化:', {
+  //       hasCurrentWork: !!currentWork,
+  //       workId: currentWork?._id || currentWork?.id,
+  //       hasContent: !!(currentWork?.content),
+  //       contentKeys: currentWork?.content ? Object.keys(currentWork.content) : []
+  //     });
+  //     
+  //     if (currentWork && currentWork.content) {
+  //       console.log('[OutlineContent] 开始加载内容:', {
+  //         outline: currentWork.content.outline ? '存在' : '不存在',
+  //         charactersText: (currentWork.content as any).charactersText ? '存在' : '不存在',
+  //         scenesText: (currentWork.content as any).scenesText ? '存在' : '不存在'
+  //       });
+  //       
+  //       if (currentWork.content.outline) {
+  //         console.log('[OutlineContent] 设置大纲内容，长度:', currentWork.content.outline.length);
+  //         setBackgroundContent(currentWork.content.outline);
+  //       }
+  //       if ((currentWork.content as any).charactersText) {
+  //         console.log('[OutlineContent] 设置角色内容，长度:', (currentWork.content as any).charactersText.length);
+  //         setCharactersContent((currentWork.content as any).charactersText);
+  //       }
+  //       if ((currentWork.content as any).scenesText) {
+  //         console.log('[OutlineContent] 设置分幕内容，长度:', (currentWork.content as any).scenesText.length);
+  //         setScenesContent((currentWork.content as any).scenesText);
+  //       }
+  //       
+  //       console.log('[OutlineContent] 内容加载完成，当前状态:', {
+  //         backgroundContentLength: backgroundContent.length,
+  //         charactersContentLength: charactersContent.length,
+  //         scenesContentLength: scenesContent.length
+  //       });
+  //     } else {
+  //       console.log('[OutlineContent] 没有当前作品或内容');
+  //     }
+  // }, [currentWork]);
+
+  // 新增：从本地存储加载生成的数据
   useEffect(() => {
-    const handleWorkSelected = (event: CustomEvent) => {
-      const { work } = event.detail;
-      if (work && work.content) {
-        // 如果作品有大纲内容，加载到背景内容区域
-        if (work.content.outline) {
-          setBackgroundContent(work.content.outline);
+    console.log('[OutlineContent] 组件加载，尝试从本地存储读取数据');
+    
+    try {
+      const savedData = localStorage.getItem('generatedScriptData');
+      if (savedData) {
+        const parsedData = JSON.parse(savedData);
+        console.log('[OutlineContent] 从本地存储读取到数据:', {
+          outlineLength: parsedData.outline?.length || 0,
+          charactersLength: parsedData.charactersText?.length || 0,
+          scenesLength: parsedData.scenesText?.length || 0,
+          timestamp: parsedData.timestamp
+        });
+        
+        if (parsedData.outline) {
+          setBackgroundContent(parsedData.outline);
+          console.log('[OutlineContent] 已设置大纲内容');
         }
-        console.log('大纲页面已加载作品内容:', work.content);
+        if (parsedData.charactersText) {
+          setCharactersContent(parsedData.charactersText);
+          console.log('[OutlineContent] 已设置角色内容');
+        }
+        if (parsedData.scenesText) {
+          setScenesContent(parsedData.scenesText);
+          console.log('[OutlineContent] 已设置分幕内容');
+        }
+        
+        console.log('[OutlineContent] 本地数据加载完成');
+      } else {
+        console.log('[OutlineContent] 本地存储中没有找到生成的数据');
       }
-    };
-
-    window.addEventListener('workSelected' as any, handleWorkSelected);
-
-    return () => {
-      window.removeEventListener('workSelected' as any, handleWorkSelected);
-    };
-  }, []);
-
-  // 当currentWork改变时，也加载内容
-  useEffect(() => {
-    if (currentWork && currentWork.content) {
-      if (currentWork.content.outline) {
-        setBackgroundContent(currentWork.content.outline);
-      }
-      console.log('大纲页面已加载当前作品内容:', currentWork.content);
+    } catch (error) {
+      console.error('[OutlineContent] 读取本地存储数据失败:', error);
     }
-  }, [currentWork]);
+  }, []);
 
   // 根据输入内容生成建议
   useEffect(() => {
@@ -431,31 +506,31 @@ function OutlineContent() {
               修改详情 <Icon icon="ri:arrow-right-s-line" />
             </Link>
           </div>
-          <div className="border border-gray-200 rounded-md p-4 h-[180px] overflow-y-auto">
-            <div className="mb-4">
-              <p className="mb-2"></p>
-            </div>
-            <div>
-              <p></p>
-
-            </div>
+          <div className="border border-gray-200 rounded-md p-4 h-[200px] overflow-y-auto">
+            <textarea
+              className="w-full h-full border-none outline-none resize-none text-gray-800"
+              value={charactersContent}
+              onChange={(e) => setCharactersContent(e.target.value)}
+              placeholder="生成的角色设定将展示在这里"
+            />
           </div>
         </div>
 
-        {/* 分章剧情 */}
+        {/* 分幕剧情 */}
         <div>
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold">分章剧情</h2>
+            <h2 className="text-xl font-bold">分幕剧情</h2>
             <Link to='/chapters' className="text-gray-500 text-sm flex items-center hover:text-gray-700 transition-colors">
               修改详情 <Icon icon="ri:arrow-right-s-line" />
             </Link>
           </div>
-          <div className="border border-gray-200 rounded-md p-4 h-[240px] overflow-y-auto">
-            <div className="mb-4">
-              <h3 className="font-medium mb-2"> </h3>
-              <p className="mb-2 pl-4"> </p>
-
-            </div>
+          <div className="border border-gray-200 rounded-md p-4 h-[260px] overflow-y-auto">
+            <textarea
+              className="w-full h-full border-none outline-none resize-none text-gray-800"
+              value={scenesContent}
+              onChange={(e) => setScenesContent(e.target.value)}
+              placeholder="生成的分幕剧本将展示在这里"
+            />
           </div>
         </div>
       </div>

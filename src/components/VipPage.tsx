@@ -167,7 +167,7 @@ const VipPage: React.FC = () => {
     const handlePurchase = async (planType: 'chinese' | 'multilingual') => {
         if (!isAuthenticated) {
             message.warning(t('common.pleaseLogin'));
-            navigate('/login');
+            navigate('/app/login');
             return;
         }
 

@@ -13,15 +13,15 @@ const TopBar: React.FC = () => {
 
     const handleLogout = () => {
         logout();
-        navigate('/login');
+        navigate('/app/login');
     };
 
     const userMenu = (
         <Menu>
-            <Menu.Item key="profile" onClick={() => navigate('/profile')}>
+            <Menu.Item key="profile" onClick={() => navigate('/app/profile')}>
                 <UserOutlined /> {t('topbar.profile')}
             </Menu.Item>
-            <Menu.Item key="vip" onClick={() => navigate('/vip')}>
+            <Menu.Item key="vip" onClick={() => navigate('/app/vip')}>
                 <CrownOutlined /> {t('topbar.memberCenter')}
             </Menu.Item>
             <Menu.Divider />
@@ -38,7 +38,7 @@ const TopBar: React.FC = () => {
             // 显示需要会员的提示
             const confirmUpgrade = window.confirm('多语言功能需要会员权限，是否前往升级页面？');
             if (confirmUpgrade) {
-                navigate('/vip');
+                navigate('/app/vip');
             }
         }
     };
@@ -73,7 +73,7 @@ const TopBar: React.FC = () => {
         <div className="w-full h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 z-50">
             <div className="flex items-center space-x-3">
                 <button
-                    onClick={() => navigate('/')}
+                    onClick={() => navigate('/app/home')}
                     className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                     title={t('topbar.home')}
                 >
@@ -90,7 +90,7 @@ const TopBar: React.FC = () => {
                     </button>
                 </Dropdown>
                 <button
-                    onClick={() => navigate('/vip')}
+                    onClick={() => navigate('/app/vip')}
                     className="px-4 py-2 text-sm font-medium text-blue-700 bg-blue-100 border border-blue-200 rounded-md hover:bg-blue-200 flex items-center"
                 >
                     <CrownOutlined className="mr-1" />{t('topbar.vip')}
@@ -105,7 +105,7 @@ const TopBar: React.FC = () => {
                     </Dropdown>
                 ) : (
                     <button
-                        onClick={() => navigate('/login')}
+                        onClick={() => navigate('/app/login')}
                         className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-100 flex items-center"
                     >
                         <LoginOutlined className="mr-1" />{t('topbar.login')}

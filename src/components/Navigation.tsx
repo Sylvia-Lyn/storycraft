@@ -27,17 +27,17 @@ function Navigation({ tabs, defaultTab, onTabChange, isHomePage = false }: Navig
 
     // 根据不同标签执行不同的路由导航
     if (tab === '分幕') {
-      navigate('/scenes');
+      navigate('/app/scenes');
     } else if (tab === '剧本') {
-      navigate('/editor'); // 剧本页面改为/editor路径
+      navigate('/app/editor'); // 剧本页面改为/app/editor路径
     } else if (tab === '大纲') {
-      navigate('/outline');
+      navigate('/app/outline');
     } else if (tab === '角色') {
-      navigate('/characters');
+      navigate('/app/characters');
     } else if (tab === '关系') {
-      navigate('/relations');
+      navigate('/app/relations');
     } else if (tab === '章节') {
-      navigate('/chapters');
+      navigate('/app/chapters');
     }
 
     onTabChange(tab);

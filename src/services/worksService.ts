@@ -1,4 +1,4 @@
-import { app, getAuthHeader } from '../cloudbase';
+import { getCloudbaseApp, getAuthHeader } from '../cloudbase';
 import { apiInterceptor } from './apiInterceptor';
 
 export interface Work {
@@ -61,7 +61,7 @@ export class WorksService {
         
         // 使用API拦截器包装云函数调用
         return await apiInterceptor.callFunctionWithInterceptor(() => 
-            app.callFunction({
+            getCloudbaseApp().callFunction({
                 name,
                 data,
                 headers

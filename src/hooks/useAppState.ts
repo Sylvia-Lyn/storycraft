@@ -50,7 +50,7 @@ export function useAppState() {
 
     // 如果点击的是分幕标签，则导航到分幕列表页面
     if (tab === '分幕') {
-      navigate('/scenes')
+      navigate('/app/scenes')
     }
   }
 

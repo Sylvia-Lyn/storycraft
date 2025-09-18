@@ -21,7 +21,7 @@ const PaymentPage: React.FC = () => {
     useEffect(() => {
         if (!isAuthenticated) {
             message.warning(t('common.pleaseLoginFirst'));
-            navigate('/login');
+            navigate('/app/login');
             return;
         }
 
@@ -47,7 +47,7 @@ const PaymentPage: React.FC = () => {
                 // 检查订单状态
                 if (result.data.status === 'paid') {
                     message.success(t('common.orderPaidSuccess'));
-                    navigate('/vip');
+                    navigate('/app/vip');
                 } else if (result.data.status === 'expired') {
                     setError('订单已过期，请重新下单');
                 } else if (result.data.status === 'cancelled') {
@@ -90,7 +90,7 @@ const PaymentPage: React.FC = () => {
 
                         if (result.success) {
                             message.success(t('common.paymentSuccess'));
-                            navigate('/vip');
+                            navigate('/app/vip');
                         } else {
                             message.error(result.error || t('common.paymentProcessFailed'));
                         }
@@ -137,7 +137,7 @@ const PaymentPage: React.FC = () => {
 
                         if (result.success) {
                             message.success(t('common.paymentSuccess'));
-                            navigate('/vip');
+                            navigate('/app/vip');
                         } else {
                             message.error(result.error || t('common.paymentProcessFailed'));
                         }
@@ -170,7 +170,7 @@ const PaymentPage: React.FC = () => {
 
                         if (result.success) {
                             message.success(t('common.paymentSuccess'));
-                            navigate('/vip');
+                            navigate('/app/vip');
                         } else {
                             message.error(result.error || t('common.paymentProcessFailed'));
                         }
@@ -190,7 +190,7 @@ const PaymentPage: React.FC = () => {
     };
 
     const handleCancel = () => {
-        navigate('/vip');
+        navigate('/app/vip');
     };
 
     if (loading) {
@@ -209,7 +209,7 @@ const PaymentPage: React.FC = () => {
                         <Icon icon="ri:error-warning-line" className="w-16 h-16 text-red-500 mx-auto mb-4" />
                         <h2 className="text-xl font-semibold mb-2">订单异常</h2>
                         <p className="text-gray-600 mb-6">{error}</p>
-                        <Button type="primary" onClick={() => navigate('/vip')}>
+                        <Button type="primary" onClick={() => navigate('/app/vip')}>
                             返回会员中心
                         </Button>
                     </div>

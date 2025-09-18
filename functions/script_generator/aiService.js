@@ -9,6 +9,9 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const DEEPSEEK_API_BASE = process.env.DEEPSEEK_API_BASE || 'https://api.deepseek.com';
 const GEMINI_API_BASE = process.env.GEMINI_API_BASE || 'https://generativelanguage.googleapis.com';
 
+// 导入工具函数
+const { retry } = require('./utils');
+
 /**
  * 生成剧本大纲
  * @param {Object} processedContent 处理后的内容
@@ -23,17 +26,12 @@ async function generateOutline(processedContent, model, language) {
 小说内容：
 ${processedContent.cleaned_content}
 
-要求：
-1. 提取核心主题和情感线
-2. 确定剧本类型（爱情、悬疑、喜剧、古风等）
-3. 概括主要情节发展
-4. 分析故事结构和节奏
-5. 用中文回答
+要求：简洁明了，用中文回答
 
 请以JSON格式返回：
 {
   "title": "剧本标题",
-  "summary": "剧本大纲（200-300字）",
+  "summary": "剧本大纲（100-150字）",
   "theme": "主题",
   "genre": "类型",
   "structure": "故事结构",
@@ -42,7 +40,7 @@ ${processedContent.cleaned_content}
 `;
 
     try {
-        const response = await callAI(prompt, model, language);
+        const response = await retry(() => callAI(prompt, model, language), 2, 2000);
         return parseAIResponse(response, 'outline');
     } catch (error) {
         console.error('生成大纲失败:', error);
@@ -58,7 +56,13 @@ ${processedContent.cleaned_content}
  * @returns {Array} 角色数组
  */
 async function generateCharacterProfiles(processedContent, model, language) {
-    const extractedCharacters = processedContent.characters.map(c => c.name).join('、');
+    // 确保 characters 是数组
+    let extractedCharacters = '未知角色';
+    if (Array.isArray(processedContent.characters)) {
+        extractedCharacters = processedContent.characters.map(c => c.name).join('、');
+    } else if (processedContent.characters && typeof processedContent.characters === 'object') {
+        extractedCharacters = Object.values(processedContent.characters).map(c => c.name || c).join('、');
+    }
     
     const prompt = `
 请基于以下小说内容和提取的角色信息生成详细的角色设定：
@@ -90,7 +94,7 @@ ${extractedCharacters}
 `;
 
     try {
-        const response = await callAI(prompt, model, language);
+        const response = await retry(() => callAI(prompt, model, language), 2, 2000);
         return parseAIResponse(response, 'characters');
     } catch (error) {
         console.error('生成角色设定失败:', error);
@@ -107,7 +111,14 @@ ${extractedCharacters}
  * @returns {Array} 分幕剧本数组
  */
 async function generateScenes(processedContent, characters, model, language) {
-    const characterNames = characters.map(c => c.name).join('、');
+    // 确保 characters 是数组
+    let characterNames = '未知角色';
+    if (Array.isArray(characters)) {
+        characterNames = characters.map(c => c.name).join('、');
+    } else if (characters && typeof characters === 'object') {
+        // 如果 characters 是对象，尝试提取名称
+        characterNames = Object.values(characters).map(c => c.name || c).join('、');
+    }
     
     const prompt = `
 请基于以下小说内容、角色设定和场景分割生成分幕剧本：
@@ -157,7 +168,7 @@ ${JSON.stringify(processedContent.scenes.map(s => ({
 `;
 
     try {
-        const response = await callAI(prompt, model, language);
+        const response = await retry(() => callAI(prompt, model, language), 2, 2000);
         return parseAIResponse(response, 'scenes');
     } catch (error) {
         console.error('生成分幕剧本失败:', error);
@@ -210,7 +221,8 @@ async function callDeepSeekAPI(prompt, language) {
             ],
             temperature: 0.7,
             max_tokens: 4000
-        })
+        }),
+        signal: AbortSignal.timeout(120000) // 120 seconds timeout for AI calls
     });
 
     if (!response.ok) {
@@ -248,7 +260,8 @@ async function callGeminiAPI(prompt, language) {
                 temperature: 0.7,
                 maxOutputTokens: 4000
             }
-        })
+        }),
+        signal: AbortSignal.timeout(120000) // 120 seconds timeout for AI calls
     });
 
     if (!response.ok) {
@@ -267,20 +280,47 @@ async function callGeminiAPI(prompt, language) {
  */
 function parseAIResponse(response, type) {
     try {
-        // 尝试提取JSON部分
-        const jsonMatch = response.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
+        // 清理响应文本，移除可能的非JSON内容
+        let cleanedResponse = response.trim();
+        
+        // 尝试多种方式提取JSON
+        let jsonMatch = null;
+        
+        // 方式1：查找完整的JSON对象或数组
+        jsonMatch = cleanedResponse.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
+        
+        // 方式2：如果没找到，尝试查找```json```代码块
+        if (!jsonMatch) {
+            const codeBlockMatch = cleanedResponse.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+            if (codeBlockMatch) {
+                jsonMatch = [codeBlockMatch[1]];
+            }
+        }
+        
+        // 方式3：如果还是没找到，尝试查找```代码块
+        if (!jsonMatch) {
+            const codeMatch = cleanedResponse.match(/```\s*([\s\S]*?)\s*```/);
+            if (codeMatch) {
+                jsonMatch = [codeMatch[1]];
+            }
+        }
+        
         if (jsonMatch) {
-            return JSON.parse(jsonMatch[0]);
+            const jsonText = jsonMatch[0].trim();
+            console.log(`尝试解析${type}的JSON:`, jsonText.substring(0, 200) + '...');
+            return JSON.parse(jsonText);
         }
         
         // 如果没有找到JSON，返回原始响应
         console.warn(`无法解析${type}的AI响应为JSON，返回原始文本`);
+        console.log(`原始响应:`, response.substring(0, 500) + '...');
         return {
             raw_response: response,
             type: type
         };
     } catch (error) {
         console.error(`解析${type}响应失败:`, error);
+        console.log(`错误响应内容:`, response.substring(0, 1000));
         return {
             raw_response: response,
             type: type,

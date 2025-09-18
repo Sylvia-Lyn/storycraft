@@ -71,11 +71,11 @@ const PaymentSuccessPage: React.FC = () => {
     }, [searchParams, user, updateUser, t]);
 
     const handleGoHome = () => {
-        navigate('/');
+        navigate('/app/home');
     };
 
     const handleGoToVip = () => {
-        navigate('/vip');
+        navigate('/app/vip');
     };
 
     if (loading) {

@@ -3,7 +3,7 @@ import { Icon } from '@iconify/react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
 import downloadWork from './WorkDownloader'
-import { auth } from '../cloudbase'
+import { getCloudbaseAuth } from '../cloudbase'
 import worksService, { Work as CloudWork } from '../services/worksService'
 import CreateWorkModal from './CreateWorkModal'
 import { useAuth } from '../contexts/AuthContext'
@@ -227,32 +227,32 @@ const Sidebar: React.FC = () => {
       // 根据作品类型或上次访问的视图进行页面导航
       // 优先使用lastVisitedView，如果没有则根据作品类型决定
       if (view === 'outline') {
-        navigate('/outline')
+        navigate('/app/outline')
       } else if (view === 'script' || view === 'editor') {
-        navigate('/editor')
+        navigate('/app/editor')
       } else if (view === 'characters') {
-        navigate('/characters')
+        navigate('/app/characters')
       } else if (view === 'relations') {
-        navigate('/relations')
+        navigate('/app/relations')
       } else if (view === 'chapters') {
-        navigate('/chapters')
+        navigate('/app/chapters')
       } else if (view === 'scenes') {
-        navigate('/scenes')
+        navigate('/app/scenes')
       } else if (work.type === 'web_novel') {
         // 网文类型默认导航到编辑器页面
-        navigate('/editor')
+        navigate('/app/editor')
       } else if (work.type === 'script') {
         // 剧本类型默认导航到编辑器页面
-        navigate('/editor')
+        navigate('/app/editor')
       } else if (work.type === 'outline') {
         // 大纲类型默认导航到大纲页面
-        navigate('/outline')
+        navigate('/app/outline')
       } else if (work.type === 'character') {
         // 角色类型默认导航到角色页面
-        navigate('/characters')
+        navigate('/app/characters')
       } else {
         // 其他情况默认导航到大纲页面
-        navigate('/outline')
+        navigate('/app/outline')
       }
 
       toast.success(t('common.workLoaded', { name: work.name }))
@@ -298,7 +298,7 @@ const Sidebar: React.FC = () => {
   const handleAddWork = () => {
     if (!isAuthenticated) {
       toast.error(t('common.pleaseLogin'));
-      navigate('/login');
+      navigate('/app/login');
       return;
     }
     setIsCreateWorkModalOpen(true)
@@ -372,7 +372,7 @@ const Sidebar: React.FC = () => {
   // 处理工作流其他按钮点击
   const handleWorkflowOtherAction = (e: React.MouseEvent) => {
     e.stopPropagation()
-    navigate('/story-settings')
+    navigate('/app/story-settings')
   }
 
   // 修改知识库点击处理函数，实现真正的展开/收起切换
@@ -386,7 +386,7 @@ const Sidebar: React.FC = () => {
   const handleKnowledgeItemDetailClick = (knowledgeId: string) => {
     const item = knowledgeItems.find(item => item.id === knowledgeId)
     if (item) {
-      navigate(`/knowledge/${item.id}`)
+      navigate(`/app/knowledge/${item.id}`)
     }
   }
 
@@ -614,7 +614,7 @@ const Sidebar: React.FC = () => {
                 <p>{t('common.pleaseLogin')}</p>
                 <p className="text-xs">{t('sidebar.loginToView')}</p>
                 <button
-                  onClick={() => navigate('/login')}
+                  onClick={() => navigate('/app/login')}
                   className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-sm"
                 >
                   {t('sidebar.goToLogin')}
@@ -764,7 +764,7 @@ const Sidebar: React.FC = () => {
             className="w-5 h-5 text-gray-500 cursor-pointer"
             onClick={(e) => {
               e.stopPropagation()
-              navigate('/story-settings')
+              navigate('/app/story-settings')
             }}
           />
         </div>
@@ -773,7 +773,7 @@ const Sidebar: React.FC = () => {
         <div className="font-bold text-lg mt-6 mb-2 flex justify-between items-center hover:bg-gray-50 p-2 rounded-md">
           <span
             className="cursor-pointer flex items-center"
-            onClick={() => navigate('/profile')}
+            onClick={() => navigate('/app/profile')}
           >
             <Icon
               icon="ri:user-line"

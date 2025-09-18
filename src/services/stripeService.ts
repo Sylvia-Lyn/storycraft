@@ -1,6 +1,6 @@
 import { loadStripe, Stripe } from '@stripe/stripe-js';
 import config from '../config';
-import { app, getAuthHeader } from '../cloudbase';
+import { getCloudbaseApp, getAuthHeader } from '../cloudbase';
 
 class StripeService {
     private static instance: StripeService;
@@ -36,7 +36,7 @@ class StripeService {
                 };
             }
 
-            const result = await app.callFunction({
+            const result = await getCloudbaseApp().callFunction({
                 name: 'payment_manager',
                 data: {
                     action: 'createStripeCheckoutSession',
@@ -124,7 +124,7 @@ class StripeService {
                 };
             }
 
-            const result = await app.callFunction({
+            const result = await getCloudbaseApp().callFunction({
                 name: 'payment_manager',
                 data: {
                     action: 'handleStripePaymentSuccess',

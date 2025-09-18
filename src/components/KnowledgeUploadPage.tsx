@@ -1017,7 +1017,7 @@ const KnowledgeUploadPage: React.FC = () => {
               {currentStep === 3 && (
                 <button 
                   className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-sm"
-                  onClick={() => navigate(`/knowledge/${knowledgeId}`)}
+                  onClick={() => navigate(`/app/knowledge/${knowledgeId}`)}
                 >
                   {t('knowledgeBase.complete')}
                 </button>

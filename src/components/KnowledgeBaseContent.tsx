@@ -96,7 +96,7 @@ const KnowledgeBaseContent: React.FC<KnowledgeBaseContentProps> = ({ knowledgeBa
   // 处理文件上传
   const handleFileUpload = () => {
     // 导航到文件上传页面
-    navigate(`/knowledge/${knowledgeBase.id}/upload`);
+    navigate(`/app/knowledge/${knowledgeBase.id}/upload`);
   };
 
   // 计算分页数据

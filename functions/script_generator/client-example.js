@@ -4,8 +4,9 @@
  */
 
 // 配置信息
-const API_BASE_URL = 'https://stroycraft-1ghmi4ojd3b4a20b.tcb.qcloud.la';
-const API_KEY = 'YOUR_API_KEY_HERE'; // 请替换为实际的API密钥
+//const API_BASE_URL = 'https://stroycraft-1ghmi4ojd3b4a20b.tcb.qcloud.la';
+const API_BASE_URL = 'stroycraft-1ghmi4ojd3b4a20b-1304253469.ap-shanghai.app.tcloudbase.com'
+const API_KEY = 'storycraft_script_2024_secure'; // 与云函数中设置的API密钥一致
 
 /**
  * 调用小说转剧本生成API
@@ -39,8 +40,12 @@ async function generateScript(novelContent, options = {}) {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${API_KEY}`
             },
-            body: JSON.stringify(requestBody)
+            body: JSON.stringify(requestBody),
+            signal: AbortSignal.timeout(960000) // 3 minutes timeout for complex AI processing
         });
+        
+        console.log('📡 响应状态:', response.status, response.statusText);
+        console.log('📡 响应头:', Object.fromEntries(response.headers.entries()));
         
         const result = await response.json();
         
@@ -57,6 +62,15 @@ async function generateScript(novelContent, options = {}) {
         }
     } catch (error) {
         console.error('❌ API调用失败:', error);
+        
+        // 处理特定的连接错误
+        if (error.cause && error.cause.code === 'ECONNRESET') {
+            console.error('💡 连接被重置，可能是由于请求超时或服务器负载过高');
+            console.error('💡 建议：1) 减少请求内容长度 2) 稍后重试 3) 检查网络连接');
+        } else if (error.name === 'AbortError') {
+            console.error('💡 请求超时，请检查网络连接或减少请求内容');
+        }
+        
         throw error;
     }
 }
@@ -66,11 +80,33 @@ async function generateScript(novelContent, options = {}) {
  * @returns {Promise<Object>} 健康状态
  */
 async function healthCheck() {
-    const url = `${API_BASE_URL}/script_generator/health`;
+    const url = `${API_BASE_URL}/script_generator`;
     
     try {
-        const response = await fetch(url);
-        const result = await response.json();
+        console.log('🔍 发送健康检查请求到:', url);
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${API_KEY}`
+            },
+            body: JSON.stringify({
+                action: 'health_check'
+            })
+        });
+        
+        console.log('📡 响应状态:', response.status, response.statusText);
+        console.log('📡 响应头:', Object.fromEntries(response.headers.entries()));
+        
+        // 获取响应文本
+        const responseText = await response.text();
+        console.log('📄 响应内容:', responseText);
+        
+        if (!responseText.trim()) {
+            throw new Error('服务器返回空响应');
+        }
+        
+        const result = JSON.parse(responseText);
         
         if (result.success) {
             console.log('✅ API健康检查通过');
@@ -83,6 +119,7 @@ async function healthCheck() {
         return result;
     } catch (error) {
         console.error('❌ 健康检查失败:', error);
+        console.error('错误详情:', error.message);
         throw error;
     }
 }
@@ -91,7 +128,7 @@ async function healthCheck() {
  * 示例：生成剧本
  */
 async function example() {
-    // 示例小说内容
+    // 示例小说内容（简化版本，减少请求大小）
     const novelContent = `
     在一个阳光明媚的下午，李明走进了那家熟悉的咖啡厅。他看到了坐在角落里的张雨，心中涌起一阵复杂的情绪。
 
@@ -99,7 +136,7 @@ async function example() {
 
     张雨抬起头，眼中闪过一丝惊讶，然后露出了淡淡的笑容："是啊，好久不见了。"
 
-    两人陷入了短暂的沉默。咖啡厅里播放着轻柔的音乐，其他顾客的谈话声此起彼伏。
+    两人陷入了短暂的沉默。咖啡厅里播放着轻柔的音乐。
 
     "你最近怎么样？"李明打破了沉默。
 
@@ -133,7 +170,7 @@ async function example() {
 
     "你也是。"张雨也站了起来。
 
-    两人相视而笑，然后各自走向不同的方向。咖啡厅里，音乐依然在播放，仿佛在诉说着这个关于重逢和分别的故事。
+    两人相视而笑，然后各自走向不同的方向。
     `;
     
     try {
@@ -147,7 +184,7 @@ async function example() {
             model: 'deepseek-r1',
             language: 'zh-CN',
             style: '现代情感',
-            max_scenes: 3
+            max_scenes: 1  // 减少到1个场景，加快处理速度
         });
         
         // 3. 输出结果

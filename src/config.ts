@@ -19,15 +19,17 @@ interface Config {
     MAX_TOKENS: number;
     TEMPERATURE: number;
     STRIPE_PUBLISHABLE_KEY: string;
+    SCRIPT_API_URL: string;
+    SCRIPT_API_KEY: string;
 }
 
 const config: Config = {
-    DEEPSEEK_API_KEY: import.meta.env.VITE_DEEPSEEK_API_KEY || 'sk-3c50dc547bcc443cbfd8f34e7ee5f138',
+    DEEPSEEK_API_KEY: import.meta.env.VITE_DEEPSEEK_API_KEY || '',
     DEEPSEEK_API_BASE: import.meta.env.VITE_DEEPSEEK_API_BASE || 'https://api.deepseek.com/v1',
-    GEMINI_API_KEY: import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyCtg3qPLGvCeXGn3ixraod6MvDVxa-6SpA',
+    GEMINI_API_KEY: import.meta.env.VITE_GEMINI_API_KEY || '',
     GEMINI_API_BASE: import.meta.env.VITE_GEMINI_API_BASE || 'https://generativelanguage.googleapis.com',
-    QDRANT_URL: import.meta.env.VITE_QDRANT_URL || 'https://eb24099c-54e1-4fd9-9a66-1a0dcc65d895.eu-west-2-0.aws.cloud.qdrant.io',
-    QDRANT_API_KEY: import.meta.env.VITE_QDRANT_API_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3MiOiJtIn0.L7WJflCWFN1-XanTthshcDqXFjD8usge2Hwfli8YYJY',
+    QDRANT_URL: import.meta.env.VITE_QDRANT_URL || '',
+    QDRANT_API_KEY: import.meta.env.VITE_QDRANT_API_KEY || '',
     EMBEDDING_MODEL: 'all-MiniLM-L6-v2',
     CHAT_MODEL: 'deepseek-chat',
     VECTOR_DIM: 384,
@@ -41,7 +43,9 @@ const config: Config = {
     MAX_CONTEXT_LENGTH: 2000,
     MAX_TOKENS: 1000,
     TEMPERATURE: 0.6,
-    STRIPE_PUBLISHABLE_KEY: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_your_stripe_publishable_key'
+    STRIPE_PUBLISHABLE_KEY: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '',
+    SCRIPT_API_URL: import.meta.env.VITE_SCRIPT_API_URL || '',
+    SCRIPT_API_KEY: import.meta.env.VITE_SCRIPT_API_KEY || ''
 };
 
 export function validateConfig(): boolean {
@@ -49,7 +53,8 @@ export function validateConfig(): boolean {
         'DEEPSEEK_API_KEY',
         'GEMINI_API_KEY',
         'QDRANT_URL',
-        'QDRANT_API_KEY'
+        'QDRANT_API_KEY',
+        'SCRIPT_API_URL'
     ];
 
     return requiredFields.every(field => {

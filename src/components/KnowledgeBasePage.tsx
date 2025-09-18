@@ -121,7 +121,7 @@ const KnowledgeBasePage: React.FC = () => {
   // 处理文件上传
   const handleFileUpload = () => {
     // 导航到文件上传页面
-    navigate(`/knowledge/${knowledgeId}/upload`);
+    navigate(`/app/knowledge/${knowledgeId}/upload`);
   };
 
   // 处理返回

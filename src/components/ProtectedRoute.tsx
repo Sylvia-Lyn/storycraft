@@ -12,7 +12,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
     if (!isAuthenticated) {
         // 重定向到登录页面，并保存当前路径
-        return <Navigate to="/login" state={{ from: location }} replace />;
+        return <Navigate to="/app/login" state={{ from: location }} replace />;
     }
 
     return <>{children}</>;

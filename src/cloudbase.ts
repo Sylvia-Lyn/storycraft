@@ -76,11 +76,25 @@ export async function ensureCloudbaseLogin(): Promise<void> {
     
     try {
         const loginState = anyAuth?.getLoginState ? await anyAuth.getLoginState() : null;
-        if (!loginState && anyAuth?.signInAnonymously) {
-            await anyAuth.signInAnonymously();
+        console.log('🔍 [CloudBase] 当前登录状态:', loginState ? '已登录' : '未登录');
+        
+        if (!loginState) {
+            console.log('🔄 [CloudBase] 未登录，尝试匿名登录');
+            if (anyAuth?.signInAnonymously) {
+                await anyAuth.signInAnonymously();
+                console.log('✅ [CloudBase] 匿名登录成功');
+            }
         }
     } catch (e) {
+        console.warn('⚠️ [CloudBase] 获取登录状态失败:', e);
         // 某些环境下 getLoginState 可能抛错，直接尝试匿名登录（若可用）
-        try { if (anyAuth?.signInAnonymously) { await anyAuth.signInAnonymously(); } } catch (_) {}
+        try { 
+            if (anyAuth?.signInAnonymously) { 
+                await anyAuth.signInAnonymously();
+                console.log('✅ [CloudBase] 匿名登录成功（备用方法）');
+            } 
+        } catch (anonymousError) {
+            console.warn('⚠️ [CloudBase] 匿名登录也失败了:', anonymousError);
+        }
     }
 }

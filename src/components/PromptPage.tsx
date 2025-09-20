@@ -389,7 +389,7 @@ const PromptPage: React.FC = () => {
             <h1 className="text-2xl font-bold text-gray-900 mb-4">Prompt管理</h1>
             <p className="text-gray-600 mb-6">请先登录以管理您的prompt模板</p>
             <button
-              onClick={() => window.location.href = '/#/login'}
+              onClick={() => window.location.href = '/#/app/login'}
               className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700"
             >
               前往登录

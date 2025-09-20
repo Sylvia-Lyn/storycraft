@@ -89,7 +89,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.log('Token已过期，执行自动登出');
         logout();
         // 使用window.location进行页面跳转，避免在Provider中使用useNavigate
-        window.location.href = '/#/login';
+        window.location.href = '/#/app/login';
     };
 
     // 检查token有效性

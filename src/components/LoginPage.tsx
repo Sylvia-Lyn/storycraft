@@ -99,7 +99,9 @@ const LoginPage: React.FC = () => {
                     subscription_status: userData.subscription_status,
                     userId: userData.userId
                 };
-                login(authUserData, authHeader);
+                // 提取纯token，去掉Bearer前缀
+                const token = authHeader ? authHeader.replace('Bearer ', '') : null;
+                login(authUserData, token || '');
                 return true;
             }
         } catch (error) {

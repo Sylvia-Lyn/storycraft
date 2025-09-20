@@ -21,6 +21,7 @@ import PaymentPage from './components/PaymentPage'
 import PaymentSuccessPage from './components/PaymentSuccessPage'
 import ProtectedRoute from './components/ProtectedRoute'
 import ShortplayEntryPage from './components/ShortplayEntryPage'
+import PromptPage from './components/PromptPage'
 
 // 临时页面组件，显示"正在加班加点更新中"
 // const ComingSoonPage = () => (
@@ -112,6 +113,10 @@ const router = createHashRouter([
       {
         path: 'register',
         element: <RegisterPage />
+      },
+      {
+        path: 'prompt',
+        element: <PromptPage />
       },
     ]
   }

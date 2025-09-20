@@ -21,6 +21,8 @@ interface Config {
     STRIPE_PUBLISHABLE_KEY: string;
     SCRIPT_API_URL: string;
     SCRIPT_API_KEY: string;
+    CLOUDBASE_API_BASE: string;
+    PROMPT_API_URL: string;
 }
 
 const config: Config = {
@@ -45,7 +47,9 @@ const config: Config = {
     TEMPERATURE: 0.6,
     STRIPE_PUBLISHABLE_KEY: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '',
     SCRIPT_API_URL: import.meta.env.VITE_SCRIPT_API_URL || '',
-    SCRIPT_API_KEY: import.meta.env.VITE_SCRIPT_API_KEY || ''
+    SCRIPT_API_KEY: import.meta.env.VITE_SCRIPT_API_KEY || '',
+    CLOUDBASE_API_BASE: import.meta.env.VITE_CLOUDBASE_API_BASE || 'https://stroycraft-1ghmi4ojd3b4a20b-1304253469.ap-shanghai.app.tcloudbase.com',
+    PROMPT_API_URL: import.meta.env.VITE_PROMPT_API_URL || 'https://stroycraft-1ghmi4ojd3b4a20b-1304253469.ap-shanghai.app.tcloudbase.com/prompt_manager'
 };
 
 export function validateConfig(): boolean {

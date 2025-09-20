@@ -187,6 +187,8 @@ const LoginPage: React.FC = () => {
             setMsg(t('login.loginSuccess'));
             message.success(t('login.loginSuccess'));
             const authHeader = getAuthHeader();
+            // 提取纯token，去掉Bearer前缀
+            const token = authHeader ? authHeader.replace('Bearer ', '') : null;
             
             // 获取用户信息并更新AuthContext
             const userInfoUpdated = await fetchAndUpdateUserInfo(authHeader);
@@ -202,7 +204,7 @@ const LoginPage: React.FC = () => {
                     user_piont: '0'
                 };
                 console.log('手机号登录 - 使用默认用户信息:', userInfo);
-                login(userInfo, authHeader);
+                login(userInfo, token || '');
                 navigate('/app/home');
             }
         } catch (e) {
@@ -232,6 +234,8 @@ const LoginPage: React.FC = () => {
             message.success(t('common.loginSuccess'));
 
             const authHeader = getAuthHeader();
+            // 提取纯token，去掉Bearer前缀
+            const token = authHeader ? authHeader.replace('Bearer ', '') : null;
             
             // 获取用户信息并更新AuthContext
             const userInfoUpdated = await fetchAndUpdateUserInfo(authHeader);
@@ -247,7 +251,7 @@ const LoginPage: React.FC = () => {
                     user_piont: '0'
                 };
                 console.log('用户名密码登录 - 使用默认用户信息:', userInfo);
-                login(userInfo, authHeader);
+                login(userInfo, token || '');
                 navigate('/app/home');
             }
         } catch (e) {
@@ -277,6 +281,8 @@ const LoginPage: React.FC = () => {
             });
             message.success(t('common.loginSuccess'));
             const authHeader = getAuthHeader();
+            // 提取纯token，去掉Bearer前缀
+            const token = authHeader ? authHeader.replace('Bearer ', '') : null;
             
             // 获取用户信息并更新AuthContext
             const userInfoUpdated = await fetchAndUpdateUserInfo(authHeader);
@@ -292,7 +298,7 @@ const LoginPage: React.FC = () => {
                     user_piont: '0',
                 };
                 console.log('邮箱登录 - 使用默认用户信息:', userInfo);
-                login(userInfo, authHeader);
+                login(userInfo, token || '');
                 navigate('/app/home');
             }
         } catch (e) {

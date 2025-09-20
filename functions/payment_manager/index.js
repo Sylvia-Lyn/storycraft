@@ -60,6 +60,19 @@ exports.main = async (event, context) => {
                 }
             } catch (error) {
                 console.log('从请求头获取用户信息失败:', error);
+                // 如果是token过期错误，返回更明确的错误信息
+                if (error.message && (
+                    error.message.includes('token') || 
+                    error.message.includes('expired') || 
+                    error.message.includes('invalid') ||
+                    error.message.includes('unauthorized')
+                )) {
+                    return {
+                        success: false,
+                        error: '登录已过期，请重新登录',
+                        code: 401
+                    };
+                }
             }
         }
 

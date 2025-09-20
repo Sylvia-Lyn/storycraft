@@ -1,4 +1,4 @@
-import { getCloudbaseApp, getAuthHeader } from '../cloudbase';
+import { getCloudbaseApp, getAuthHeader, getCloudbaseAuth } from '../cloudbase';
 import { apiInterceptor } from './apiInterceptor';
 
 export interface OrderData {
@@ -65,10 +65,29 @@ export class PaymentService {
     private async callFunctionWithAuth(action: string, data: any): Promise<any> {
         const authHeader = getAuthHeader();
         if (!authHeader) {
+            console.warn('⚠️ [PaymentService] 没有找到认证头，用户未登录');
             return {
                 success: false,
                 error: '用户未登录'
             };
+        }
+
+        // 打印完整的auth token信息用于调试
+        console.log('🔐 [PaymentService] 调用payment_manager:', { 
+            action,
+            authHeader: authHeader.substring(0, 20) + '...',
+            fullAuthHeader: authHeader,
+            authHeaderLength: authHeader.length,
+            hasBearerPrefix: authHeader.startsWith('Bearer ')
+        });
+
+        // 检查CloudBase SDK状态（仅用于调试）
+        try {
+            const authInstance = getCloudbaseAuth();
+            const loginState = await authInstance.getLoginState();
+            console.log('🔍 [PaymentService] CloudBase登录状态:', loginState ? '已登录' : '未登录');
+        } catch (error) {
+            console.warn('⚠️ [PaymentService] 获取CloudBase状态失败:', error);
         }
 
         const result = await apiInterceptor.callFunctionWithInterceptor(() =>
@@ -275,17 +294,44 @@ export class PaymentService {
     }> {
         try {
             const authHeader = getAuthHeader();
-            const result = await getCloudbaseApp().callFunction({
-                name: 'payment_manager',
-                data: {
-                    action: 'getUserInfo'
-                },
-                headers: {
-                    authorization: authHeader
-                }
+            if (!authHeader) {
+                console.warn('⚠️ [PaymentService] getUserInfo - 没有找到认证头');
+                return {
+                    success: false,
+                    error: '用户未登录'
+                };
+            }
+
+            // 打印完整的auth token信息用于调试
+            console.log('🔐 [PaymentService] getUserInfo:', { 
+                authHeader: authHeader.substring(0, 20) + '...',
+                fullAuthHeader: authHeader,
+                authHeaderLength: authHeader.length,
+                hasBearerPrefix: authHeader.startsWith('Bearer ')
             });
 
-            return result.result;
+            // 检查CloudBase SDK状态（仅用于调试）
+            try {
+                const authInstance = getCloudbaseAuth();
+                const loginState = await authInstance.getLoginState();
+                console.log('🔍 [PaymentService] getUserInfo - CloudBase登录状态:', loginState ? '已登录' : '未登录');
+            } catch (error) {
+                console.warn('⚠️ [PaymentService] getUserInfo - 获取CloudBase状态失败:', error);
+            }
+
+            const result = await apiInterceptor.callFunctionWithInterceptor(() =>
+                getCloudbaseApp().callFunction({
+                    name: 'payment_manager',
+                    data: {
+                        action: 'getUserInfo'
+                    },
+                    headers: {
+                        authorization: authHeader
+                    }
+                })
+            );
+
+            return (result as any).data?.result || result;
         } catch (error) {
             console.error('获取用户信息失败:', error);
             return {

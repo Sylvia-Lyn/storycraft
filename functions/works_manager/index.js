@@ -46,7 +46,8 @@ exports.main = async (event, context) => {
                 if (error.message && (
                     error.message.includes('token') || 
                     error.message.includes('expired') || 
-                    error.message.includes('invalid')
+                    error.message.includes('invalid') ||
+                    error.message.includes('unauthorized')
                 )) {
                     return {
                         success: false,

@@ -1,4 +1,4 @@
-import { getCloudbaseApp, getAuthHeader } from '../cloudbase';
+import { getCloudbaseApp, getAuthHeader, getCloudbaseAuth } from '../cloudbase';
 import { apiInterceptor } from './apiInterceptor';
 
 export interface Work {
@@ -52,12 +52,28 @@ export class WorksService {
         
         if (authHeader) {
             headers.authorization = authHeader;
-            console.log('使用认证头调用云函数:', { name, authHeader: authHeader.substring(0, 20) + '...' });
+            // 打印完整的auth token信息用于调试
+            console.log('🔐 [WorksService] 使用认证头调用云函数:', { 
+                name, 
+                authHeader: authHeader.substring(0, 20) + '...',
+                fullAuthHeader: authHeader,
+                authHeaderLength: authHeader.length,
+                hasBearerPrefix: authHeader.startsWith('Bearer ')
+            });
+
+            // 检查CloudBase SDK状态（仅用于调试）
+            try {
+                const authInstance = getCloudbaseAuth();
+                const loginState = await authInstance.getLoginState();
+                console.log('🔍 [WorksService] CloudBase登录状态:', loginState ? '已登录' : '未登录');
+            } catch (error) {
+                console.warn('⚠️ [WorksService] 获取CloudBase状态失败:', error);
+            }
         } else {
-            console.warn('没有找到认证头，可能影响云函数调用');
+            console.warn('⚠️ [WorksService] 没有找到认证头，可能影响云函数调用');
         }
 
-        console.log('准备调用云函数:', { name, data, headers });
+        console.log('📡 [WorksService] 准备调用云函数:', { name, data, headers });
         
         // 使用API拦截器包装云函数调用
         return await apiInterceptor.callFunctionWithInterceptor(() => 

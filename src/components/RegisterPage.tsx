@@ -1,7 +1,7 @@
 import { LockOutlined, PhoneOutlined, UserOutlined, MailOutlined } from '@ant-design/icons';
 import { Button, Card, Form, Input, Select, Space, Typography, message, Modal } from 'antd';
 import { useEffect, useState } from 'react';
-import { getCloudbaseAuth } from '../cloudbase';
+import { getCloudbaseAuth, getAuthHeader } from '../cloudbase';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { userService } from '../services/userService';
@@ -354,7 +354,10 @@ const RegisterPage = () => {
                     user_plan: 'free' as 'free' | 'chinese' | 'multilingual',
                     user_piont: '0'
                 };
-                login(userInfo, 'token');
+                // 注册成功后需要获取真实的token
+                const authHeader = getAuthHeader();
+                const token = authHeader ? authHeader.replace('Bearer ', '') : 'temp_token';
+                login(userInfo, token);
                 navigate('/app/home');
             }
         } catch (e) {

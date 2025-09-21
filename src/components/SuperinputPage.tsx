@@ -84,7 +84,13 @@ const SuperinputPage: React.FC = () => {
                                 创作模式
                             </button>
                             <select className="border border-gray-300 rounded px-2 py-1 text-xs text-gray-600 h-7">
-                                <option>文风参考</option>
+                                <option>古风</option>
+                                <option>西方奇幻</option>
+                                <option>浪漫言情</option>
+                                <option>悬疑惊悚</option>
+                                <option>粉丝同人</option>
+                                <option>游戏竞技</option>
+                                <option>LGBTQ+</option>
                             </select>
                             <select className="border border-gray-300 rounded px-2 py-1 text-xs text-gray-600 h-7">
                                 <option>提示词</option>

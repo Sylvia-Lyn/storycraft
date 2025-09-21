@@ -600,6 +600,17 @@ export const enUS = {
       prompt: 'Prompt',
       character: 'Character',
       
+      // Style options
+      styleOptions: {
+        ancient: 'Ancient Style',
+        'western-fantasy': 'Western Fantasy',
+        romance: 'Romance',
+        'suspense-thriller': 'Suspense Thriller',
+        'fan-fiction': 'Fan Fiction',
+        'gaming-esports': 'Gaming & Esports',
+        lgbtq: 'LGBTQ+'
+      },
+      
       // Chat history
       chatHistory: 'Chat History',
       clearHistory: 'Clear History',

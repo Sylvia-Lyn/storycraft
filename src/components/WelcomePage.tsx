@@ -110,6 +110,12 @@ const WelcomePage: React.FC = () => {
                                 </span>
                                 <select className="border border-gray-500 rounded px-6 py-2 text-sm text-gray-300 bg-black">
                                     <option>古风</option>
+                                    <option>西方奇幻</option>
+                                    <option>浪漫言情</option>
+                                    <option>悬疑惊悚</option>
+                                    <option>粉丝同人</option>
+                                    <option>游戏竞技</option>
+                                    <option>LGBTQ+</option>
                                 </select>
                             </div>
                         </div>

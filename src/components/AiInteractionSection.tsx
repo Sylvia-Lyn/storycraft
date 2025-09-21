@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Icon } from '@iconify/react'
+import { useAuth } from '../contexts/AuthContext'
+import { buildFullDynamicPrompt } from '../utils/promptBuilder'
 
 // 消息类型定义
 interface Message {
@@ -43,6 +45,7 @@ function AiInteractionSection({
   selectedText = "",
   selectModel
 }: AiInteractionSectionProps) {
+  const { token, isAuthenticated } = useAuth();
   console.log(`[AiInteractionSection] 组件渲染，当前selectedModel: ${selectedModel}`);
   console.log(`[AiInteractionSection] selectModel函数是否存在: ${!!selectModel}`);
 
@@ -71,6 +74,62 @@ function AiInteractionSection({
   // 引用
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // 获取动态系统提示词
+  const getDynamicSystemPrompt = async (): Promise<string> => {
+    console.log('[AiInteractionSection] 🔍 开始获取动态系统提示词');
+    console.log('[AiInteractionSection] 🔍 认证状态:', { isAuthenticated, tokenExists: !!token });
+    console.log('[AiInteractionSection] 🔍 当前模式:', activeMode);
+    
+    try {
+      if (!isAuthenticated || !token) {
+        console.log('[AiInteractionSection] ❌ 用户未登录或无token，使用默认提示词');
+        const defaultPrompt = activeMode === 'optimize' 
+          ? '你是一个专业的剧本顾问，专注于帮助用户优化剧情。请提供具体、创意性的建议，使剧情更加引人入胜。'
+          : '你是一个专业的剧本创作助手，可以帮助用户解答关于剧本创作的各种问题。';
+        console.log('[AiInteractionSection] 🔍 返回默认提示词:', defaultPrompt);
+        return defaultPrompt;
+      }
+
+      console.log('[AiInteractionSection] 🔍 开始调用 buildFullDynamicPrompt');
+      console.log('[AiInteractionSection] 🔍 调用参数:', {
+        replacements: { '输入内容': '' },
+        tokenExists: !!token
+      });
+
+      // 尝试获取动态 prompt
+      const dynamicPrompt = await buildFullDynamicPrompt({
+        '输入内容': '' // 系统提示词不需要用户输入
+      }, token);
+
+      console.log('[AiInteractionSection] 🔍 buildFullDynamicPrompt 返回结果:', dynamicPrompt);
+
+      if (dynamicPrompt) {
+        console.log('[AiInteractionSection] ✅ 成功获取动态系统提示词');
+        console.log('[AiInteractionSection] 📝 动态提示词内容:', dynamicPrompt);
+        return dynamicPrompt;
+      } else {
+        console.log('[AiInteractionSection] ❌ 动态提示词为空，使用默认提示词');
+        const defaultPrompt = activeMode === 'optimize' 
+          ? '你是一个专业的剧本顾问，专注于帮助用户优化剧情。请提供具体、创意性的建议，使剧情更加引人入胜。'
+          : '你是一个专业的剧本创作助手，可以帮助用户解答关于剧本创作的各种问题。';
+        console.log('[AiInteractionSection] 🔍 返回默认提示词:', defaultPrompt);
+        return defaultPrompt;
+      }
+    } catch (error) {
+      console.error('[AiInteractionSection] ❌ 获取动态提示词时发生错误:', error);
+      console.error('[AiInteractionSection] 🔍 错误详情:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
+      const defaultPrompt = activeMode === 'optimize' 
+        ? '你是一个专业的剧本顾问，专注于帮助用户优化剧情。请提供具体、创意性的建议，使剧情更加引人入胜。'
+        : '你是一个专业的剧本创作助手，可以帮助用户解答关于剧本创作的各种问题。';
+      console.log('[AiInteractionSection] 🔍 错误时返回默认提示词:', defaultPrompt);
+      return defaultPrompt;
+    }
+  };
 
   // AI模型列表
   const models = [
@@ -213,18 +272,18 @@ function AiInteractionSection({
         content: msg.content
       }));
 
-      // 添加系统提示，根据当前模式调整
-      if (activeMode === 'optimize') {
-        messagesPayload.unshift({
-          role: 'system',
-          content: '你是一个专业的剧本顾问，专注于帮助用户优化剧情。请提供具体、创意性的建议，使剧情更加引人入胜。'
-        });
-      } else {
-        messagesPayload.unshift({
-          role: 'system',
-          content: '你是一个专业的剧本创作助手，可以帮助用户解答关于剧本创作的各种问题。'
-        });
-      }
+      // 获取动态系统提示词
+      console.log('[AiInteractionSection] 🔍 准备获取动态系统提示词');
+      const systemPrompt = await getDynamicSystemPrompt();
+      console.log('[AiInteractionSection] 🔍 获取到的系统提示词:', systemPrompt);
+      console.log('[AiInteractionSection] 🔍 系统提示词长度:', systemPrompt.length);
+      
+      messagesPayload.unshift({
+        role: 'system',
+        content: systemPrompt
+      });
+      
+      console.log('[AiInteractionSection] 🔍 最终的消息载荷:', messagesPayload);
 
       // 调用 API
       const aiResponse = await callDeepSeekAPI(messagesPayload);

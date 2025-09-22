@@ -213,6 +213,20 @@ function MiddleSection() {
     message.info('功能尚在开发中...');
   };
 
+  // 文风参考选项
+  const styleOptions = [
+    { value: 'ancient', label: t('editor.middleSection.styleOptions.ancient') },
+    { value: 'western-fantasy', label: t('editor.middleSection.styleOptions.western-fantasy') },
+    { value: 'romance', label: t('editor.middleSection.styleOptions.romance') },
+    { value: 'suspense-thriller', label: t('editor.middleSection.styleOptions.suspense-thriller') },
+    { value: 'fan-fiction', label: t('editor.middleSection.styleOptions.fan-fiction') },
+    { value: 'gaming-esports', label: t('editor.middleSection.styleOptions.gaming-esports') },
+    { value: 'lgbtq', label: t('editor.middleSection.styleOptions.lgbtq') }
+  ];
+
+  // 文风选择状态
+  const [selectedWritingStyle, setSelectedWritingStyle] = useState('ancient');
+
   return (
     <div ref={containerRef} className="w-[520px] border-r border-gray-200 bg-white flex flex-col h-full min-h-0">
       {/* 中间内容区域 */}
@@ -268,28 +282,14 @@ function MiddleSection() {
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2 flex-1">
                 <span className="text-sm font-medium text-gray-700 min-w-[50px]">文风参考</span>
-                <div 
-                  className="relative cursor-not-allowed group"
-                  onClick={handleLockedFeatureClick}
-                  title="功能尚在开发中..."
-                >
-                  <Select 
-                    defaultValue={t('editor.middleSection.styleReference')} 
-                    style={{ width: 120 }} 
-                    size="small" 
-                    disabled
-                    className="rounded-md"
-                    options={[{ value: t('editor.middleSection.styleReference'), label: t('editor.middleSection.styleReference') }]} 
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div className="bg-white/80 rounded-full p-1 shadow-sm">
-                      <Icon icon="mdi:lock" className="w-3 h-3 text-gray-400" />
-                    </div>
-                  </div>
-                  <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
-                    功能尚在开发中...
-                  </div>
-                </div>
+                <Select 
+                  value={selectedWritingStyle}
+                  onChange={(value) => setSelectedWritingStyle(value)}
+                  style={{ width: 120 }} 
+                  size="small" 
+                  className="rounded-md"
+                  options={styleOptions} 
+                />
               </div>
               
               <div className="flex items-center gap-2 flex-1">

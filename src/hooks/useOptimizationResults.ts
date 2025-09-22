@@ -1,8 +1,8 @@
 import { useState, useRef, useCallback } from 'react';
 import { useAppState } from './useAppState';
-import { generateDeepSeekContent } from '../services/deepseekService';
-import { generateGeminiContent } from '../services/geminiService';
 import { useI18n } from '../contexts/I18nContext';
+import { callAIWithDynamicPrompt } from '../services/dynamicPromptService';
+import { getAccessToken } from '../cloudbase';
 
 interface OptimizationResult {
   id: string;
@@ -22,7 +22,7 @@ export const modelChangeEventBus = {
 };
 
 export function useOptimizationResults() {
-  const { selectedModel, selectedMode } = useAppState();
+  const { selectedModel, selectedMode, selectedStyle } = useAppState();
   const { language } = useI18n();
   const [isGenerating, setIsGenerating] = useState(false);
   const [optimizationResults, setOptimizationResults] = useState<OptimizationResult[]>([]);
@@ -106,62 +106,45 @@ export function useOptimizationResults() {
     console.log("[useOptimizationResults] 输入:", feedbackText);
     console.log("[useOptimizationResults] 当前使用的模型:", currentModel);
 
-    // 构建上下文和提示词
-    let prompt = '';
+    // 构建输入内容（包含上下文与用户要求），交由动态模板统一处理
+    let inputContent = '';
 
     // 获取编辑器中的内容
     const editorContent = document.querySelector('.codex-editor__redactor')?.textContent || '';
     console.log("[useOptimizationResults] 编辑器内容:", editorContent);
 
-    // 如果有编辑器内容，添加为上下文
     if (editorContent) {
-      // 设置最大上下文长度（字符数）
       const MAX_CONTEXT_LENGTH = 1000;
-
       let contextContent = editorContent;
-
-      // 如果内容超过最大长度，只保留后半部分
       if (contextContent.length > MAX_CONTEXT_LENGTH) {
         contextContent = contextContent.slice(-MAX_CONTEXT_LENGTH);
         console.log(`[useOptimizationResults] 上下文内容已截取，保留最后${MAX_CONTEXT_LENGTH}个字符`);
       }
-
-      prompt += `已完成的上文内容：\n${contextContent}\n\n`;
+      inputContent += `已完成的上文内容：\n${contextContent}\n\n`;
     }
 
-    // 添加用户输入
-    prompt += `用户要求：${feedbackText}\n\n`;
-
-    // 添加指令 - 根据模式设置不同的prompt
-    // 暂时注释掉原有的通用指令
-    // prompt += `你是一名擅长写作的大师，正在辅助用户进行创作。请在阅读并理解以上上文以及用户要求后，严格根据以下指令做出回复：
-    // 1. 如果用户要求续写，则接续上文内容，根据用户要求续写。必须直接返回续写的文本内容，不需要包括上文内容或者解释。
-    // 2. 如果用户要求优化或改写，则根据用户要求优化或改写。必须直接返回优化或改写后的文本内容，不需要多余的上文或者解释。
-    // 3. 如果用户要讨论剧情或思路，则基于要求和前文内容，正常对话。`;
-
-    // 根据模式设置不同的prompt
-    if (selectedMode === 'create') {
-      // 创作模式
-      prompt += `你是一名擅长写作的大师，正在辅助用户进行创作。如果用户有要求，则根据用户要求优化或改写。必须直接返回优化或改写后的文本内容，不需要多余的上文或者解释。`;
-    } else if (selectedMode === 'continue') {
-      // 续写模式
-      prompt += `你是一名擅长写作的大师，正在辅助用户进行创作。接续上文内容，根据用户要求续写。必须直接返回续写的文本内容，不需要包括上文内容或者解释。`;
-    }
+    inputContent += `用户要求：${feedbackText}`;
 
     try {
-      console.log(`[useOptimizationResults] 准备调用API，使用模型: ${currentModel}`);
-      console.log(`[useOptimizationResults] 完整提示词:\n${prompt}`);
+      console.log(`[useOptimizationResults] 准备调用动态Prompt服务，使用模型: ${currentModel}`);
 
-      let response;
-      if (currentModel === 'deepseek-r1') {
-        console.log(`[useOptimizationResults] 调用DeepSeek API... 尝试 ${retryCount + 1}/${MAX_RETRIES + 1}`);
-        response = await generateDeepSeekContent(prompt, 'deepseek-reasoner', language);
-      } else if (currentModel === 'Gemini') {
-        console.log(`[useOptimizationResults] 调用Gemini API... 尝试 ${retryCount + 1}/${MAX_RETRIES + 1}`);
-        response = await generateGeminiContent(prompt, language);
-      } else {
-        throw new Error(`不支持的模型: ${currentModel}`);
-      }
+      // 映射模型到动态服务的配置
+      const mappedModel = currentModel === 'Gemini' ? 'gemini' : 'deepseek-r1' as const;
+
+      // 获取token（允许为空）
+      const token = getAccessToken() || '';
+
+      // 组织模板替换参数：不传"首页-创作类型"，只传模式、风格与输入内容
+      const replacements: { [key: string]: string } = {};
+      replacements['首页-创作模式'] = selectedMode;
+      replacements['首页-题材风格'] = selectedStyle;
+      replacements['输入内容'] = inputContent;
+
+      const response = await callAIWithDynamicPrompt(
+        replacements,
+        token,
+        { model: mappedModel, language }
+      );
 
       console.log(`[useOptimizationResults] ${currentModel} API返回:`, response);
 

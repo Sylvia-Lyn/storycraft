@@ -602,6 +602,17 @@ export const zhCN = {
       prompt: '提示词',
       character: '角色',
       
+      // 文风选项
+      styleOptions: {
+        ancient: '古风',
+        'western-fantasy': '西方奇幻',
+        romance: '浪漫言情',
+        'suspense-thriller': '悬疑惊悚',
+        'fan-fiction': '粉丝同人',
+        'gaming-esports': '游戏竞技',
+        lgbtq: 'LGBTQ+'
+      },
+      
       // 对话历史
       chatHistory: '对话历史',
       clearHistory: '清空历史',

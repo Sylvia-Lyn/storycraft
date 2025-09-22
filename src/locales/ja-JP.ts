@@ -600,6 +600,17 @@ export const jaJP = {
       prompt: 'プロンプト',
       character: 'キャラクター',
       
+      // スタイルオプション
+      styleOptions: {
+        ancient: '古代風',
+        'western-fantasy': '西洋ファンタジー',
+        romance: 'ロマンス',
+        'suspense-thriller': 'サスペンス・スリラー',
+        'fan-fiction': 'ファンフィクション',
+        'gaming-esports': 'ゲーム・eスポーツ',
+        lgbtq: 'LGBTQ+'
+      },
+      
       // チャット履歴
       chatHistory: 'チャット履歴',
       clearHistory: '履歴をクリア',

@@ -300,10 +300,13 @@ function OutlineContent() {
                 value={outlineStyle}
                 onChange={(e) => setOutlineStyle(e.target.value)}
               >
-                <option>古风情感</option>
-                <option>现代都市</option>
-                <option>科幻未来</option>
-                <option>悬疑推理</option>
+                <option>古风</option>
+                <option>西方奇幻</option>
+                <option>浪漫言情</option>
+                <option>悬疑惊悚</option>
+                <option>粉丝同人</option>
+                <option>游戏竞技</option>
+                <option>LGBTQ+</option>
               </select>
               <Icon
                 icon="ri:arrow-down-s-line"

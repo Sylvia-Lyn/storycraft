@@ -278,7 +278,7 @@ async function handleListPrompts(userId, event, requestId, respond) {
     try {
         console.log(`[${requestId}] 获取prompt列表，用户ID: ${userId}`);
         
-        const { category, isActive, search, page = 1, limit = 20 } = event;
+        const { category, isActive, search, page = 1, limit = 20, location, option } = event;
         
         let query = db.collection('prompts');
         
@@ -286,6 +286,8 @@ async function handleListPrompts(userId, event, requestId, respond) {
         const whereConditions = {};
         if (category) whereConditions.category = category;
         if (isActive !== undefined) whereConditions.isActive = isActive;
+        if (location) whereConditions.location = location;
+        if (option) whereConditions.option = option;
         
         if (Object.keys(whereConditions).length > 0) {
             query = query.where(whereConditions);
@@ -409,7 +411,9 @@ async function handleCreatePrompt(userId, event, requestId, respond) {
             isActive = true,
             isDefault = false,
             createdBy = 'system',
-            tags = []
+            tags = [],
+            location,
+            option
         } = event;
         
         // 验证必填字段
@@ -447,6 +451,8 @@ async function handleCreatePrompt(userId, event, requestId, respond) {
             isDefault,
             createdBy,
             tags,
+            location,
+            option,
             usageCount: 0,
             createdAt: now,
             updatedAt: now

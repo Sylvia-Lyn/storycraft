@@ -12,7 +12,7 @@ const SuperinputPage: React.FC = () => {
     const [selectedCard, setSelectedCard] = useState<string | null>(null);
 
     const handleStartCreate = () => {
-        navigate('/app/story-settings');
+        navigate('/app/editor');
     };
 
     return (

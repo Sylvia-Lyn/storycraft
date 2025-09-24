@@ -3,6 +3,7 @@ import { useAppState } from './useAppState';
 import { useI18n } from '../contexts/I18nContext';
 import { callAIWithDynamicPrompt } from '../services/dynamicPromptService';
 import { getAccessToken } from '../cloudbase';
+import { checkApiConnection } from '../services/apiConnectionService';
 
 interface OptimizationResult {
   id: string;
@@ -28,6 +29,9 @@ export function useOptimizationResults() {
   const [optimizationResults, setOptimizationResults] = useState<OptimizationResult[]>([]);
   const [responseCache, setResponseCache] = useState<{ [key: string]: OptimizationResult[] }>({});
   const resultsContainerRef = useRef<HTMLDivElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  // 跟踪进行中的请求，避免短时间内对相同输入重复调用
+  const inFlightKeysRef = useRef<Set<string>>(new Set());
 
   // 使用一个独立的state来跟踪当前使用的模型
   const [currentModel, setCurrentModel] = useState(selectedModel || 'Gemini');  // 默认使用Gemini
@@ -77,23 +81,20 @@ export function useOptimizationResults() {
     currentDraftContent: string,
     quickResponses: OptimizationResult[],
     updateRecentInputs: (input: string) => void,
-    showLoading = true,
-    retryCount = 0
+    showLoading = true
   ) => {
     if (!feedbackText.trim()) {
       return;
     }
 
-    // 最大重试次数
-    const MAX_RETRIES = 3;
-
-    // 检查缓存
+    // 计算缓存key（仅用于进行中去重与写入，不再读取命中）
     const cacheKey = feedbackText.trim().toLowerCase();
-    if (responseCache[cacheKey]) {
-      setOptimizationResults(responseCache[cacheKey]);
-      setIsGenerating(false);
+
+    // 如果相同key已有请求在进行，直接返回，避免重复触发
+    if (inFlightKeysRef.current.has(cacheKey)) {
       return;
     }
+    inFlightKeysRef.current.add(cacheKey);
 
     // 保存到最近输入
     updateRecentInputs(feedbackText);
@@ -126,10 +127,28 @@ export function useOptimizationResults() {
     inputContent += `用户要求：${feedbackText}`;
 
     try {
+      // 如果之前有未完成的请求，先取消
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      // 为本次请求创建新的AbortController
+      abortControllerRef.current = new AbortController();
+      const signal = abortControllerRef.current.signal;
       console.log(`[useOptimizationResults] 准备调用动态Prompt服务，使用模型: ${currentModel}`);
 
       // 映射模型到动态服务的配置
       const mappedModel = currentModel === 'Gemini' ? 'gemini' : 'deepseek-r1' as const;
+
+      // 在进行API调用之前，先检查连接状态
+      console.log(`[useOptimizationResults] 检查 ${currentModel} API连接状态...`);
+      const connectionResult = await checkApiConnection(currentModel);
+      
+      if (!connectionResult.isConnected) {
+        console.error(`[useOptimizationResults] ${currentModel} API连接失败:`, connectionResult.error);
+        throw new Error(`无法连接到 ${currentModel} API服务: ${connectionResult.error}`);
+      }
+      
+      console.log(`[useOptimizationResults] ${currentModel} API连接正常，开始调用服务`);
 
       // 获取token（允许为空）
       const token = getAccessToken() || '';
@@ -143,7 +162,8 @@ export function useOptimizationResults() {
       const response = await callAIWithDynamicPrompt(
         replacements,
         token,
-        { model: mappedModel, language }
+        { model: mappedModel, language },
+        { signal }
       );
 
       console.log(`[useOptimizationResults] ${currentModel} API返回:`, response);
@@ -157,7 +177,7 @@ export function useOptimizationResults() {
         text: content
       };
 
-      // 添加到缓存
+      // 添加到缓存（仅写入，当前不读取）
       setResponseCache(prev => ({
         ...prev,
         [cacheKey]: [result]
@@ -169,44 +189,62 @@ export function useOptimizationResults() {
     } catch (error: any) {
       console.error('[useOptimizationResults] 生成优化内容失败:', error);
 
-      // 重试机制
-      if (retryCount < MAX_RETRIES &&
-        (error.name === 'AbortError' || // 超时错误
-          error.name === 'TypeError' || // 网络错误
-          (error.message && error.message.includes('network')))) { // 网络相关错误
-
-        console.log(`网络错误，将在1秒后重试 (${retryCount + 1}/${MAX_RETRIES})`);
-        // 显示重试状态
-        setOptimizationResults([
-          { id: "retry", text: `网络连接不稳定，正在重试 (${retryCount + 1}/${MAX_RETRIES})...` }
-        ]);
-
-        // 等待一段时间后重试
-        setTimeout(() => {
-          generateOptimizedContent(
-            feedbackText,
-            previousDraftContent,
-            currentDraftContent,
-            quickResponses,
-            updateRecentInputs,
-            false,
-            retryCount + 1
-          );
-        }, 1000 * (retryCount + 1)); // 逐次增加重试间隔
-
+      // 如果是用户主动取消，则不显示错误
+      if (error?.name === 'AbortError') {
         return;
       }
 
-      // 已经重试MAX_RETRIES次或非网络错误，显示错误信息
+      // 根据错误类型提供不同的错误信息和建议
+      let errorMessage = "抱歉，无法连接到AI服务。";
+      let suggestionMessage = "您也可以刷新页面或稍后再试。";
+      let helpMessage = "如果问题持续存在，请检查网络连接或联系技术支持。";
+      
+      // 判断是否为网络连接问题
+      const isNetworkError = error?.message?.includes('网络错误') || 
+                            error?.message?.includes('网络连接失败') ||
+                            error?.message?.includes('网络连接问题');
+      
+      if (isNetworkError) {
+        // 网络连接问题的专门处理
+        errorMessage = "🌐 网络连接失败";
+        suggestionMessage = "请检查您的网络连接是否正常";
+        helpMessage = "建议：1) 检查WiFi/网络设置 2) 尝试刷新页面 3) 稍后重试";
+      } else if (error?.message?.includes('无法连接到')) {
+        // API服务不可用的问题
+        const modelMatch = error.message.match(/无法连接到\s+(\w+)/);
+        if (modelMatch) {
+          errorMessage = `🤖 ${modelMatch[1]} API服务暂时不可用`;
+        } else {
+          errorMessage = "🤖 AI服务暂时不可用";
+        }
+        suggestionMessage = "服务可能正在维护，请稍后重试";
+        helpMessage = "如果问题持续存在，请联系技术支持";
+      } else if (error?.message?.includes('API密钥')) {
+        // API密钥配置问题
+        errorMessage = "🔑 API密钥配置问题";
+        suggestionMessage = "请检查服务配置是否正确";
+        helpMessage = "请联系管理员检查API密钥配置";
+      } else {
+        // 其他未知错误
+        errorMessage = "❌ 服务异常";
+        suggestionMessage = "请稍后重试或联系技术支持";
+        helpMessage = "如果问题持续存在，请联系技术支持";
+      }
+      
       const fallbackResults = [
-        { id: "1", text: "1. 由于网络连接问题，无法获取建议。请检查您的网络连接后重试。" },
-        { id: "2", text: "2. 您也可以刷新页面或稍后再试。" },
-        { id: "3", text: "3. 如果问题持续存在，可能是API服务暂时不可用。" }
+        { id: "1", text: errorMessage },
+        { id: "2", text: suggestionMessage },
+        { id: "3", text: helpMessage }
       ];
 
       setOptimizationResults(fallbackResults);
     } finally {
+      // 清理当前的controller
+      abortControllerRef.current = null;
       setIsGenerating(false);
+      // 移除进行中的key
+      const key = feedbackText.trim().toLowerCase();
+      inFlightKeysRef.current.delete(key);
     }
   }, [responseCache, currentModel]);
 
@@ -224,12 +262,7 @@ export function useOptimizationResults() {
       return;
     }
 
-    // 首先检查缓存
-    const cacheKey = feedbackText.trim().toLowerCase();
-    if (responseCache[cacheKey]) {
-      setOptimizationResults(responseCache[cacheKey]);
-      return;
-    }
+    // 不再读取缓存命中
 
     // 保存到最近输入
     updateRecentInputs(feedbackText);
@@ -253,8 +286,7 @@ export function useOptimizationResults() {
           currentDraftContent,
           quickResponses,
           updateRecentInputs,
-          false,
-          0
+          false
         );
 
         // 如果成功生成了回复
@@ -286,6 +318,14 @@ export function useOptimizationResults() {
     }, 300);
   }, [generateOptimizedContent, optimizationResults, responseCache]);
 
+  const cancelGeneration = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    setIsGenerating(false);
+  }, []);
+
   return {
     isGenerating,
     setIsGenerating,
@@ -297,6 +337,7 @@ export function useOptimizationResults() {
     applyOptimizedText,
     copyToClipboard,
     generateOptimizedContent,
-    generateQuickContent
+    generateQuickContent,
+    cancelGeneration
   };
 }

@@ -2,6 +2,7 @@ import { LockOutlined, PhoneOutlined, UserOutlined, MailOutlined } from '@ant-de
 import { Button, Card, Form, Input, Select, Space, Typography, message, Modal } from 'antd';
 import { useEffect, useState } from 'react';
 import { getCloudbaseAuth, getAuthHeader } from '../cloudbase';
+import { paymentService } from '../services/paymentService';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { userService } from '../services/userService';
@@ -231,9 +232,61 @@ const RegisterPage = () => {
                     const userId = signUpResult.user.uid;
                     await createUserRecord(userId, name || phoneNumber, undefined, phoneNumber);
                 }
-                
-                setMsg('注册成功，请登录');
-                message.success(t('common.registerSuccess'));
+
+                // 注册成功后自动登录
+                try {
+                    await getCloudbaseAuth().signIn({
+                        username: phoneNumber,
+                        password,
+                    });
+
+                    const authHeader = getAuthHeader();
+                    // 优先获取后端用户信息以填充上下文
+                    try {
+                        const userInfoResult = await paymentService.getUserInfo();
+                        if (userInfoResult.success && userInfoResult.data) {
+                            const d = userInfoResult.data;
+                            const authUserData = {
+                                user_id: d.user_id || 0,
+                                user_name: d.user_name || (name || phoneNumber),
+                                user_email: d.user_email || '',
+                                user_plan: d.user_plan || 'free',
+                                user_piont: d.user_piont || '0',
+                                subscription_expires_at: d.subscription_expires_at,
+                                subscription_status: d.subscription_status,
+                                userId: d.userId,
+                            } as any;
+                            const token = authHeader ? authHeader.replace('Bearer ', '') : '';
+                            login(authUserData, token);
+                        } else {
+                            const token = authHeader ? authHeader.replace('Bearer ', '') : '';
+                            login({
+                                user_id: 1,
+                                user_name: name || phoneNumber,
+                                user_email: '',
+                                user_plan: 'free',
+                                user_piont: '0',
+                            } as any, token);
+                        }
+                    } catch (_) {
+                        const token = authHeader ? authHeader.replace('Bearer ', '') : '';
+                        login({
+                            user_id: 1,
+                            user_name: name || phoneNumber,
+                            user_email: '',
+                            user_plan: 'free',
+                            user_piont: '0',
+                        } as any, token);
+                    }
+
+                    message.success(t('common.loginSuccess'));
+                    navigate('/app/home');
+                } catch (autoLoginErr) {
+                    console.error('注册后自动登录失败:', autoLoginErr);
+                    message.success(t('common.registerSuccess'));
+                }
+
+                // 清理状态
                 setPhone('');
                 setCode('');
                 setPassword('');
@@ -304,9 +357,61 @@ const RegisterPage = () => {
                     const userId = signUpResult.user.uid;
                     await createUserRecord(userId, name || email, email);
                 }
-                
-                setMsg('注册成功，请登录');
-                message.success(t('common.registerSuccess'));
+
+                // 注册成功后自动登录（邮箱+密码）
+                try {
+                    await getCloudbaseAuth().signIn({
+                        username: email,
+                        password,
+                    });
+
+                    const authHeader = getAuthHeader();
+                    // 优先获取后端用户信息以填充上下文
+                    try {
+                        const userInfoResult = await paymentService.getUserInfo();
+                        if (userInfoResult.success && userInfoResult.data) {
+                            const d = userInfoResult.data;
+                            const authUserData = {
+                                user_id: d.user_id || 0,
+                                user_name: d.user_name || (name || email),
+                                user_email: d.user_email || email,
+                                user_plan: d.user_plan || 'free',
+                                user_piont: d.user_piont || '0',
+                                subscription_expires_at: d.subscription_expires_at,
+                                subscription_status: d.subscription_status,
+                                userId: d.userId,
+                            } as any;
+                            const token = authHeader ? authHeader.replace('Bearer ', '') : '';
+                            login(authUserData, token);
+                        } else {
+                            const token = authHeader ? authHeader.replace('Bearer ', '') : '';
+                            login({
+                                user_id: 1,
+                                user_name: name || email,
+                                user_email: email,
+                                user_plan: 'free',
+                                user_piont: '0',
+                            } as any, token);
+                        }
+                    } catch (_) {
+                        const authHeader2 = getAuthHeader();
+                        const token = authHeader2 ? authHeader2.replace('Bearer ', '') : '';
+                        login({
+                            user_id: 1,
+                            user_name: name || email,
+                            user_email: email,
+                            user_plan: 'free',
+                            user_piont: '0',
+                        } as any, token);
+                    }
+
+                    message.success(t('common.loginSuccess'));
+                    navigate('/app/home');
+                } catch (autoLoginErr) {
+                    console.error('注册后自动登录失败:', autoLoginErr);
+                    message.success(t('common.registerSuccess'));
+                }
+
                 // 清空表单
                 setEmail('');
                 setCode('');

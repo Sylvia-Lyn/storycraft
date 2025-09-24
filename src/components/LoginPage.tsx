@@ -458,7 +458,7 @@ const LoginPage: React.FC = () => {
                 )}
                 {msg && <div style={{ marginTop: 16, color: msg.includes('成功') ? 'green' : 'red' }}>{msg}</div>}
                 <Form.Item style={{ marginBottom: 0, textAlign: 'center' }}>
-                    <Text type="secondary">{t('login.noAccount')} <Link to="/register">{t('login.registerNow')}</Link></Text>
+                    <Text type="secondary">{t('login.noAccount')} <Link to="/app/register">{t('login.registerNow')}</Link></Text>
                 </Form.Item>
             </Card>
         </div>

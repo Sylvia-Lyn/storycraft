@@ -46,7 +46,7 @@ function parseRetryDelay(errorText: string): number {
  * @param language 当前语言
  * @returns 生成的文本内容
  */
-export async function generateGeminiContent(prompt: string, language: string = 'zh-CN'): Promise<string> {
+export async function generateGeminiContent(prompt: string, language: string = 'zh-CN', signal?: AbortSignal): Promise<string> {
   // 首先检查配置
   if (!GEMINI_API_KEY) {
     throw new Error('Gemini API密钥未配置，请在环境变量中设置 VITE_GEMINI_API_KEY');
@@ -124,7 +124,8 @@ export async function generateGeminiContent(prompt: string, language: string = '
               threshold: "BLOCK_MEDIUM_AND_ABOVE"
             }
           ]
-        })
+        }),
+        signal
       });
 
       if (!response.ok) {
@@ -175,6 +176,9 @@ export async function generateGeminiContent(prompt: string, language: string = '
       }
     } catch (error) {
       console.error(`Gemini API调用失败 (尝试 ${retryCount + 1}/${MAX_RETRIES}):`, error);
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        throw error;
+      }
       
       // 检查是否是网络错误
       if (error instanceof TypeError && error.message.includes('fetch')) {
@@ -215,8 +219,12 @@ export async function checkGeminiApiStatus(): Promise<boolean> {
     }
     
     // 发送一个简单的测试请求
-    const testPrompt = "Hello";
+    const testPrompt = "ping";
     const API_URL = `${API_BASE_URL}/v1beta/models/${GEMINI_MODEL}:generateContent`;
+    
+    // 使用AbortController设置较短的超时时间
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3秒超时
     
     const response = await fetch(API_URL, {
       method: 'POST',
@@ -232,10 +240,14 @@ export async function checkGeminiApiStatus(): Promise<boolean> {
           }]
         }],
         generationConfig: {
-          maxOutputTokens: 10
+          maxOutputTokens: 1,
+          temperature: 0
         }
-      })
+      }),
+      signal: controller.signal
     });
+    
+    clearTimeout(timeoutId);
     
     if (response.ok) {
       console.log('Gemini API连接正常');
@@ -247,6 +259,12 @@ export async function checkGeminiApiStatus(): Promise<boolean> {
     }
   } catch (error) {
     console.error("Gemini API状态检查失败:", error);
+    
+    // 如果是网络错误，抛出错误让上层处理
+    if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+      throw error;
+    }
+    
     return false;
   }
 }

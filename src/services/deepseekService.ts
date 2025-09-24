@@ -19,7 +19,8 @@ const API_URL = `${config.DEEPSEEK_API_BASE}/chat/completions`;
 export const generateDeepSeekContent = async (
   prompt: string,
   model: 'deepseek-chat' | 'deepseek-reasoner' | 'deepseek-r1' = 'deepseek-chat',
-  language: string = 'zh-CN'
+  language: string = 'zh-CN',
+  signal?: AbortSignal
 ): Promise<string> => {
   console.log("[DeepSeek] 开始生成内容");
   console.log("[DeepSeek] 提示词:", prompt);
@@ -65,7 +66,8 @@ export const generateDeepSeekContent = async (
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
       },
-      body: JSON.stringify(requestBody)
+      body: JSON.stringify(requestBody),
+      signal
     });
 
     console.log("[DeepSeek] 收到响应状态:", response.status, response.statusText);
@@ -102,6 +104,9 @@ export const generateDeepSeekContent = async (
     return content;
   } catch (error) {
     console.error("[DeepSeek] API调用失败:", error);
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      throw error;
+    }
     if (error instanceof Error) {
       console.error("[DeepSeek] 错误详情:", error.message);
       console.error("[DeepSeek] 错误堆栈:", error.stack);
@@ -117,21 +122,55 @@ export const generateDeepSeekContent = async (
 export const checkDeepSeekApiStatus = async (): Promise<boolean> => {
   console.log("[DeepSeek] 开始检查API状态");
   try {
-    console.log("[DeepSeek] 发送状态检查请求到:", `${API_URL}?check=true`);
-    const response = await fetch(`${API_URL}?check=true`, {
-      method: 'GET',
+    console.log("[DeepSeek] 发送快速连接检查请求到:", API_URL);
+    
+    // 使用AbortController设置较短的超时时间
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3秒超时
+    
+    // 发送一个最小的请求来测试连接
+    const response = await fetch(API_URL, {
+      method: 'POST',
       headers: {
+        'Content-Type': 'application/json',
         'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
-      }
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {
+            role: 'user',
+            content: 'ping'
+          }
+        ],
+        max_tokens: 1,
+        temperature: 0
+      }),
+      signal: controller.signal
     });
+    
+    clearTimeout(timeoutId);
     console.log("[DeepSeek] 状态检查响应:", response.status, response.statusText);
-    return response.ok;
+    
+    // 即使返回错误，只要不是网络错误就认为API可用
+    if (response.status === 401 || response.status === 403) {
+      console.log("[DeepSeek] API密钥问题，但API服务可用");
+      return false; // 密钥问题，但服务可用
+    }
+    
+    return response.ok || response.status === 400; // 400也可能是正常的请求格式错误
   } catch (error) {
     console.error("[DeepSeek] API状态检查失败:", error);
     if (error instanceof Error) {
       console.error("[DeepSeek] 错误详情:", error.message);
       console.error("[DeepSeek] 错误堆栈:", error.stack);
     }
+    
+    // 如果是网络错误，抛出错误让上层处理
+    if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+      throw error;
+    }
+    
     return false;
   }
 } 

@@ -17,7 +17,8 @@ export interface AIRequestConfig {
 export async function callAIWithDynamicPrompt(
   replacements: Partial<DynamicPromptParams>,
   token: string,
-  config: AIRequestConfig
+  config: AIRequestConfig,
+  options?: { signal?: AbortSignal }
 ): Promise<string> {
   try {
     console.log('开始构建动态 prompt:', replacements);
@@ -41,14 +42,16 @@ export async function callAIWithDynamicPrompt(
         response = await generateDeepSeekContent(
           dynamicPrompt,
           config.model,
-          config.language || 'zh-CN'
+          config.language || 'zh-CN',
+          options?.signal
         );
         break;
       
       case 'gemini':
         response = await generateGeminiContent(
           dynamicPrompt,
-          config.language || 'zh-CN'
+          config.language || 'zh-CN',
+          options?.signal
         );
         break;
       

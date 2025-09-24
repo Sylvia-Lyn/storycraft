@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { Icon } from '@iconify/react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
 import downloadWork from './WorkDownloader'
 import { getCloudbaseAuth } from '../cloudbase'
@@ -122,6 +122,7 @@ interface KnowledgeItem {
 
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated, user } = useAuth();
   const { works, currentWork, isLoading, setCurrentWork, createWork, deleteWork } = useWorks();
   const { t, language } = useI18n();
@@ -208,12 +209,34 @@ const Sidebar: React.FC = () => {
     toast('新功能加班加点更新中～')
   }
 
+  // 根据作品类型导航到相应的编辑界面
+  const navigateToWorkEditor = (work: CloudWork) => {
+    const view = work.lastVisitedView
+    
+    // 优先使用lastVisitedView，如果没有则根据作品类型决定
+    if (view === 'outline') {
+      navigate('/app/outline')
+    } else if (view === 'script' || view === 'editor') {
+      navigate('/app/editor')
+    } else if (view === 'characters') {
+      navigate('/app/characters')
+    } else if (view === 'relations') {
+      navigate('/app/relations')
+    } else if (view === 'chapters') {
+      navigate('/app/chapters')
+    } else if (view === 'scenes') {
+      navigate('/app/scenes')
+    } else {
+      // 所有新创建的作品类型都跳转到编辑器页面
+      navigate('/app/editor')
+    }
+  }
+
   // 处理作品点击
   const handleWorkClick = async (work: CloudWork) => {
     try {
       setCurrentWork(work)
-      const view = work.lastVisitedView
-      console.log(`Navigating to ${view || 'default'} view for work: ${work.name}, type: ${work.type}`)
+      console.log(`Navigating to ${work.lastVisitedView || 'default'} view for work: ${work.name}, type: ${work.type}`)
 
       // 获取完整的作品信息
       const fullWork = await worksService.getWork(work._id || work.id || '')
@@ -224,36 +247,8 @@ const Sidebar: React.FC = () => {
       })
       window.dispatchEvent(event)
 
-      // 根据作品类型或上次访问的视图进行页面导航
-      // 优先使用lastVisitedView，如果没有则根据作品类型决定
-      if (view === 'outline') {
-        navigate('/app/outline')
-      } else if (view === 'script' || view === 'editor') {
-        navigate('/app/editor')
-      } else if (view === 'characters') {
-        navigate('/app/characters')
-      } else if (view === 'relations') {
-        navigate('/app/relations')
-      } else if (view === 'chapters') {
-        navigate('/app/chapters')
-      } else if (view === 'scenes') {
-        navigate('/app/scenes')
-      } else if (work.type === 'web_novel') {
-        // 网文类型默认导航到编辑器页面
-        navigate('/app/editor')
-      } else if (work.type === 'script') {
-        // 剧本类型默认导航到编辑器页面
-        navigate('/app/editor')
-      } else if (work.type === 'outline') {
-        // 大纲类型默认导航到大纲页面
-        navigate('/app/outline')
-      } else if (work.type === 'character') {
-        // 角色类型默认导航到角色页面
-        navigate('/app/characters')
-      } else {
-        // 其他情况默认导航到大纲页面
-        navigate('/app/outline')
-      }
+      // 导航到相应的编辑界面
+      navigateToWorkEditor(work)
 
       toast.success(t('common.workLoaded', { name: work.name }))
     } catch (error) {
@@ -310,6 +305,9 @@ const Sidebar: React.FC = () => {
       const newWork = await createWork(name, undefined, type)
       setIsCreateWorkModalOpen(false)
       toast.success(t('common.workCreated'))
+      
+      // 创建成功后自动跳转到相应的编辑界面
+      navigateToWorkEditor(newWork)
     } catch (error) {
       console.error('创建作品失败:', error)
       toast.error(t('common.workCreateFailed'))
@@ -514,6 +512,14 @@ const Sidebar: React.FC = () => {
       setWorkToDelete(null)
       
       toast.success(t('common.workDeleted'))
+
+      // 如果当前在编辑页且删除的是当前作品，则跳转回首页
+      const isEditorPage = location.pathname === '/app/editor'
+      const deletedId = work._id || work.id
+      const currentId = currentWork ? (currentWork._id || currentWork.id) : null
+      if (isEditorPage && deletedId && currentId && deletedId === currentId) {
+        navigate('/app/home')
+      }
     } catch (error) {
       console.error('删除作品失败:', error)
       toast.error(t('common.workDeleteFailed'))

@@ -5,6 +5,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { useOptimizationResults } from '../hooks/useOptimizationResults'
 import { Button, Select, message } from 'antd'
 import { useI18n } from '../contexts/I18nContext'
+import { checkApiConnection } from '../services/apiConnectionService'
 
 // 消息类型定义
 interface Message {
@@ -37,7 +38,9 @@ function MiddleSection() {
   const {
     isGenerating,
     optimizationResults,
+    setOptimizationResults,
     generateOptimizedContent,
+    cancelGeneration,
   } = useOptimizationResults();
 
   // 基础状态
@@ -160,8 +163,7 @@ function MiddleSection() {
         '', // currentDraftContent
         [], // quickResponses
         () => { }, // updateRecentInputs
-        true, // showLoading
-        0 // retryCount
+        true // showLoading
       );
     } catch (error) {
       console.error('生成回复失败:', error);
@@ -226,6 +228,51 @@ function MiddleSection() {
 
   // 文风选择状态
   const [selectedWritingStyle, setSelectedWritingStyle] = useState('ancient');
+  
+  // API连接状态
+  const [connectionStatus, setConnectionStatus] = useState<{
+    [key: string]: 'checking' | 'connected' | 'disconnected';
+  }>({});
+  
+  // 连接错误信息
+  const [connectionErrors, setConnectionErrors] = useState<{
+    [key: string]: string;
+  }>({});
+
+  // 检查API连接状态
+  const checkConnectionStatus = useCallback(async (model: string) => {
+    // 使用函数式更新来避免依赖connectionStatus
+    setConnectionStatus(prev => {
+      if (prev[model] === 'checking') return prev;
+      return { ...prev, [model]: 'checking' };
+    });
+    setConnectionErrors(prev => ({ ...prev, [model]: '' }));
+    
+    try {
+      const result = await checkApiConnection(model);
+      setConnectionStatus(prev => ({ 
+        ...prev, 
+        [model]: result.isConnected ? 'connected' : 'disconnected' 
+      }));
+      if (!result.isConnected && result.error) {
+        setConnectionErrors(prev => ({ ...prev, [model]: result.error! }));
+      }
+    } catch (error) {
+      console.error(`检查 ${model} 连接状态失败:`, error);
+      setConnectionStatus(prev => ({ ...prev, [model]: 'disconnected' }));
+      setConnectionErrors(prev => ({ 
+        ...prev, 
+        [model]: error instanceof Error ? error.message : '连接检查失败' 
+      }));
+    }
+  }, []); // 移除connectionStatus依赖
+
+  // 监听模型切换，自动检查连接状态
+  useEffect(() => {
+    if (selectedModel) {
+      checkConnectionStatus(selectedModel);
+    }
+  }, [selectedModel]); // 移除checkConnectionStatus依赖
 
   return (
     <div ref={containerRef} className="w-[520px] border-r border-gray-200 bg-white flex flex-col h-full min-h-0">
@@ -238,14 +285,34 @@ function MiddleSection() {
             <div className="flex items-center gap-3 mb-4">
               <div className="flex items-center gap-2 flex-1">
                 <span className="text-sm font-medium text-gray-700 min-w-[50px]">AI模型</span>
-                <Select
-                  value={selectedModel}
-                  onChange={(val) => selectModel(val)}
-                  style={{ width: 120 }}
-                  size="small"
-                  className="rounded-md"
-                  options={models.map(m => ({ value: m, label: m }))}
-                />
+                <div className="flex items-center gap-1">
+                  <Select
+                    value={selectedModel}
+                    onChange={(val) => selectModel(val)}
+                    style={{ width: 120 }}
+                    size="small"
+                    className="rounded-md"
+                    disabled={isGenerating}
+                    options={models.map(m => ({ value: m, label: m }))}
+                  />
+                  {/* 连接状态指示器 */}
+                  {selectedModel && (
+                    <div className="flex items-center">
+                      {connectionStatus[selectedModel] === 'checking' && (
+                        <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse" title="检查连接中..." />
+                      )}
+                      {connectionStatus[selectedModel] === 'connected' && (
+                        <div className="w-2 h-2 bg-green-500 rounded-full" title="连接正常" />
+                      )}
+                      {connectionStatus[selectedModel] === 'disconnected' && (
+                        <div 
+                          className="w-2 h-2 bg-red-500 rounded-full cursor-help" 
+                          title={connectionErrors[selectedModel] || "连接失败"}
+                        />
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="flex items-center gap-2 flex-1">
                 <span className="text-sm font-medium text-gray-700 min-w-[50px]">模式</span>
@@ -254,10 +321,13 @@ function MiddleSection() {
                     type={selectedMode === 'continue' ? 'primary' : 'text'} 
                     size="small"
                     onClick={() => setSelectedMode('continue')}
+                    disabled={isGenerating}
                     className={`px-3 py-1 h-8 border-0 rounded-none text-xs ${
-                      selectedMode === 'continue' 
-                        ? 'bg-blue-500 text-white shadow-sm' 
-                        : 'text-gray-600 hover:text-blue-500 hover:bg-blue-50'
+                      isGenerating
+                        ? 'text-gray-400'
+                        : (selectedMode === 'continue' 
+                            ? 'bg-blue-500 text-white shadow-sm'
+                            : 'text-gray-600 hover:text-blue-500 hover:bg-blue-50')
                     }`}
                   >
                     {t('editor.middleSection.continueMode')}
@@ -266,10 +336,13 @@ function MiddleSection() {
                     type={selectedMode === 'create' ? 'primary' : 'text'} 
                     size="small"
                     onClick={() => setSelectedMode('create')}
+                    disabled={isGenerating}
                     className={`px-3 py-1 h-8 border-0 rounded-none text-xs ${
-                      selectedMode === 'create' 
-                        ? 'bg-blue-500 text-white shadow-sm' 
-                        : 'text-gray-600 hover:text-blue-500 hover:bg-blue-50'
+                      isGenerating
+                        ? 'text-gray-400'
+                        : (selectedMode === 'create' 
+                            ? 'bg-blue-500 text-white shadow-sm'
+                            : 'text-gray-600 hover:text-blue-500 hover:bg-blue-50')
                     }`}
                   >
                     {t('editor.middleSection.createMode')}
@@ -288,6 +361,7 @@ function MiddleSection() {
                   style={{ width: 120 }} 
                   size="small" 
                   className="rounded-md"
+                  disabled={isGenerating}
                   options={styleOptions} 
                 />
               </div>
@@ -326,19 +400,7 @@ function MiddleSection() {
             </div>
           </div>
 
-          {/* AI助手状态区域 */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-sm font-medium text-blue-700">AI助手</span>
-                <span className="text-sm text-blue-600">{selectedModel}</span>
-              </div>
-              <div className="text-sm text-gray-500">
-                已就绪，随时为您提供创作帮助
-              </div>
-            </div>
-          </div>
+          
 
           {/* 对话消息区域 - 使用动态计算的高度 */}
           <div className="flex flex-col min-h-0" style={{ maxHeight: chatMaxHeight }}>
@@ -427,18 +489,38 @@ function MiddleSection() {
               rows={1}
             />
             <button
-              className={`absolute right-4 top-1/2 transform -translate-y-1/2 p-2 rounded-lg transition-all duration-200 ${
+              className={`absolute right-4 top-1/2 transform -translate-y-1/2 transition-all duration-200 ${
                 userInput.trim() && !isGenerating 
-                  ? 'text-white bg-blue-500 hover:bg-blue-600 shadow-sm' 
-                  : 'text-gray-400 bg-gray-100 cursor-not-allowed'
+                  ? 'text-white bg-blue-500 hover:bg-blue-600 shadow-sm p-2 rounded-lg' 
+                  : isGenerating
+                    ? 'text-white bg-blue-500 p-2 rounded-md' // 正方形按钮样式
+                    : 'text-gray-400 bg-gray-100 cursor-not-allowed p-2 rounded-lg'
               }`}
-              onClick={sendMessage}
-              disabled={!userInput.trim() || isGenerating}
+              onClick={isGenerating ? () => {
+                cancelGeneration();
+                // 追加系统消息：已取消本次创作
+                const cancelMsg: Message = {
+                  id: `cancel-${Date.now()}`,
+                  content: '已取消本次创作',
+                  role: 'system',
+                  timestamp: Date.now(),
+                  isUser: false,
+                  model: selectedModel
+                };
+                setMessages(prev => [...prev, cancelMsg]);
+                // 清空可能已有的优化结果展示
+                setOptimizationResults([]);
+              } : sendMessage}
+              disabled={isGenerating ? false : !userInput.trim()}
             >
-              <Icon 
-                icon={isGenerating ? "mdi:loading" : "mdi:send"} 
-                className={`w-4 h-4 ${isGenerating ? "animate-spin" : ""}`} 
-              />
+              {isGenerating ? (
+                <div className="w-4 h-4 bg-white rounded-sm"></div>
+              ) : (
+                <Icon 
+                  icon="mdi:send" 
+                  className="w-4 h-4" 
+                />
+              )}
             </button>
           </div>
         </div>

@@ -7,12 +7,35 @@ import { useI18n } from '../contexts/I18nContext';
 const SuperinputPage: React.FC = () => {
     const [draftContent, setDraftContent] = useState<string>('');
     const [selectedMode, setSelectedMode] = useState<string | null>(null);
+    const [selectedGenre, setSelectedGenre] = useState<string>('古风');
+    const [selectedPrompt, setSelectedPrompt] = useState<string>('提示词');
+    const [selectedCharacter, setSelectedCharacter] = useState<string>('角色');
+    const [selectedModel, setSelectedModel] = useState<string>('deepseek');
     const navigate = useNavigate();
     const { t } = useI18n();
     const [selectedCard, setSelectedCard] = useState<string | null>(null);
 
     const handleStartCreate = () => {
-        navigate('/app/editor');
+        // 收集用户选择的所有信息
+        const userSelections = {
+            mode: selectedMode,
+            genre: selectedGenre,
+            prompt: selectedPrompt,
+            character: selectedCharacter,
+            content: draftContent,
+            model: selectedModel
+        };
+        
+        console.log('[SuperinputPage] handleStartCreate called with userSelections:', userSelections);
+        
+        // 通过路由状态传递数据到editor页面
+        navigate('/app/editor', { 
+            state: { 
+                initialData: userSelections 
+            } 
+        });
+        
+        console.log('[SuperinputPage] Navigation to /app/editor with state:', { initialData: userSelections });
     };
 
     return (
@@ -66,8 +89,13 @@ const SuperinputPage: React.FC = () => {
 
                     <div className="bg-white p-6 rounded-lg border border-gray-200">
                         <div className="flex flex-wrap items-center gap-2 mb-3">
-                            <select className="bg-gray-900 text-white rounded px-2 py-1 text-xs font-semibold h-7">
-                                <option>Gemini-2.5-pro</option>
+                            <select 
+                                className="bg-gray-900 text-white rounded px-2 py-1 text-xs font-semibold h-7"
+                                value={selectedModel}
+                                onChange={(e) => setSelectedModel(e.target.value)}
+                            >
+                                <option value="deepseek">DeepSeek</option>
+                                <option value="gemini-2.5-pro">Gemini-2.5-pro</option>
                             </select>
                             <button
                                 className={`px-2 py-1 border rounded text-xs h-7 ${selectedMode === 'continue' ? 'border-blue-500 text-blue-500' : 'border-gray-300 text-gray-600'}`}
@@ -83,20 +111,32 @@ const SuperinputPage: React.FC = () => {
                             >
                                 创作模式
                             </button>
-                            <select className="border border-gray-300 rounded px-2 py-1 text-xs text-gray-600 h-7">
-                                <option>古风</option>
-                                <option>西方奇幻</option>
-                                <option>浪漫言情</option>
-                                <option>悬疑惊悚</option>
-                                <option>粉丝同人</option>
-                                <option>游戏竞技</option>
-                                <option>LGBTQ+</option>
+                            <select 
+                                className="border border-gray-300 rounded px-2 py-1 text-xs text-gray-600 h-7"
+                                value={selectedGenre}
+                                onChange={(e) => setSelectedGenre(e.target.value)}
+                            >
+                                <option value="古风">古风</option>
+                                <option value="西方奇幻">西方奇幻</option>
+                                <option value="浪漫言情">浪漫言情</option>
+                                <option value="悬疑惊悚">悬疑惊悚</option>
+                                <option value="粉丝同人">粉丝同人</option>
+                                <option value="游戏竞技">游戏竞技</option>
+                                <option value="LGBTQ+">LGBTQ+</option>
                             </select>
-                            <select className="border border-gray-300 rounded px-2 py-1 text-xs text-gray-600 h-7">
-                                <option>提示词</option>
+                            <select 
+                                className="border border-gray-300 rounded px-2 py-1 text-xs text-gray-600 h-7"
+                                value={selectedPrompt}
+                                onChange={(e) => setSelectedPrompt(e.target.value)}
+                            >
+                                <option value="提示词">提示词</option>
                             </select>
-                            <select className="border border-gray-300 rounded px-2 py-1 text-xs text-gray-600 h-7">
-                                <option>角色</option>
+                            <select 
+                                className="border border-gray-300 rounded px-2 py-1 text-xs text-gray-600 h-7"
+                                value={selectedCharacter}
+                                onChange={(e) => setSelectedCharacter(e.target.value)}
+                            >
+                                <option value="角色">角色</option>
                             </select>
                         </div>
                         <textarea

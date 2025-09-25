@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useI18n } from '../contexts/I18nContext';
-import { Select } from 'antd';
+import { Select, Button, ConfigProvider } from 'antd';
 
 const WelcomePage: React.FC = () => {
     const navigate = useNavigate();
     const { t } = useI18n();
     const [draftContent, setDraftContent] = useState<string>('');
-    const [selectedMode, setSelectedMode] = useState<string | null>(null);
+    const [selectedMode, setSelectedMode] = useState<string>('create');
     const [selectedProduct, setSelectedProduct] = useState<string>('storycraft');
     const [selectedGenre, setSelectedGenre] = useState<string>('古风');
 
@@ -41,6 +41,10 @@ const WelcomePage: React.FC = () => {
         console.log('联系我们');
     };
 
+    const handleNovelCreation = () => {
+        navigate('/app/editor');
+    };
+
     return (
         <div className="min-h-screen bg-black flex flex-col">
             {/* 顶部导航栏 */}
@@ -57,16 +61,34 @@ const WelcomePage: React.FC = () => {
                         {/* 中间业务导航 */}
                         <div className="hidden lg:block">
                             <div className="flex items-center space-x-8 lg:space-x-12">
-                                <span className="text-white text-lg hover:text-gray-300 cursor-pointer transition-colors">
+                                <span
+                                    className="text-white text-lg cursor-not-allowed transition-colors"
+                                    title="功能尚在开发中"
+                                    aria-disabled="true"
+                                >
                                     短剧创作
                                 </span>
-                                <span className="text-white text-lg hover:text-gray-300 cursor-pointer transition-colors">
+                                <span
+                                    className="text-white text-lg hover:text-gray-300 cursor-pointer transition-colors"
+                                    role="button"
+                                    tabIndex={0}
+                                    onClick={handleNovelCreation}
+                                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleNovelCreation(); } }}
+                                >
                                     小说创作
                                 </span>
-                                <span className="text-white text-lg hover:text-gray-300 cursor-pointer transition-colors">
+                                <span
+                                    className="text-white text-lg cursor-not-allowed transition-colors"
+                                    title="功能尚在开发中"
+                                    aria-disabled="true"
+                                >
                                     批量创作
                                 </span>
-                                <span className="text-white text-lg hover:text-gray-300 cursor-pointer transition-colors">
+                                <span
+                                    className="text-white text-lg cursor-not-allowed transition-colors"
+                                    title="功能尚在开发中"
+                                    aria-disabled="true"
+                                >
                                     互动短剧
                                 </span>
                             </div>
@@ -142,21 +164,45 @@ const WelcomePage: React.FC = () => {
                                 dropdownStyle={{ backgroundColor: 'transparent' }}
                                 popupClassName="custom-select-dropdown"
                             />
-                            <div className="flex items-center gap-8">
-                                <button
-                                    className={`px-10 py-1 h-9 border rounded text-[18px] leading-[28px] font-normal bg-black hover:border-white hover:text-white transition-colors ${selectedMode === 'continue' ? 'border-white text-white bg-gray-800' : 'border-gray-500 text-gray-300'}`}
-                                    onClick={() => setSelectedMode('continue')}
-                                    type="button"
-                                >
-                                    续写模式
-                                </button>
-                                <button
-                                    className={`px-10 py-1 h-9 border rounded text-[18px] leading-[28px] font-normal bg-black hover:border-white hover:text-white transition-colors ${selectedMode === 'create' ? 'border-white text-white bg-gray-800' : 'border-gray-500 text-gray-300'}`}
-                                    onClick={() => setSelectedMode('create')}
-                                    type="button"
-                                >
-                                    创作模式
-                                </button>
+                            <div className="flex items-center gap-8" role="radiogroup" aria-label="创作模式选择">
+                                <ConfigProvider wave={{ disabled: true }} theme={{ components: { Button: { defaultColor: 'rgba(255,255,255,0.9)', defaultBorderColor: 'rgba(255,255,255,0.5)', defaultBg: 'transparent', defaultHoverColor: 'rgba(255,255,255,1)', defaultHoverBorderColor: 'rgba(255,255,255,0.9)', defaultHoverBg: 'transparent', defaultActiveColor: '#ffffff', defaultActiveBorderColor: '#ffffff', defaultActiveBg: 'transparent', ghostBg: 'transparent' } } }}>
+                                    <Button
+                                        ghost={selectedMode !== 'continue'}
+                                        type="default"
+                                        role="radio"
+                                        aria-checked={selectedMode === 'continue'}
+                                        className={`${selectedMode === 'continue' ? '' : 'border-gray-500 text-gray-300 bg-transparent'} px-10 h-9 text-[18px] leading-[28px] font-normal`}
+                                        style={{
+                                            backgroundColor: selectedMode === 'continue' ? '#ffffff' : 'transparent',
+                                            color: selectedMode === 'continue' ? '#000000' : undefined,
+                                            borderRadius: 6,
+                                            borderWidth: 1,
+                                            borderColor: selectedMode === 'continue' ? '#ffffff' : undefined
+                                        }}
+                                        onClick={() => setSelectedMode('continue')}
+                                    >
+                                        续写模式
+                                    </Button>
+                                </ConfigProvider>
+                                <ConfigProvider wave={{ disabled: true }} theme={{ components: { Button: { defaultColor: 'rgba(255,255,255,0.9)', defaultBorderColor: 'rgba(255,255,255,0.5)', defaultBg: 'transparent', defaultHoverColor: 'rgba(255,255,255,1)', defaultHoverBorderColor: 'rgba(255,255,255,0.9)', defaultHoverBg: 'transparent', defaultActiveColor: '#ffffff', defaultActiveBorderColor: '#ffffff', defaultActiveBg: 'transparent', ghostBg: 'transparent' } } }}>
+                                    <Button
+                                        ghost={selectedMode !== 'create'}
+                                        type="default"
+                                        role="radio"
+                                        aria-checked={selectedMode === 'create'}
+                                        className={`${selectedMode === 'create' ? '' : 'border-gray-500 text-gray-300 bg-transparent'} px-10 h-9 text-[18px] leading-[28px] font-normal`}
+                                        style={{
+                                            backgroundColor: selectedMode === 'create' ? '#ffffff' : 'transparent',
+                                            color: selectedMode === 'create' ? '#000000' : undefined,
+                                            borderRadius: 6,
+                                            borderWidth: 1,
+                                            borderColor: selectedMode === 'create' ? '#ffffff' : undefined
+                                        }}
+                                        onClick={() => setSelectedMode('create')}
+                                    >
+                                        创作模式
+                                    </Button>
+                                </ConfigProvider>
                             </div>
                             <div className="flex items-center gap-4">
                                 <span className="text-lg text-gray-300">

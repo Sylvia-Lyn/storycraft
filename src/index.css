@@ -66,3 +66,54 @@ button {
 button:hover {
   border-color: #646cff;
 }
+
+/* Custom styles for WelcomePage Select components */
+.custom-select-dropdown .ant-select-item {
+  color: white !important;
+}
+
+.custom-select-dropdown .ant-select-item:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  color: white !important;
+}
+
+.custom-select-dropdown .ant-select-item-option-selected {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+}
+
+/* Make Select selector area transparent with white text */
+.welcome-select .ant-select-selector {
+  background-color: transparent !important;
+  color: white !important;
+}
+
+.welcome-select .ant-select-selection-item,
+.welcome-select .ant-select-selection-placeholder {
+  color: white !important;
+}
+
+.welcome-select .ant-select-arrow {
+  color: white !important;
+}
+
+/* Remove AntD blue focus/active styles for WelcomePage selects */
+.welcome-select.ant-select-focused .ant-select-selector,
+.welcome-select.ant-select-open .ant-select-selector {
+  border-color: white !important; /* keep gray */
+  box-shadow: none !important;      /* remove blue glow */
+}
+
+/* Keep appearance stable on hover in all states */
+.welcome-select:hover .ant-select-selector,
+.welcome-select.ant-select:not(.ant-select-disabled):hover .ant-select-selector,
+.welcome-select.ant-select-open:hover .ant-select-selector,
+.welcome-select.ant-select-focused:hover .ant-select-selector {
+  border-color: white !important;
+  background-color: transparent !important;
+}
+
+/* Prevent color/opacity transitions from causing visual change */
+.welcome-select .ant-select-selector {
+  transition: none !important;
+}

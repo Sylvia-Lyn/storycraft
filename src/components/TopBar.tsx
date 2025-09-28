@@ -7,9 +7,31 @@ import { useI18n, languageNames, Language } from '../contexts/I18nContext';
 
 const TopBar: React.FC = () => {
     const navigate = useNavigate();
-    const { user, isAuthenticated, logout } = useAuth();
+    const { user, isAuthenticated, logout, refreshUserInfo } = useAuth();
     const { language, setLanguage, t, canChangeLanguage } = useI18n();
     const [userMenuVisible, setUserMenuVisible] = useState(false);
+
+    // 获取会员状态显示文本
+    const getMemberStatusText = () => {
+        if (!isAuthenticated || !user) {
+            return t('topbar.vip');
+        }
+
+        const planText = user.user_plan === 'free' 
+            ? t('vip.freePlan')
+            : user.user_plan === 'chinese' 
+            ? t('vip.chinesePlan')
+            : t('vip.multilingualPlan');
+        
+        return `${planText} (${user.user_point || '0'}${t('topbar.points')})`;
+    };
+
+    // 当用户登录状态改变时刷新用户信息
+    React.useEffect(() => {
+        if (isAuthenticated) {
+            refreshUserInfo();
+        }
+    }, [isAuthenticated]);
 
     const handleLogout = () => {
         logout();
@@ -93,7 +115,7 @@ const TopBar: React.FC = () => {
                     onClick={() => navigate('/app/vip')}
                     className="px-4 py-2 text-sm font-medium text-blue-700 bg-blue-100 border border-blue-200 rounded-md hover:bg-blue-200 flex items-center"
                 >
-                    <CrownOutlined className="mr-1" />{t('topbar.vip')}
+                    <CrownOutlined className="mr-1" />{getMemberStatusText()}
                 </button>
                 {isAuthenticated && user ? (
                     <Dropdown overlay={userMenu} trigger={['click']} onVisibleChange={setUserMenuVisible}>

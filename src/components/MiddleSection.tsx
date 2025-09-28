@@ -2,7 +2,7 @@ import { Icon } from '@iconify/react'
 import Navigation from './Navigation'
 import { useAppState } from '../hooks/useAppState'
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { useOptimizationResults } from '../hooks/useOptimizationResults'
+import { useOptimizationResults, modelChangeEventBus } from '../hooks/useOptimizationResults'
 import { Button, Select, message } from 'antd'
 import { useI18n } from '../contexts/I18nContext'
 import { checkApiConnection } from '../services/apiConnectionService'
@@ -17,7 +17,7 @@ interface Message {
   model?: string;
 }
 
-function MiddleSection() {
+function MiddleSection({ initialData }: { initialData?: any }) {
   const { t } = useI18n();
   const {
     selectedTab,
@@ -42,6 +42,9 @@ function MiddleSection() {
     generateOptimizedContent,
     cancelGeneration,
   } = useOptimizationResults();
+
+  // 用于跟踪是否已经处理过初始数据
+  const hasProcessedInitialData = useRef(false);
 
   // 基础状态
   const [messages, setMessages] = useState<Message[]>([
@@ -136,6 +139,136 @@ function MiddleSection() {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages]);
+
+  // 处理从HomePage传递的初始数据
+  useEffect(() => {
+    console.log('[MiddleSection] useEffect triggered with initialData:', initialData);
+    if (initialData && initialData.content) {
+      console.log('[MiddleSection] Processing initial data...');
+      
+      if (hasProcessedInitialData.current) {
+        console.log('[MiddleSection] Initial data already processed, skipping...');
+        return;
+      }
+      
+      hasProcessedInitialData.current = true;
+      
+      // 设置创作模式
+      if (initialData.mode) {
+        console.log('[MiddleSection] Setting mode to:', initialData.mode);
+        setSelectedMode(initialData.mode);
+      }
+
+      // 设置模型（来自首页）
+      if (initialData.model) {
+        // 将首页的模型值映射为应用内部的模型标识
+        const modelMapping: { [key: string]: string } = {
+          'deepseek': 'deepseek-r1',
+          'gemini-2.5-pro': 'Gemini',
+          'Gemini': 'Gemini',
+          'deepseek-r1': 'deepseek-r1'
+        };
+        const mappedModel = modelMapping[initialData.model] || 'Gemini';
+        console.log('[MiddleSection] Selecting initial model:', initialData.model, '=>', mappedModel);
+        try {
+          // 先同步通知订阅者，尽量在首次发送前切换内部模型
+          modelChangeEventBus.notify(mappedModel);
+          selectModel(mappedModel);
+        } catch (err) {
+          console.warn('[MiddleSection] selectModel call failed, fallback setSelectedModel not available here', err);
+        }
+      }
+      
+      // 设置文风参考（题材）
+      if (initialData.genre) {
+        console.log('[MiddleSection] Setting writing style to:', initialData.genre);
+        // 将中文题材映射到英文value
+        const genreMapping: { [key: string]: string } = {
+          '古风': 'ancient',
+          '西方奇幻': 'western-fantasy',
+          '浪漫言情': 'romance',
+          '悬疑惊悚': 'suspense-thriller',
+          '粉丝同人': 'fan-fiction',
+          '游戏竞技': 'gaming-esports',
+          'LGBTQ+': 'lgbtq'
+        };
+        
+        const mappedValue = genreMapping[initialData.genre] || 'ancient';
+        console.log('[MiddleSection] Mapped genre to value:', mappedValue);
+        setSelectedWritingStyle(mappedValue);
+      }
+      
+      // 只将内容部分发送到对话框
+      const contentMessage = initialData.content;
+      console.log('[MiddleSection] Sending content message:', contentMessage);
+
+      // 直接发送消息，不设置用户输入框（给模型切换预留更长缓冲时间）
+      const delay = initialData.model ? 800 : 500;
+      setTimeout(() => {
+        console.log('[MiddleSection] setTimeout callback executing, calling sendInitialMessage');
+        sendInitialMessage(contentMessage);
+      }, delay);
+    }
+  }, [initialData]);
+
+  // 发送初始消息
+  const sendInitialMessage = async (messageContent: string) => {
+    console.log('[MiddleSection] sendInitialMessage called with:', messageContent);
+    console.log('[MiddleSection] isGenerating:', isGenerating);
+    
+    if (!messageContent.trim() || isGenerating) {
+      console.log('[MiddleSection] sendInitialMessage early return - empty content or generating');
+      return;
+    }
+
+    console.log('[MiddleSection] Creating user message...');
+    // 创建用户消息
+    const userMessage: Message = {
+      id: `user-${Date.now()}`,
+      content: messageContent,
+      role: 'user',
+      timestamp: Date.now(),
+      isUser: true,
+      model: selectedModel
+    };
+
+    console.log('[MiddleSection] User message created:', userMessage);
+    console.log('[MiddleSection] Adding message to messages list...');
+
+    // 更新消息列表
+    setMessages(prev => {
+      console.log('[MiddleSection] Current messages before adding:', prev);
+      const newMessages = [...prev, userMessage];
+      console.log('[MiddleSection] New messages after adding:', newMessages);
+      return newMessages;
+    });
+
+    try {
+      console.log('[MiddleSection] Calling generateOptimizedContent...');
+      // 使用generateOptimizedContent处理对话
+      await generateOptimizedContent(
+        messageContent,
+        '', // previousDraftContent
+        '', // currentDraftContent
+        [], // quickResponses
+        () => { }, // updateRecentInputs
+        true // showLoading
+      );
+      console.log('[MiddleSection] generateOptimizedContent completed');
+    } catch (error) {
+      console.error('[MiddleSection] 生成回复失败:', error);
+      // 添加错误消息
+      const errorMessage: Message = {
+        id: `error-${Date.now()}`,
+        content: t('editor.middleSection.generateReplyFailed'),
+        role: 'assistant',
+        timestamp: Date.now(),
+        isUser: false,
+        model: selectedModel
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    }
+  };
 
   // 发送消息
   const sendMessage = async () => {
@@ -284,7 +417,7 @@ function MiddleSection() {
             {/* 第一行：模型选择和模式切换 */}
             <div className="flex items-center gap-3 mb-4">
               <div className="flex items-center gap-2 flex-1">
-                <span className="text-sm font-medium text-gray-700 min-w-[50px]">AI模型</span>
+                <span className="text-sm font-medium text-gray-700 min-w-[50px]">{t('editor.middleSection.aiModel')}</span>
                 <div className="flex items-center gap-1">
                   <Select
                     value={selectedModel}
@@ -315,14 +448,14 @@ function MiddleSection() {
                 </div>
               </div>
               <div className="flex items-center gap-2 flex-1">
-                <span className="text-sm font-medium text-gray-700 min-w-[50px]">模式</span>
+                <span className="text-sm font-medium text-gray-700 min-w-[50px]">{t('editor.middleSection.mode')}</span>
                 <div className="flex bg-white rounded-md border border-gray-300 overflow-hidden">
                   <Button 
                     type={selectedMode === 'continue' ? 'primary' : 'text'} 
                     size="small"
                     onClick={() => setSelectedMode('continue')}
                     disabled={isGenerating}
-                    className={`px-3 py-1 h-8 border-0 rounded-none text-xs ${
+                    className={`px-2 py-1 h-8 border-0 rounded-none text-xs flex-1 ${
                       isGenerating
                         ? 'text-gray-400'
                         : (selectedMode === 'continue' 
@@ -337,7 +470,7 @@ function MiddleSection() {
                     size="small"
                     onClick={() => setSelectedMode('create')}
                     disabled={isGenerating}
-                    className={`px-3 py-1 h-8 border-0 rounded-none text-xs ${
+                    className={`px-2 py-1 h-8 border-0 rounded-none text-xs flex-1 ${
                       isGenerating
                         ? 'text-gray-400'
                         : (selectedMode === 'create' 
@@ -354,7 +487,7 @@ function MiddleSection() {
             {/* 第二行：功能选项 */}
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2 flex-1">
-                <span className="text-sm font-medium text-gray-700 min-w-[50px]">文风参考</span>
+                <span className="text-sm font-medium text-gray-700 min-w-[50px]">{t('editor.middleSection.writingStyle')}</span>
                 <Select 
                   value={selectedWritingStyle}
                   onChange={(value) => setSelectedWritingStyle(value)}
@@ -367,7 +500,7 @@ function MiddleSection() {
               </div>
               
               <div className="flex items-center gap-2 flex-1">
-                <span className="text-sm font-medium text-gray-700 min-w-[50px]">提示词</span>
+                <span className="text-sm font-medium text-gray-700 min-w-[50px]">{t('editor.middleSection.promptLabel')}</span>
                 <div 
                   className="relative cursor-not-allowed group"
                   onClick={handleLockedFeatureClick}

@@ -34,19 +34,33 @@ const CREDENTIALS_KEY = `credentials_${ENV_ID}`;
 export function getAccessToken(): string | null {
     if (typeof window === 'undefined') return null;
     
+    console.log('🔐 [CloudBase] getAccessToken - 开始获取token:');
+    
     // 首先尝试从 AuthContext 的 token 获取
     const authToken = localStorage.getItem('token');
+    console.log('  - localStorage中的token:', authToken ? authToken.substring(0, 50) + '...' : 'null');
+    
     if (authToken) {
+        console.log('  - 返回: localStorage中的token');
         return authToken;
     }
     
     // 如果没有，尝试从 credentials 获取
     const raw = localStorage.getItem(CREDENTIALS_KEY);
-    if (!raw) return null;
+    console.log('  - credentials原始数据:', raw ? '存在' : '不存在');
+    
+    if (!raw) {
+        console.log('  - 返回: null (无token)');
+        return null;
+    }
+    
     try {
       const { access_token } = JSON.parse(raw);
+      console.log('  - credentials中的access_token:', access_token ? access_token.substring(0, 50) + '...' : 'null');
+      console.log('  - 返回: credentials中的access_token');
       return access_token || null;
     } catch {
+      console.log('  - 返回: null (解析失败)');
       return null;
     }
 }
@@ -55,13 +69,37 @@ export function getAuthHeader(): string | null {
     const token = getAccessToken();
     if (!token) return null;
     
+    console.log('🔐 [CloudBase] getAuthHeader - Token调试信息:');
+    console.log('  - 原始token:', token);
+    console.log('  - token类型:', typeof token);
+    console.log('  - token长度:', token.length);
+    console.log('  - 是否包含Bearer:', token.startsWith('Bearer '));
+    console.log('  - 前50个字符:', token.substring(0, 50));
+    
+    // 解析JWT token检查过期时间
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const exp = payload.exp;
+        const now = Math.floor(Date.now() / 1000);
+        const expired = now > exp;
+        console.log('  - Token过期时间:', new Date(exp * 1000));
+        console.log('  - 当前时间:', new Date());
+        console.log('  - Token是否过期:', expired);
+        console.log('  - 剩余时间(秒):', exp - now);
+    } catch (e) {
+        console.log('  - 无法解析JWT token:', e.message);
+    }
+    
     // 如果 token 已经包含 Bearer 前缀，直接返回
     if (token.startsWith('Bearer ')) {
+        console.log('  - 返回: 直接使用带Bearer前缀的token');
         return token;
     }
     
     // 否则添加 Bearer 前缀
-    return `Bearer ${token}`;
+    const bearerToken = `Bearer ${token}`;
+    console.log('  - 返回: 添加Bearer前缀后的token:', bearerToken.substring(0, 50) + '...');
+    return bearerToken;
 }
 
 // 确保已登录到 CloudBase（如未登录则匿名登录）

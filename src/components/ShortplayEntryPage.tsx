@@ -9,6 +9,7 @@ import {
   type TaskInfo 
 } from '../services/scriptGeneratorService';
 import { useWorks } from '../contexts/WorksContext';
+import mammoth from 'mammoth';
 
 function ShortplayEntryPage() {
   const navigate = useNavigate();
@@ -20,6 +21,23 @@ function ShortplayEntryPage() {
   const [taskStatus, setTaskStatus] = useState<string>('');
   const [currentTaskId, setCurrentTaskId] = useState<string>('');
   const { currentWork, saveWorkContent } = useWorks();
+
+  // 文件转换函数
+  const convertFileToText = async (file: File): Promise<string> => {
+    const fileName = file.name.toLowerCase();
+    
+    if (fileName.endsWith('.txt') || fileName.endsWith('.md')) {
+      // 纯文本文件
+      return await file.text();
+    } else if (fileName.endsWith('.docx')) {
+      // Word 文档
+      const arrayBuffer = await file.arrayBuffer();
+      const result = await mammoth.extractRawText({ arrayBuffer });
+      return result.value;
+    } else {
+      throw new Error('不支持的文件格式，请上传 .txt、.md 或 .docx 文件');
+    }
+  };
 
   const handleGoOutline = () => {
     navigate('/app/outline');
@@ -39,28 +57,8 @@ function ShortplayEntryPage() {
         setIsUploading(true);
         setUploadProgress('正在解析文件...');
         
-        // 检查文件类型
-        const fileName = file.name.toLowerCase();
-        let text: string;
-        
-        if (fileName.endsWith('.txt') || fileName.endsWith('.md')) {
-          // 纯文本文件
-          text = await file.text();
-        } else if (fileName.endsWith('.docx')) {
-          // Word 文档 - 暂时提示用户转换为文本
-          alert('请将 Word 文档另存为 .txt 格式后重新上传，或复制内容到记事本保存为 .txt 文件');
-          setIsUploading(false);
-          return;
-        } else if (fileName.endsWith('.pdf')) {
-          // PDF 文档 - 暂时提示用户转换为文本
-          alert('请将 PDF 文档内容复制到记事本，保存为 .txt 文件后重新上传');
-          setIsUploading(false);
-          return;
-        } else {
-          alert('不支持的文件格式，请上传 .txt 或 .md 文件');
-          setIsUploading(false);
-          return;
-        }
+        // 使用文件转换函数
+        const text = await convertFileToText(file);
         
         // 检查文本内容是否有效
         if (!text || text.trim().length < 100) {
@@ -69,7 +67,7 @@ function ShortplayEntryPage() {
           return;
         }
         
-        console.log('[文件解析] 文件类型:', fileName, '内容长度:', text.length);
+        console.log('[文件解析] 文件类型:', file.name, '内容长度:', text.length);
         
         setUploadProgress('正在提交任务...');
         
@@ -147,26 +145,30 @@ function ShortplayEntryPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* 自主创作 */}
-          <button
-            className="w-full h-40 rounded-lg border border-gray-300 hover:border-black hover:shadow bg-white px-6 py-4 text-left"
-            onClick={handleGoOutline}
+          <div 
+            className="w-full h-40 rounded-lg border border-gray-300 bg-gray-100 px-6 py-4 text-left cursor-not-allowed opacity-60 relative group"
+            title="功能尚在开发中"
           >
-            <div className="text-lg font-semibold mb-2">自主创作</div>
-            <div className="text-gray-500 text-sm">从空白大纲开始创作短剧剧本</div>
-          </button>
+            <div className="text-lg font-semibold mb-2 text-gray-500">自主创作</div>
+            <div className="text-gray-400 text-sm">从空白大纲开始创作短剧剧本</div>
+            {/* 悬停提示 */}
+            <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
+              功能尚在开发中
+            </div>
+          </div>
 
           {/* 导入小说创作 */}
           <div className="w-full h-40 rounded-lg border border-gray-300 bg-white px-6 py-4 flex flex-col justify-between">
             <div>
               <div className="text-lg font-semibold mb-2">导入小说创作</div>
-              <div className="text-gray-500 text-sm">上传你的小说文本，我们将帮助你生成大纲与分幕</div>
+              <div className="text-gray-500 text-sm">上传你的小说文本（支持 .txt、.md、.docx 格式），我们将帮助你生成大纲与分幕</div>
             </div>
 
             <div>
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".txt,.md"
+                accept=".txt,.md,.docx"
                 className="hidden"
                 onChange={handleFileChange}
               />

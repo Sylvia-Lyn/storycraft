@@ -26,9 +26,10 @@ function DialogTrigger({ children, asChild = false }: { children: React.ReactNod
   const { onOpenChange } = React.useContext(DialogContext)!;
   
   if (asChild && React.isValidElement(children)) {
-    return React.cloneElement(children, {
+    // Clone element while allowing injection of onClick
+    return React.cloneElement(children as React.ReactElement<any>, {
       onClick: () => onOpenChange(true),
-    });
+    } as any);
   }
   
   return (

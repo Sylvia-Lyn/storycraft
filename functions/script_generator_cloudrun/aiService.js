@@ -418,7 +418,36 @@ function parseAIResponse(response, type) {
         if (jsonMatch) {
             const jsonText = jsonMatch[0].trim();
             console.log(`尝试解析${type}的JSON:`, jsonText.substring(0, 200) + '...');
-            return JSON.parse(jsonText);
+            
+            // 尝试直接解析
+            try {
+                return JSON.parse(jsonText);
+            } catch (parseError) {
+                console.warn(`直接解析${type}失败，尝试修复JSON:`, parseError.message);
+                
+                // 尝试修复JSON
+                const fixedJson = fixJsonString(jsonText);
+                if (fixedJson) {
+                    try {
+                        return JSON.parse(fixedJson);
+                    } catch (fixError) {
+                        console.warn(`修复后的JSON仍然无法解析:`, fixError.message);
+                    }
+                }
+                
+                // 如果修复失败，尝试提取有效内容
+                const extractedContent = extractValidContent(jsonText, type);
+                if (extractedContent) {
+                    return extractedContent;
+                }
+                
+                // 最后返回错误信息
+                return {
+                    error: parseError.message,
+                    raw_response: jsonText,
+                    type: type
+                };
+            }
         }
         
         // 如果没有找到JSON，返回原始响应
@@ -436,6 +465,208 @@ function parseAIResponse(response, type) {
             type: type,
             error: error.message
         };
+    }
+}
+
+/**
+ * 修复JSON字符串中的常见问题
+ * @param {string} jsonString 原始JSON字符串
+ * @returns {string|null} 修复后的JSON字符串
+ */
+function fixJsonString(jsonString) {
+    try {
+        let fixed = jsonString;
+        
+        // 1. 移除BOM标记
+        fixed = fixed.replace(/^\uFEFF/, '');
+        
+        // 2. 修复常见的JSON问题
+        // 移除控制字符（除了必要的换行符和制表符）
+        fixed = fixed.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+        
+        // 3. 修复不正确的引号
+        // 将中文引号替换为英文引号
+        fixed = fixed.replace(/[""]/g, '"');
+        fixed = fixed.replace(/['']/g, "'");
+        
+        // 修复字符串内部的中文引号（需要转义）
+        // 处理字符串值中的中文引号，将其转义
+        fixed = fixed.replace(/"([^"]*)"([^"]*)"([^"]*)"/g, '"$1\\"$2\\"$3"');
+        
+        // 更全面的中文引号处理
+        // 处理字符串值中的中文引号，将其转义为英文引号
+        fixed = fixed.replace(/"([^"]*)"([^"]*)"/g, '"$1\\"$2\\"');
+        fixed = fixed.replace(/"([^"]*)"([^"]*)"/g, '"$1\\"$2\\"');
+        
+        // 4. 修复可能的编码问题
+        // 移除或替换可能导致解析错误的字符
+        fixed = fixed.replace(/[\u200B-\u200D\uFEFF]/g, ''); // 零宽字符
+        
+        // 5. 尝试修复不完整的JSON
+        // 如果JSON以逗号结尾，移除它
+        fixed = fixed.replace(/,(\s*[}\]])/g, '$1');
+        
+        // 6. 修复可能的字符串转义问题
+        // 确保字符串中的引号被正确转义
+        fixed = fixed.replace(/(?<!\\)"(?=.*")/g, '\\"');
+        
+        return fixed;
+    } catch (error) {
+        console.error('修复JSON时出错:', error);
+        return null;
+    }
+}
+
+/**
+ * 从损坏的JSON中提取有效内容
+ * @param {string} jsonString 原始JSON字符串
+ * @param {string} type 内容类型
+ * @returns {Object|Array|null} 提取的内容
+ */
+function extractValidContent(jsonString, type) {
+    try {
+        // 根据类型尝试不同的提取策略
+        if (type === 'characters') {
+            return extractCharactersFromText(jsonString);
+        } else if (type === 'outline') {
+            return extractOutlineFromText(jsonString);
+        } else if (type === 'scenes') {
+            return extractScenesFromText(jsonString);
+        }
+        
+        return null;
+    } catch (error) {
+        console.error(`提取${type}内容时出错:`, error);
+        return null;
+    }
+}
+
+/**
+ * 从文本中提取角色信息
+ * @param {string} text 包含角色信息的文本
+ * @returns {Array|null} 角色数组
+ */
+function extractCharactersFromText(text) {
+    try {
+        const characters = [];
+        
+        // 尝试使用正则表达式提取角色信息
+        const characterMatches = text.match(/\{[^}]*"name"[^}]*\}/g);
+        
+        if (characterMatches) {
+            for (const match of characterMatches) {
+                try {
+                    // 尝试解析单个角色对象
+                    const character = JSON.parse(match);
+                    if (character.name) {
+                        characters.push(character);
+                    }
+                } catch (e) {
+                    // 如果单个角色解析失败，尝试手动提取关键信息
+                    const nameMatch = match.match(/"name"\s*:\s*"([^"]+)"/);
+                    const descMatch = match.match(/"description"\s*:\s*"([^"]+)"/);
+                    
+                    if (nameMatch) {
+                        characters.push({
+                            name: nameMatch[1],
+                            description: descMatch ? descMatch[1] : '角色描述提取失败',
+                            personality: '性格特点提取失败',
+                            background: '背景故事提取失败',
+                            role: '角色类型提取失败',
+                            motivation: '角色动机提取失败',
+                            relationships: '角色关系提取失败'
+                        });
+                    }
+                }
+            }
+        }
+        
+        return characters.length > 0 ? characters : null;
+    } catch (error) {
+        console.error('提取角色信息时出错:', error);
+        return null;
+    }
+}
+
+/**
+ * 从文本中提取大纲信息
+ * @param {string} text 包含大纲信息的文本
+ * @returns {Object|null} 大纲对象
+ */
+function extractOutlineFromText(text) {
+    try {
+        const outline = {};
+        
+        // 尝试提取各个字段
+        const titleMatch = text.match(/"title"\s*:\s*"([^"]+)"/);
+        const summaryMatch = text.match(/"summary"\s*:\s*"([^"]+)"/);
+        const themeMatch = text.match(/"theme"\s*:\s*"([^"]+)"/);
+        const genreMatch = text.match(/"genre"\s*:\s*"([^"]+)"/);
+        
+        if (titleMatch) outline.title = titleMatch[1];
+        if (summaryMatch) outline.summary = summaryMatch[1];
+        if (themeMatch) outline.theme = themeMatch[1];
+        if (genreMatch) outline.genre = genreMatch[1];
+        
+        // 设置默认值
+        outline.structure = outline.structure || '故事结构提取失败';
+        outline.tone = outline.tone || '整体基调提取失败';
+        
+        return Object.keys(outline).length > 0 ? outline : null;
+    } catch (error) {
+        console.error('提取大纲信息时出错:', error);
+        return null;
+    }
+}
+
+/**
+ * 从文本中提取场景信息
+ * @param {string} text 包含场景信息的文本
+ * @returns {Array|null} 场景数组
+ */
+function extractScenesFromText(text) {
+    try {
+        const scenes = [];
+        
+        // 尝试使用正则表达式提取场景信息
+        const sceneMatches = text.match(/\{[^}]*"scene_number"[^}]*\}/g);
+        
+        if (sceneMatches) {
+            for (const match of sceneMatches) {
+                try {
+                    // 尝试解析单个场景对象
+                    const scene = JSON.parse(match);
+                    if (scene.scene_number) {
+                        scenes.push(scene);
+                    }
+                } catch (e) {
+                    // 如果单个场景解析失败，尝试手动提取关键信息
+                    const numberMatch = match.match(/"scene_number"\s*:\s*(\d+)/);
+                    const titleMatch = match.match(/"title"\s*:\s*"([^"]+)"/);
+                    
+                    if (numberMatch) {
+                        scenes.push({
+                            scene_number: parseInt(numberMatch[1]),
+                            title: titleMatch ? titleMatch[1] : '场景标题提取失败',
+                            characters: [],
+                            setting: {
+                                time: '时间提取失败',
+                                location: '地点提取失败',
+                                atmosphere: '氛围提取失败'
+                            },
+                            dialogue: [],
+                            narrative: '场景描述提取失败',
+                            summary: '场景总结提取失败'
+                        });
+                    }
+                }
+            }
+        }
+        
+        return scenes.length > 0 ? scenes : null;
+    } catch (error) {
+        console.error('提取场景信息时出错:', error);
+        return null;
     }
 }
 

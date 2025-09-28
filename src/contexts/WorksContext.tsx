@@ -31,8 +31,26 @@ interface WorksProviderProps {
 }
 
 export const WorksProvider: React.FC<WorksProviderProps> = ({ children }) => {
-    const { isAuthenticated } = useAuth();
-    const { t } = useI18n();
+    // 添加错误边界处理，防止热重载时的Context错误
+    let authContext;
+    let i18nContext;
+    
+    try {
+        authContext = useAuth();
+    } catch (error) {
+        console.warn('WorksProvider: AuthContext not available, using fallback');
+        authContext = { isAuthenticated: false };
+    }
+    
+    try {
+        i18nContext = useI18n();
+    } catch (error) {
+        console.warn('WorksProvider: I18nContext not available, using fallback');
+        i18nContext = { t: (key: string) => key };
+    }
+    
+    const { isAuthenticated } = authContext;
+    const { t } = i18nContext;
     const [currentWork, setCurrentWork] = useState<Work | null>(null);
     const [works, setWorks] = useState<Work[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -158,9 +176,12 @@ export const WorksProvider: React.FC<WorksProviderProps> = ({ children }) => {
 
     // 当认证状态改变时，自动加载作品列表
     useEffect(() => {
+        console.log('WorksContext useEffect触发 - isAuthenticated:', isAuthenticated);
         if (isAuthenticated) {
+            console.log('认证状态为true，调用loadWorks');
             loadWorks();
         } else {
+            console.log('认证状态为false，清空作品列表');
             setWorks([]);
             setCurrentWork(null);
         }

@@ -1,5 +1,6 @@
 import { useRef, useEffect, useState } from 'react'
 import { Icon } from '@iconify/react'
+import { useLocation } from 'react-router-dom'
 import MiddleSection from './MiddleSection'
 import { useAppState } from '../hooks/useAppState'
 import EditorComponent, { EditorComponentRef } from './EditorComponent'
@@ -10,7 +11,7 @@ import { useI18n } from '../contexts/I18nContext'
 import { toast } from 'react-hot-toast'
 
 // 主要编辑区域组件
-function ContentArea() {
+function ContentArea({ initialData }: { initialData?: any }) {
   // 从应用状态中获取必要状态
   const {
     characterName,
@@ -43,6 +44,26 @@ function ContentArea() {
 
   // 用于跟踪上一个作品，用于自动保存
   const [previousWork, setPreviousWork] = useState<any>(null);
+
+  // 处理从路由传递的初始数据
+  useEffect(() => {
+    if (initialData && initialData.content) {
+      console.log('ScriptEditor: 处理初始数据:', initialData);
+      
+      // 将初始内容转换为 EditorJS 格式
+      const editorContent = {
+        time: Date.now(),
+        blocks: initialData.content.trim() ? 
+          [{ type: 'paragraph', data: { text: initialData.content } }] : 
+          [],
+        version: '2.31.0'
+      };
+      
+      console.log('ScriptEditor: 设置初始编辑器内容:', editorContent);
+      setEditorData(editorContent);
+      setCurrentEditingContent(editorContent);
+    }
+  }, [initialData]);
 
   // 当选中作品改变时，先保存上一个作品的内容，然后加载新作品内容
   useEffect(() => {
@@ -319,6 +340,13 @@ function ContentArea() {
 function ScriptEditor() {
   const { isAuthenticated } = useAuth();
   const { t } = useI18n();
+  const location = useLocation();
+  
+  // 获取从HomePage传递的初始数据
+  const initialData = location.state?.initialData;
+  
+  console.log('[ScriptEditor] Component mounted with location.state:', location.state);
+  console.log('[ScriptEditor] Extracted initialData:', initialData);
 
   // 如果用户未登录，显示登录提示
   if (!isAuthenticated) {
@@ -342,9 +370,9 @@ function ScriptEditor() {
   return (
     <div className="h-[calc(100vh-64px)] flex w-full min-h-0">
       {/* 中间操作台 */}
-      <MiddleSection />
+      <MiddleSection initialData={initialData} />
       {/* 右侧内容区域 */}
-      <ContentArea />
+      <ContentArea initialData={initialData} />
     </div>
   );
 }

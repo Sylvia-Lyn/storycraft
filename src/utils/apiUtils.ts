@@ -8,11 +8,7 @@ export interface ApiResponse<T = any> {
   request_id?: string;
 }
 
-export interface ApiError extends Error {
-  code?: string;
-  status?: number;
-  request_id?: string;
-}
+// Note: ApiError interface removed to avoid conflict with class declaration below
 
 /**
  * 带重试机制的API调用函数
@@ -143,12 +139,13 @@ class ApiError extends Error {
   public code?: string;
   public status?: number;
   public request_id?: string;
+  public cause?: unknown;
 
   constructor(message: string, options?: {
     code?: string;
     status?: number;
     request_id?: string;
-    cause?: Error;
+    cause?: unknown;
   }) {
     super(message);
     this.name = 'ApiError';
@@ -156,7 +153,7 @@ class ApiError extends Error {
     this.status = options?.status;
     this.request_id = options?.request_id;
     
-    if (options?.cause) {
+    if (options && 'cause' in options) {
       this.cause = options.cause;
     }
   }

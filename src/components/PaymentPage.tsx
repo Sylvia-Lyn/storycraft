@@ -9,7 +9,7 @@ import { useI18n } from '../contexts/I18nContext';
 const PaymentPage: React.FC = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, refreshUserInfo } = useAuth();
     const { t } = useI18n();
     const [order, setOrder] = useState<OrderData | null>(null);
     const [loading, setLoading] = useState(true);
@@ -137,6 +137,10 @@ const PaymentPage: React.FC = () => {
 
                         if (result.success) {
                             message.success(t('common.paymentSuccess'));
+                            
+                            // 刷新用户信息以更新积分显示
+                            await refreshUserInfo();
+                            
                             navigate('/app/vip');
                         } else {
                             message.error(result.error || t('common.paymentProcessFailed'));

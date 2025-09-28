@@ -34,10 +34,10 @@ function TooltipTrigger({ children, asChild = false }: { children: React.ReactNo
   };
   
   if (asChild && React.isValidElement(children)) {
-    return React.cloneElement(children, {
+    return React.cloneElement(children as React.ReactElement<any>, {
       onMouseEnter: handleMouseEnter,
       onMouseLeave: handleMouseLeave,
-    });
+    } as any);
   }
   
   return (

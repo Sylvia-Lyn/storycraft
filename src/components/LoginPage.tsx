@@ -94,14 +94,14 @@ const LoginPage: React.FC = () => {
                     user_name: userData.user_name || '用户',
                     user_email: userData.user_email || '',
                     user_plan: userData.user_plan || 'free',
-                    user_piont: userData.user_piont || '0',
+                    user_point: userData.user_point || '0',
                     subscription_expires_at: userData.subscription_expires_at,
                     subscription_status: userData.subscription_status,
                     userId: userData.userId
                 };
                 // 提取纯token，去掉Bearer前缀
                 const token = authHeader ? authHeader.replace('Bearer ', '') : null;
-                login(authUserData, token || '');
+                await login(authUserData, token || '');
                 return true;
             }
         } catch (error) {
@@ -203,10 +203,10 @@ const LoginPage: React.FC = () => {
                     user_name: phoneNumber,
                     user_email: '',
                     user_plan: 'free' as const,
-                    user_piont: '0'
+                    user_point: '0'
                 };
                 console.log('手机号登录 - 使用默认用户信息:', userInfo);
-                login(userInfo, token || '');
+                await login(userInfo, token || '');
                 navigate('/app/home');
             }
         } catch (e) {
@@ -250,10 +250,10 @@ const LoginPage: React.FC = () => {
                     user_name: username,
                     user_email: '',
                     user_plan: 'free' as const,
-                    user_piont: '0'
+                    user_point: '0'
                 };
                 console.log('用户名密码登录 - 使用默认用户信息:', userInfo);
-                login(userInfo, token || '');
+                await login(userInfo, token || '');
                 navigate('/app/home');
             }
         } catch (e) {
@@ -297,10 +297,10 @@ const LoginPage: React.FC = () => {
                     user_name: email,
                     user_email: email,
                     user_plan: 'free' as const,
-                    user_piont: '0',
+                    user_point: '0',
                 };
                 console.log('邮箱登录 - 使用默认用户信息:', userInfo);
-                login(userInfo, token || '');
+                await login(userInfo, token || '');
                 navigate('/app/home');
             }
         } catch (e) {

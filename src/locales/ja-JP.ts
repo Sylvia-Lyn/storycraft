@@ -7,6 +7,7 @@ export const jaJP = {
     memberCenter: 'メンバーセンター',
     logout: 'ログアウト',
     login: 'ログイン',
+    points: 'ポイント',
   },
   
   // VipPage
@@ -176,6 +177,26 @@ export const jaJP = {
     shortDrama: 'ショートドラマ',
     startCreation: '創作開始',
     creatorCommunity: 'クリエイターコミュニティ',
+    
+    // 入力エリア
+    continueMode: '継続モード',
+    createMode: '作成モード',
+    inputPlaceholder: '続きを書きたい内容を入力してください',
+    
+    // ジャンルオプション
+    genreOptions: {
+      ancient: '古代風',
+      'western-fantasy': '西洋ファンタジー',
+      romance: 'ロマンス',
+      'suspense-thriller': 'サスペンス・スリラー',
+      'fan-fiction': 'ファンフィクション',
+      'gaming-esports': 'ゲーム・eスポーツ',
+      lgbtq: 'LGBTQ+'
+    },
+    
+    // その他のオプション
+    prompt: 'プロンプト',
+    character: 'キャラクター',
   },
 
   // Sidebar
@@ -599,6 +620,12 @@ export const jaJP = {
       styleReference: 'スタイル参考',
       prompt: 'プロンプト',
       character: 'キャラクター',
+      
+      // パラメータラベル
+      aiModel: 'AIモデル',
+      mode: 'モード',
+      writingStyle: '文章スタイル',
+      promptLabel: 'プロンプト',
       
       // スタイルオプション
       styleOptions: {

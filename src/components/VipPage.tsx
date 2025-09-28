@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { message } from 'antd';
 import { paymentService } from '../services/paymentService';
 import { stripeService } from '../services/stripeService';
+import { pointsService } from '../services/pointsService';
 import { useAuth } from '../contexts/AuthContext';
 import { useI18n } from '../contexts/I18nContext';
 
@@ -30,7 +31,7 @@ const pricingData = {
 
 const VipPage: React.FC = () => {
     const navigate = useNavigate();
-    const { isAuthenticated, user } = useAuth();
+    const { isAuthenticated, user, refreshUserInfo } = useAuth();
     const { t } = useI18n();
     const [plan, setPlan] = useState<PlanType>('yearly');
     const [loading, setLoading] = useState<{ [key: string]: boolean }>({});
@@ -80,6 +81,13 @@ const VipPage: React.FC = () => {
     };
 
     const planConfig = planConfigs.find(p => p.key === plan)!;
+
+    // 计算积分奖励函数
+    const calculatePointsReward = (planType: 'chinese' | 'multilingual', duration: PlanType): number => {
+        // 根据VIP页面说明：购买任何套餐都立即赠送1万积分
+        // 后续每天第一次登录时再增加1万积分（这个在登录时处理）
+        return 10000;
+    };
 
     // 查询用户订阅信息
     useEffect(() => {
@@ -175,6 +183,46 @@ const VipPage: React.FC = () => {
         setLoading(prev => ({ ...prev, [buttonKey]: true }));
 
         try {
+            // 临时实现：点击购买立即成功
+            message.success(t('common.purchaseSuccess') || '购买成功！');
+            
+            // 计算积分奖励（根据套餐类型和时长）
+            const pointsReward = calculatePointsReward(planType, plan);
+            
+            // 更新订阅状态为已购买
+            setSubscriptionInfo(prev => ({
+                user_plan: planType,
+                subscription_status: 'active',
+                subscription_expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString() // 一年后过期
+            }));
+
+            // 调用积分更新API
+            if (pointsReward > 0) {
+                try {
+                    const pointsResult = await pointsService.addPointsWithHistory({
+                        points: pointsReward,
+                        reason: `购买${planType}套餐奖励`,
+                        source: 'vip_purchase',
+                        orderId: `vip_${planType}_${plan}_${Date.now()}`
+                    });
+
+                    if (pointsResult.success) {
+                        console.log(`购买${planType}套餐成功，获得${pointsReward}积分奖励`);
+                        message.success(`恭喜！您获得了 ${pointsReward} 积分奖励！`);
+                        
+                        // 刷新用户信息以更新积分显示
+                        await refreshUserInfo();
+                    } else {
+                        console.error('积分更新失败:', pointsResult.error);
+                        message.warning('购买成功，但积分更新失败');
+                    }
+                } catch (error) {
+                    console.error('积分更新异常:', error);
+                    message.warning('购买成功，但积分更新异常');
+                }
+            }
+
+            /* 注释掉原有的充值逻辑
             // 1. 创建订单
             const result = await paymentService.createOrder({
                 planType,
@@ -208,6 +256,7 @@ const VipPage: React.FC = () => {
             } else {
                 message.error(result.error || t('common.createOrderFailed'));
             }
+            */
         } catch (error) {
             console.error('购买失败:', error);
             message.error(t('common.purchaseFailed'));

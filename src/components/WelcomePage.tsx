@@ -50,16 +50,16 @@ const WelcomePage: React.FC = () => {
             {/* 顶部导航栏 */}
             <div className="w-full h-20 bg-black border-b border-gray-800">
                 <div className="mx-auto pl-8 pr-8 sm:pl-12 sm:pr-12 lg:pl-16 lg:pr-16">
-                    <div className="flex items-center justify-between h-20 space-x-12">
+                    <div className="flex items-center h-20">
                         {/* 左侧品牌名 */}
                         <div className="flex-shrink-0">
-                            <h1 className="text-white text-3xl font-bold">
+                            <h1 className="text-white text-lg">
                                 千帆叙梦
                             </h1>
                         </div>
 
-                        {/* 中间业务导航 */}
-                        <div className="hidden lg:block">
+                        {/* 中间业务导航 - 绝对居中 */}
+                        <div className="hidden lg:block absolute left-1/2 transform -translate-x-1/2">
                             <div className="flex items-center space-x-8 lg:space-x-12">
                                 <span
                                     className="text-white text-lg cursor-not-allowed transition-colors"
@@ -95,16 +95,16 @@ const WelcomePage: React.FC = () => {
                         </div>
 
                         {/* 右侧按钮 */}
-                        <div className="flex items-center space-x-6 sm:space-x-8">
+                        <div className="flex items-center space-x-6 sm:space-x-8 ml-auto">
                             <button
                                 onClick={handleFreeTrial}
-                                className="px-4 py-2 sm:px-5 text-lg sm:text-xl font-medium text-white bg-transparent border border-white rounded-md hover:bg-white hover:text-black transition-colors duration-200"
+                                className="px-4 py-2 sm:px-5 text-lg font-medium text-white bg-transparent border border-white rounded-md hover:bg-white hover:text-black transition-colors duration-200"
                             >
                                 免费试用
                             </button>
                             <button
                                 onClick={handleContactUs}
-                                className="px-4 py-2 sm:px-5 text-lg sm:text-xl font-medium text-white bg-transparent border border-white rounded-md hover:bg-white hover:text-black transition-colors duration-200"
+                                className="px-4 py-2 sm:px-5 text-lg font-medium text-white bg-transparent border border-white rounded-md hover:bg-white hover:text-black transition-colors duration-200"
                             >
                                 联系我们
                             </button>
@@ -118,9 +118,9 @@ const WelcomePage: React.FC = () => {
                 {/* 独立的背景图片层（顶部贴合导航栏底部）*/}
                 <div
                     className="absolute inset-0 w-full h-full bg-cover bg-top bg-no-repeat"
-                    style={{ backgroundImage: 'url(/img/welcomePage/welcome_page_background.png)' }}
+                    style={{ backgroundImage: 'url(/img/welcomePage/welcomepage_background.png)' }}
                 >
-                    <div className="absolute inset-0 bg-black opacity-0 brightness-50"></div>
+                    <div className="absolute inset-0 bg-black opacity-10 brightness-50"></div>
                 </div>
                 {/* 主要内容层 */}
                 <div className="relative flex items-start justify-center pt-32 pb-8 z-10">
@@ -150,11 +150,11 @@ const WelcomePage: React.FC = () => {
                     
                     {/* 输入面板 */}
                     <div className="bg-black/40 backdrop-blur-sm p-8 rounded-lg border border-gray-600 w-full md:max-w-[75vw] mx-auto">
-                        <div className="flex flex-wrap items-center gap-32 mb-4">
+                        <div className="flex flex-wrap md:grid-cols-3 items-center gap-4 md:gap-8 mb-4">
                             <Select
                                 defaultValue="剧本生成"
                                 options={[{ value: '剧本生成', label: '剧本生成' }]}
-                                className="ml-8 rounded welcome-select"
+                                className="rounded welcome-select"
                                 size="middle"
                                 bordered
                                 style={{ minWidth: 160, height: 36, borderColor: '#6B7280', fontSize: 18, lineHeight: '28px' }}
@@ -279,7 +279,7 @@ const WelcomePage: React.FC = () => {
             <div className="w-full mt-20">
                 {selectedProduct === 'storycraft' ? (
                     <div className="space-y-0">
-                        <h3 className="text-white text-4xl font-bold mb-0 text-center">Storycraft 功能展示</h3>
+                        {/*<h3 className="text-white text-4xl font-bold mb-0 text-center">Storycraft 功能展示</h3>*/}
                         {/* 四个全屏大小的div */}
                         <div className="w-full h-screen flex flex-col items-center justify-center bg-black bg-opacity-50">
                             <div className="w-full h-full flex flex-col items-center justify-center">
@@ -324,7 +324,7 @@ const WelcomePage: React.FC = () => {
                     </div>
                 ) : (
                     <div className="space-y-0">
-                        <h3 className="text-white text-4xl font-bold mb-0 text-center">TodayDrama 功能展示</h3>
+                        {/*<h3 className="text-white text-4xl font-bold mb-0 text-center">TodayDrama 功能展示</h3>*/}
                         {/* 四个全屏大小的div，图片和文本框左右布局 */}
                         <div className="w-full h-screen flex items-center justify-center bg-black bg-opacity-50">
                             <div className="w-full max-w-7xl flex items-center justify-between px-8">
@@ -347,8 +347,8 @@ const WelcomePage: React.FC = () => {
                                 </div>
                                 <div className="flex-none w-80 ml-36">
                                     <div className="bg-black bg-opacity-70 p-8 rounded-lg">
-                                        <h4 className="text-white text-4xl font-bold mb-24">情感陪伴</h4>
-                                        <p className="text-white text-2xl">有喜怒哀乐的“活人感”角色，沉浸式视频对话，亲密动作互动，满足随时随地pia戏的多元需求</p>
+                                        <h4 className="text-white text-2xl font-bold mb-24">情感陪伴</h4>
+                                        <p className="text-white text-1xl">有喜怒哀乐的“活人感”角色，沉浸式视频对话，亲密动作互动，满足随时随地pia戏的多元需求</p>
                                     </div>
                                 </div>
                             </div>
@@ -357,8 +357,8 @@ const WelcomePage: React.FC = () => {
                             <div className="w-full max-w-6xl flex items-center justify-between px-8">
                                 <div className="flex-none w-80 mr-8">
                                     <div className="bg-black bg-opacity-70 p-8 rounded-lg">
-                                        <h4 className="text-white text-4xl font-bold mb-24">互动短剧</h4>
-                                        <p className="text-white text-2xl">用户与剧中人一同飙戏，决定剧情发展方向，与角色产生情感羁绊</p>
+                                        <h4 className="text-white text-2xl font-bold mb-24">互动短剧</h4>
+                                        <p className="text-white text-1xl">用户与剧中人一同飙戏，决定剧情发展方向，与角色产生情感羁绊</p>
                                     </div>
                                 </div>
                                 <div className="flex-1 ml-8 flex flex-row space-x-1">
@@ -401,8 +401,8 @@ const WelcomePage: React.FC = () => {
                                 </div>
                                 <div className="flex-none w-80 ml-8">
                                     <div className="bg-black bg-opacity-70 p-4 rounded-lg">
-                                        <h4 className="text-white text-4xl font-bold mb-24">私人专业助理</h4>
-                                        <p className="text-white text-2xl">基于角色情感及信任感，基于剧中人/定制角色为高价值用户提供日常场景的专业咨询</p>
+                                        <h4 className="text-white text-2xl font-bold mb-24">私人专业助理</h4>
+                                        <p className="text-white text-1xl">基于角色情感及信任感，基于剧中人/定制角色为高价值用户提供日常场景的专业咨询</p>
                                     </div>
                                 </div>
                             </div>
@@ -411,8 +411,8 @@ const WelcomePage: React.FC = () => {
                             <div className="w-full max-w-6xl flex items-center justify-between px-8">
                                 <div className="flex-none w-80 mr-8">
                                     <div className="bg-black bg-opacity-70 p-4 rounded-lg">
-                                        <h4 className="text-white text-4xl font-bold mb-24">专属私密恋人</h4>
-                                        <p className="text-white text-2xl">付费解锁剧中人形象&声音定制、随机CG抽取、奢华服装更换、角色外观DIY、专属场景打造、角色直播打榜</p>
+                                        <h4 className="text-white text-2xl font-bold mb-24">专属私密恋人</h4>
+                                        <p className="text-white text-1xl">付费解锁剧中人形象&声音定制、随机CG抽取、奢华服装更换、角色外观DIY、专属场景打造、角色直播打榜</p>
                                     </div>
                                 </div>
                                 <div className="flex-1 ml-8 flex flex-row space-x-1">

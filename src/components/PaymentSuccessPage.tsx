@@ -10,7 +10,7 @@ import { useI18n } from '../contexts/I18nContext';
 const PaymentSuccessPage: React.FC = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    const { user, updateUser } = useAuth();
+    const { user, updateUser, refreshUserInfo } = useAuth();
     const { t } = useI18n();
     const [loading, setLoading] = useState(true);
     const [paymentStatus, setPaymentStatus] = useState<'success' | 'failed' | 'processing'>('processing');
@@ -35,25 +35,12 @@ const PaymentSuccessPage: React.FC = () => {
                     setPaymentStatus('success');
                     setPaymentData(result.session);
                     
-                    // 刷新用户信息
-                    const userInfoResult = await paymentService.getUserInfo();
-                    if (userInfoResult.success && userInfoResult.data) {
-                        const userData = userInfoResult.data;
-                        const updatedUser = {
-                            ...user,
-                            user_plan: userData.user_plan,
-                            subscription_expires_at: userData.subscription_expires_at,
-                            subscription_status: userData.subscription_status
-                        };
-                        
-                        // 更新AuthContext中的用户信息
-                        if (updateUser) {
-                            updateUser(updatedUser);
-                        }
-                        
-                        const planName = userData.user_plan === 'chinese' ? t('common.planNames.chinese') : t('common.planNames.multilingual');
-                        message.success(t('common.congratulations', { plan: planName }));
-                    }
+                    // 刷新用户信息（包括积分）
+                    await refreshUserInfo();
+                    
+                    // 显示成功消息
+                    const planName = result.session?.metadata?.planType === 'chinese' ? t('common.planNames.chinese') : t('common.planNames.multilingual');
+                    message.success(t('common.congratulations', { plan: planName }));
                 } else {
                     setPaymentStatus('failed');
                     message.error(result.error || '支付验证失败');

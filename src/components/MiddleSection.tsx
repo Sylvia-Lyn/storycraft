@@ -417,7 +417,7 @@ function MiddleSection({ initialData }: { initialData?: any }) {
             {/* 第一行：模型选择和模式切换 */}
             <div className="flex items-center gap-3 mb-4">
               <div className="flex items-center gap-2 flex-1">
-                <span className="text-sm font-medium text-gray-700 min-w-[50px]">AI模型</span>
+                <span className="text-sm font-medium text-gray-700 min-w-[50px]">{t('editor.middleSection.aiModel')}</span>
                 <div className="flex items-center gap-1">
                   <Select
                     value={selectedModel}
@@ -448,14 +448,14 @@ function MiddleSection({ initialData }: { initialData?: any }) {
                 </div>
               </div>
               <div className="flex items-center gap-2 flex-1">
-                <span className="text-sm font-medium text-gray-700 min-w-[50px]">模式</span>
+                <span className="text-sm font-medium text-gray-700 min-w-[50px]">{t('editor.middleSection.mode')}</span>
                 <div className="flex bg-white rounded-md border border-gray-300 overflow-hidden">
                   <Button 
                     type={selectedMode === 'continue' ? 'primary' : 'text'} 
                     size="small"
                     onClick={() => setSelectedMode('continue')}
                     disabled={isGenerating}
-                    className={`px-3 py-1 h-8 border-0 rounded-none text-xs ${
+                    className={`px-2 py-1 h-8 border-0 rounded-none text-xs flex-1 ${
                       isGenerating
                         ? 'text-gray-400'
                         : (selectedMode === 'continue' 
@@ -470,7 +470,7 @@ function MiddleSection({ initialData }: { initialData?: any }) {
                     size="small"
                     onClick={() => setSelectedMode('create')}
                     disabled={isGenerating}
-                    className={`px-3 py-1 h-8 border-0 rounded-none text-xs ${
+                    className={`px-2 py-1 h-8 border-0 rounded-none text-xs flex-1 ${
                       isGenerating
                         ? 'text-gray-400'
                         : (selectedMode === 'create' 
@@ -487,7 +487,7 @@ function MiddleSection({ initialData }: { initialData?: any }) {
             {/* 第二行：功能选项 */}
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2 flex-1">
-                <span className="text-sm font-medium text-gray-700 min-w-[50px]">文风参考</span>
+                <span className="text-sm font-medium text-gray-700 min-w-[50px]">{t('editor.middleSection.writingStyle')}</span>
                 <Select 
                   value={selectedWritingStyle}
                   onChange={(value) => setSelectedWritingStyle(value)}
@@ -500,7 +500,7 @@ function MiddleSection({ initialData }: { initialData?: any }) {
               </div>
               
               <div className="flex items-center gap-2 flex-1">
-                <span className="text-sm font-medium text-gray-700 min-w-[50px]">提示词</span>
+                <span className="text-sm font-medium text-gray-700 min-w-[50px]">{t('editor.middleSection.promptLabel')}</span>
                 <div 
                   className="relative cursor-not-allowed group"
                   onClick={handleLockedFeatureClick}

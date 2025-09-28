@@ -102,46 +102,46 @@ const SuperinputPage: React.FC = () => {
                                 onClick={() => setSelectedMode('continue')}
                                 type="button"
                             >
-                                续写模式
+                                {t('home.continueMode')}
                             </button>
                             <button
                                 className={`px-2 py-1 border rounded text-xs h-7 ${selectedMode === 'create' ? 'border-blue-500 text-blue-500' : 'border-gray-300 text-gray-600'}`}
                                 onClick={() => setSelectedMode('create')}
                                 type="button"
                             >
-                                创作模式
+                                {t('home.createMode')}
                             </button>
                             <select 
                                 className="border border-gray-300 rounded px-2 py-1 text-xs text-gray-600 h-7"
                                 value={selectedGenre}
                                 onChange={(e) => setSelectedGenre(e.target.value)}
                             >
-                                <option value="古风">古风</option>
-                                <option value="西方奇幻">西方奇幻</option>
-                                <option value="浪漫言情">浪漫言情</option>
-                                <option value="悬疑惊悚">悬疑惊悚</option>
-                                <option value="粉丝同人">粉丝同人</option>
-                                <option value="游戏竞技">游戏竞技</option>
-                                <option value="LGBTQ+">LGBTQ+</option>
+                                <option value="古风">{t('home.genreOptions.ancient')}</option>
+                                <option value="西方奇幻">{t('home.genreOptions.western-fantasy')}</option>
+                                <option value="浪漫言情">{t('home.genreOptions.romance')}</option>
+                                <option value="悬疑惊悚">{t('home.genreOptions.suspense-thriller')}</option>
+                                <option value="粉丝同人">{t('home.genreOptions.fan-fiction')}</option>
+                                <option value="游戏竞技">{t('home.genreOptions.gaming-esports')}</option>
+                                <option value="LGBTQ+">{t('home.genreOptions.lgbtq')}</option>
                             </select>
                             <select 
                                 className="border border-gray-300 rounded px-2 py-1 text-xs text-gray-600 h-7"
                                 value={selectedPrompt}
                                 onChange={(e) => setSelectedPrompt(e.target.value)}
                             >
-                                <option value="提示词">提示词</option>
+                                <option value="提示词">{t('home.prompt')}</option>
                             </select>
                             <select 
                                 className="border border-gray-300 rounded px-2 py-1 text-xs text-gray-600 h-7"
                                 value={selectedCharacter}
                                 onChange={(e) => setSelectedCharacter(e.target.value)}
                             >
-                                <option value="角色">角色</option>
+                                <option value="角色">{t('home.character')}</option>
                             </select>
                         </div>
                         <textarea
                             className="w-full h-40 border border-gray-200 rounded-md p-4 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="请输入你要续写的内容"
+                            placeholder={t('home.inputPlaceholder')}
                             value={draftContent}
                             onChange={e => setDraftContent(e.target.value)}
                         ></textarea>

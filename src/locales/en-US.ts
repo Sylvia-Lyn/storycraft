@@ -7,6 +7,7 @@ export const enUS = {
     memberCenter: 'Member Center',
     logout: 'Logout',
     login: 'Login',
+    points: 'Points',
   },
   
   // VipPage
@@ -176,6 +177,26 @@ export const enUS = {
     shortDrama: 'Short Drama',
     startCreation: 'Start Creating',
     creatorCommunity: 'Creator Community',
+    
+    // Input area
+    continueMode: 'Continue Mode',
+    createMode: 'Create Mode',
+    inputPlaceholder: 'Please enter the content you want to continue',
+    
+    // Genre options
+    genreOptions: {
+      ancient: 'Ancient Style',
+      'western-fantasy': 'Western Fantasy',
+      romance: 'Romance',
+      'suspense-thriller': 'Suspense Thriller',
+      'fan-fiction': 'Fan Fiction',
+      'gaming-esports': 'Gaming & Esports',
+      lgbtq: 'LGBTQ+'
+    },
+    
+    // Other options
+    prompt: 'Prompt',
+    character: 'Character',
   },
 
   // Sidebar
@@ -599,6 +620,12 @@ export const enUS = {
       styleReference: 'Style Reference',
       prompt: 'Prompt',
       character: 'Character',
+      
+      // Parameter labels
+      aiModel: 'AI Model',
+      mode: 'Mode',
+      writingStyle: 'Writing Style',
+      promptLabel: 'Prompt',
       
       // Style options
       styleOptions: {

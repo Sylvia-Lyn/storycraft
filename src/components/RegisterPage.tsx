@@ -251,7 +251,7 @@ const RegisterPage = () => {
                                 user_name: d.user_name || (name || phoneNumber),
                                 user_email: d.user_email || '',
                                 user_plan: d.user_plan || 'free',
-                                user_piont: d.user_piont || '0',
+                                user_point: d.user_point || '0',
                                 subscription_expires_at: d.subscription_expires_at,
                                 subscription_status: d.subscription_status,
                                 userId: d.userId,
@@ -265,7 +265,7 @@ const RegisterPage = () => {
                                 user_name: name || phoneNumber,
                                 user_email: '',
                                 user_plan: 'free',
-                                user_piont: '0',
+                                user_point: '0',
                             } as any, token);
                         }
                     } catch (_) {
@@ -275,7 +275,7 @@ const RegisterPage = () => {
                             user_name: name || phoneNumber,
                             user_email: '',
                             user_plan: 'free',
-                            user_piont: '0',
+                            user_point: '0',
                         } as any, token);
                     }
 
@@ -376,7 +376,7 @@ const RegisterPage = () => {
                                 user_name: d.user_name || (name || email),
                                 user_email: d.user_email || email,
                                 user_plan: d.user_plan || 'free',
-                                user_piont: d.user_piont || '0',
+                                user_point: d.user_point || '0',
                                 subscription_expires_at: d.subscription_expires_at,
                                 subscription_status: d.subscription_status,
                                 userId: d.userId,
@@ -390,7 +390,7 @@ const RegisterPage = () => {
                                 user_name: name || email,
                                 user_email: email,
                                 user_plan: 'free',
-                                user_piont: '0',
+                                user_point: '0',
                             } as any, token);
                         }
                     } catch (_) {
@@ -401,7 +401,7 @@ const RegisterPage = () => {
                             user_name: name || email,
                             user_email: email,
                             user_plan: 'free',
-                            user_piont: '0',
+                            user_point: '0',
                         } as any, token);
                     }
 
@@ -457,7 +457,7 @@ const RegisterPage = () => {
                     user_name: existingUsername || phoneNumber,
                     user_email: '',
                     user_plan: 'free' as 'free' | 'chinese' | 'multilingual',
-                    user_piont: '0'
+                    user_point: '0'
                 };
                 // 注册成功后需要获取真实的token
                 const authHeader = getAuthHeader();

@@ -7,6 +7,7 @@ export const zhCN = {
     memberCenter: '会员中心',
     logout: '退出登录',
     login: '登录',
+    points: '积分',
   },
   
   // VipPage
@@ -176,6 +177,26 @@ export const zhCN = {
     shortDrama: '短剧',
     startCreation: '开始创作',
     creatorCommunity: '创作者社区',
+    
+    // 输入区域
+    continueMode: '续写模式',
+    createMode: '创作模式',
+    inputPlaceholder: '请输入你要续写的内容',
+    
+    // 题材选项
+    genreOptions: {
+      ancient: '古风',
+      'western-fantasy': '西方奇幻',
+      romance: '浪漫言情',
+      'suspense-thriller': '悬疑惊悚',
+      'fan-fiction': '粉丝同人',
+      'gaming-esports': '游戏竞技',
+      lgbtq: 'LGBTQ+'
+    },
+    
+    // 其他选项
+    prompt: '提示词',
+    character: '角色',
   },
 
   // Sidebar
@@ -601,6 +622,12 @@ export const zhCN = {
       styleReference: '文风参考',
       prompt: '提示词',
       character: '角色',
+      
+      // 参数标签
+      aiModel: 'AI模型',
+      mode: '模式',
+      writingStyle: '文风参考',
+      promptLabel: '提示词',
       
       // 文风选项
       styleOptions: {

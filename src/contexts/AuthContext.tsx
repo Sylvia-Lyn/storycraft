@@ -1,12 +1,14 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { apiInterceptor } from '../services/apiInterceptor';
+import { pointsService } from '../services/pointsService';
+import { paymentService } from '../services/paymentService';
 
 interface User {
     user_id: number;
     user_name: string;
     user_email: string;
     user_plan: 'free' | 'chinese' | 'multilingual';
-    user_piont: string;
+    user_point: string;
     subscription_expires_at?: string | null;
     subscription_status?: 'free' | 'active' | 'expired' | 'cancelled';
     userId?: string;
@@ -18,6 +20,7 @@ interface AuthContextType {
     login: (userData: User, token: string) => void;
     logout: () => void;
     updateUser: (userData: User) => void;
+    refreshUserInfo: () => Promise<void>;
     isAuthenticated: boolean;
     checkTokenValidity: () => Promise<boolean>;
     refreshToken: () => Promise<boolean>;
@@ -63,15 +66,42 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // API拦截器的token过期回调将在TokenExpiryHandler组件中设置
     }, []);
 
-    const login = (userData: User, userToken: string) => {
+    const login = async (userData: User, userToken: string) => {
+        console.log('🔐 [AuthContext] login - Token调试信息:');
+        console.log('  - 接收到的userToken:', userToken);
+        console.log('  - userToken类型:', typeof userToken);
+        console.log('  - userToken长度:', userToken.length);
+        console.log('  - 是否包含Bearer:', userToken.startsWith('Bearer '));
+        console.log('  - 前50个字符:', userToken.substring(0, 50));
+        
+        console.log('🔐 [AuthContext] 设置认证状态为true');
         setUser(userData);
         setToken(userToken);
         setIsAuthenticated(true);
         localStorage.setItem('token', userToken);
         localStorage.setItem('user', JSON.stringify(userData));
+        
+        console.log('  - 已存储到localStorage的token:', localStorage.getItem('token')?.substring(0, 50) + '...');
+
+        // 处理每日登录积分奖励
+        try {
+            const rewardResult = await pointsService.dailyLoginReward({
+                user_plan: userData.user_plan || 'free'
+            });
+
+            if (rewardResult.success && rewardResult.data?.rewarded) {
+                console.log(`每日登录积分奖励: 获得 ${rewardResult.data.points} 积分`);
+                // 可以在这里显示积分奖励通知，但不在AuthContext中直接显示UI
+                // 通知可以通过其他方式（如全局状态管理）来处理
+            }
+        } catch (error) {
+            console.error('每日登录积分奖励处理失败:', error);
+            // 不影响登录流程，只记录错误
+        }
     };
 
     const logout = () => {
+        console.log('🔐 [AuthContext] logout - 设置认证状态为false');
         setUser(null);
         setToken(null);
         setIsAuthenticated(false);
@@ -82,6 +112,33 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const updateUser = (userData: User) => {
         setUser(userData);
         localStorage.setItem('user', JSON.stringify(userData));
+    };
+
+    // 刷新用户信息（包括积分）
+    const refreshUserInfo = async () => {
+        if (!isAuthenticated) {
+            return;
+        }
+
+        try {
+            const result = await paymentService.getUserInfo();
+            if (result.success && result.data) {
+                const userData = result.data;
+                const updatedUser: User = {
+                    user_id: userData.user_id || 0,
+                    user_name: userData.user_name || '用户',
+                    user_email: userData.user_email || '',
+                    user_plan: userData.user_plan || 'free',
+                    user_point: userData.user_point || '0',
+                    subscription_expires_at: userData.subscription_expires_at,
+                    subscription_status: userData.subscription_status,
+                    userId: userData.userId
+                };
+                updateUser(updatedUser);
+            }
+        } catch (error) {
+            console.error('刷新用户信息失败:', error);
+        }
     };
 
     // 处理token过期
@@ -139,6 +196,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         login,
         logout,
         updateUser,
+        refreshUserInfo,
         isAuthenticated,
         checkTokenValidity,
         refreshToken,

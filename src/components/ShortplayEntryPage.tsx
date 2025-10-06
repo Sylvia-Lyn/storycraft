@@ -91,7 +91,7 @@ function ShortplayEntryPage() {
 
     setIsGenerating(true);
     try {
-      const response = await fetch('http://8.136.8.24:8321/episode/create/async', {
+      const response = await fetch('/api/episode/create/async', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

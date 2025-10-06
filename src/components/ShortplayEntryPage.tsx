@@ -91,28 +91,34 @@ function ShortplayEntryPage() {
 
     setIsGenerating(true);
     try {
-      const response = await fetch('/episode-api/episode/create/async', {
+      const response = await fetch('/episode-api/series/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          userId: "user123",
-          userInput: userInput.trim(),
+          userId: "use123",
           seriesName: "修仙恋爱记",
           seriesDescription: "修仙背景的爱情故事",
-          episodeTitle: "第一集：相遇",
-          episodeDescription: "男女主角初次相遇",
-          provider: selectedModel === 'deepseek-r1' ? 'deepseek' : 'gemini'
+          userInput: userInput.trim(),
+          prompt: userInput.trim(),
+          status: "DRAFT",
+          episodes: []
         })
       });
 
       if (response.ok) {
         const result = await response.json();
         console.log('生成成功:', result);
-        // 这里可以添加成功后的处理逻辑
-        alert('生成请求已提交，请稍后查看结果');
-        setUserInput(''); // 清空输入
+
+        // 检查返回的code是否为0表示成功
+        if (result.code === 0) {
+          const { seriesId, episodeId, message } = result.data;
+          alert(`${message}\n剧集ID: ${seriesId}\n剧集ID: ${episodeId}`);
+          setUserInput(''); // 清空输入
+        } else {
+          throw new Error(result.message || '生成失败');
+        }
       } else {
         throw new Error(`请求失败: ${response.status}`);
       }

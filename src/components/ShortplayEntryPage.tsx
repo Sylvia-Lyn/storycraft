@@ -396,28 +396,30 @@ function ShortplayEntryPage() {
 
                 {activeTab === 'audio' && (
                   <div className="space-y-3">
-                    <div className="relative w-40">
-                      <select className="w-full h-9 pl-3 pr-8 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none">
-                        <option value="gemini-2.5pro">Gemini2.5pro</option>
-                        <option value="deepseek-r1">DeepSeek-R1</option>
-                        <option value="gpt-4">GPT-4</option>
-                      </select>
-                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                        <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M1 1L6 6L11 1" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
+                    <div className="flex space-x-3">
+                      <div className="relative w-32">
+                        <select className="w-full h-9 pl-3 pr-8 text-sm rounded-lg bg-white focus:outline-none appearance-none">
+                          <option value="gemini-2.5pro">Gemini2.5pro</option>
+                          <option value="deepseek-r1">DeepSeek-R1</option>
+                          <option value="gpt-4">GPT-4</option>
+                        </select>
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                          <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="relative w-40">
-                      <select className="w-full h-9 pl-3 pr-8 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none">
-                        <option value="male">男声</option>
-                        <option value="female">女声</option>
-                      </select>
-                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                        <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M1 1L6 6L11 1" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
+                      <div className="relative w-20">
+                        <select className="w-full h-9 pl-3 pr-8 text-sm rounded-lg bg-white focus:outline-none appearance-none">
+                          <option value="male">男声</option>
+                          <option value="female">女声</option>
+                        </select>
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                          <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </div>
                       </div>
                     </div>
 

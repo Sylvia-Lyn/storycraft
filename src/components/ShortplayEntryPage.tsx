@@ -277,7 +277,7 @@ function ShortplayEntryPage() {
                   <div className="space-y-4">
                     {/* 配音选择区域 */}
                     <div className="space-y-3">
-                      <div className="relative w-full">
+                      <div className="relative w-24">
                         <select className="w-full h-9 pl-3 pr-8 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none">
                           <option value="dubbing">配音</option>
                           <option value="sound_effects">音效</option>

@@ -1,237 +1,432 @@
-import React, { useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { 
-  submitScriptGenerationTask, 
-  waitForTaskCompletion, 
-  formatOutlineToText, 
-  formatCharactersToText, 
-  formatScenesToText,
-  type TaskInfo 
-} from '../services/scriptGeneratorService';
-import { useWorks } from '../contexts/WorksContext';
-import mammoth from 'mammoth';
+import React, { useState, useRef } from 'react';
+import { Icon } from '@iconify/react';
+import { Button, Select } from 'antd';
+
+const { Option } = Select;
 
 function ShortplayEntryPage() {
-  const navigate = useNavigate();
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [selectedFileName, setSelectedFileName] = useState<string>('');
-  const [isUploading, setIsUploading] = useState<boolean>(false);
-  const [uploadProgress, setUploadProgress] = useState<string>('');
-  const [taskProgress, setTaskProgress] = useState<number>(0);
-  const [taskStatus, setTaskStatus] = useState<string>('');
-  const [currentTaskId, setCurrentTaskId] = useState<string>('');
-  const { currentWork, saveWorkContent } = useWorks();
+  const [activeTab, setActiveTab] = useState<string>('script');
+  const [selectedModel, setSelectedModel] = useState<string>('deepseek-r1');
+  const [progress, setProgress] = useState<number>(75); // 进度百分比
+  const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const [hasVideo, setHasVideo] = useState<boolean>(true); // 默认有视频
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const videoSrc = "/32767410413-1-192.mp4"; // 视频文件路径
 
-  // 文件转换函数
-  const convertFileToText = async (file: File): Promise<string> => {
-    const fileName = file.name.toLowerCase();
-    
-    if (fileName.endsWith('.txt') || fileName.endsWith('.md')) {
-      // 纯文本文件
-      return await file.text();
-    } else if (fileName.endsWith('.docx')) {
-      // Word 文档
-      const arrayBuffer = await file.arrayBuffer();
-      const result = await mammoth.extractRawText({ arrayBuffer });
-      return result.value;
-    } else {
-      throw new Error('不支持的文件格式，请上传 .txt、.md 或 .docx 文件');
+  // 进度条拖拽状态
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+
+  // 处理进度条拖拽
+  const handleProgressMove = (event: React.MouseEvent<HTMLDivElement>) => {
+    const progressBar = event.currentTarget;
+    const rect = progressBar.getBoundingClientRect();
+    const clickX = event.clientX - rect.left;
+    const newProgress = (clickX / rect.width) * 100;
+    setProgress(Math.max(0, Math.min(100, newProgress)));
+
+    // 同步视频时间
+    if (videoRef.current && videoRef.current.duration) {
+      const newTime = (newProgress / 100) * videoRef.current.duration;
+      videoRef.current.currentTime = newTime;
     }
   };
 
-  const handleGoOutline = () => {
-    navigate('/app/outline');
+  const handleMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
+    setIsDragging(true);
+    handleProgressMove(event);
   };
 
-  const handlePickFile = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
+  const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (isDragging) {
+      handleProgressMove(event);
     }
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files && e.target.files[0];
-    if (file) {
-      setSelectedFileName(file.name);
-      try {
-        setIsUploading(true);
-        setUploadProgress('正在解析文件...');
-        
-        // 使用文件转换函数
-        const text = await convertFileToText(file);
-        
-        // 检查文本内容是否有效
-        if (!text || text.trim().length < 100) {
-          alert('文件内容过短，请确保文件包含足够的小说内容');
-          setIsUploading(false);
-          return;
-        }
-        
-        console.log('[文件解析] 文件类型:', file.name, '内容长度:', text.length);
-        
-        setUploadProgress('正在提交任务...');
-        
-        // 提交异步任务
-        const taskInfo = await submitScriptGenerationTask(text, { model: 'deepseek-r1', language: 'zh-CN' });
-        setCurrentTaskId(taskInfo.task_id);
-        setUploadProgress('任务已提交，正在处理中...');
-        setTaskStatus('任务已提交，正在处理中...');
-        setTaskProgress(0);
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
 
-        // 等待任务完成，带进度回调
-        const result = await waitForTaskCompletion(
-          taskInfo.task_id,
-          (taskInfo: TaskInfo) => {
-            setTaskProgress(taskInfo.progress);
-            setTaskStatus(taskInfo.message);
-            setUploadProgress(`${taskInfo.message} (${taskInfo.progress}%)`);
-          }
-        );
+  const handleMouseLeave = () => {
+    setIsDragging(false);
+  };
 
-        // 格式化为可写入 Outline 页面文本框的字符串
-        const outlineText = formatOutlineToText(result.outline);
-        const charactersText = formatCharactersToText(result.characters || []);
-        const scenesText = formatScenesToText(result.scenes || []);
-
-        setUploadProgress('正在保存结果...');
-        setTaskStatus('正在保存结果...');
-        
-        // 将结果保存到本地存储，供 OutlineContent 读取
-        const generatedData = {
-          outline: outlineText,
-          charactersText,
-          scenesText,
-          timestamp: Date.now()
-        };
-        
-        console.log('[本地存储] 准备保存生成的数据:', {
-          outlineLength: outlineText.length,
-          charactersLength: charactersText.length,
-          scenesLength: scenesText.length,
-          timestamp: generatedData.timestamp
-        });
-        
-        // 保存到 localStorage
-        localStorage.setItem('generatedScriptData', JSON.stringify(generatedData));
-        
-        console.log('[本地存储] 数据已保存到 localStorage');
-
-        setUploadProgress('处理完成！');
-        setTaskStatus('处理完成！');
-        setTaskProgress(100);
-        
-        // 延迟跳转，确保状态更新完成
-        setTimeout(() => {
-          console.log('[页面跳转] 准备跳转到大纲页');
-          navigate('/app/outline');
-        }, 1000);
-      } catch (err) {
-        console.error('导入并生成剧本失败:', err);
-        alert('导入失败：' + (err as Error).message);
-      } finally {
-        setIsUploading(false);
-        setUploadProgress('');
-        setTaskProgress(0);
-        setTaskStatus('');
-        setCurrentTaskId('');
+  // 视频控制函数
+  const togglePlay = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
       }
+      setIsPlaying(!isPlaying);
     }
   };
+
+  // 视频加载完成后重置进度
+  const handleVideoLoaded = () => {
+    setProgress(0);
+    setIsPlaying(false);
+  };
+
+  // 计算当前时间
+  const videoDuration = videoRef.current?.duration || 0;
+  const currentTime = Math.floor((progress / 100) * videoDuration);
+  const minutes = Math.floor(currentTime / 60);
+  const seconds = currentTime % 60;
+  const timeDisplay = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+  // 计算总时长显示
+  const totalMinutes = Math.floor(videoDuration / 60);
+  const totalSeconds = Math.floor(videoDuration % 60);
+  const totalTimeDisplay = `${totalMinutes.toString().padStart(2, '0')}:${totalSeconds.toString().padStart(2, '0')}`;
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center min-h-[70vh] p-8">
-      <div className="w-full max-w-2xl bg-white rounded-lg border border-gray-200 p-8">
-        <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">选择创作方式</h1>
+    <div className="flex flex-col h-full bg-gradient-to-br from-blue-50 to-purple-50">
+      <div className="flex flex-grow overflow-hidden">
+        <>
+          {/* 左侧面板 - 一键创作 (均分) */}
+          <div className="flex-1 bg-gray-50 border-r border-gray-200 flex flex-col overflow-hidden">
+          {/* 顶部Logo和标题区 */}
+          <div className="p-4 bg-white border-b border-gray-100">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-6 h-6 bg-blue-500 rounded flex items-center justify-center">
+                  <Icon icon="ri:star-fill" className="w-4 h-4 text-white" />
+                </div>
+                <span className="text-base font-medium text-gray-900">一键创作</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-gray-600">生成楚青春婚互动短剧</span>
+                <div className="w-8 h-8 rounded-full bg-orange-400 flex items-center justify-center">
+                  <Icon icon="ri:user-line" className="w-4 h-4 text-white" />
+                </div>
+              </div>
+            </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* 自主创作 */}
-          <div 
-            className="w-full h-40 rounded-lg border border-gray-300 bg-gray-100 px-6 py-4 text-left cursor-not-allowed opacity-60 relative group"
-            title="功能尚在开发中"
-          >
-            <div className="text-lg font-semibold mb-2 text-gray-500">自主创作</div>
-            <div className="text-gray-400 text-sm">从空白大纲开始创作短剧剧本</div>
-            {/* 悬停提示 */}
-            <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
-              功能尚在开发中
+            {/* 4个Tab按钮 */}
+            <div className="flex space-x-2">
+              <Button
+                type={activeTab === 'script' ? 'primary' : 'default'}
+                size="small"
+                className={`rounded-full px-3 ${activeTab === 'script' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'}`}
+                onClick={() => setActiveTab('script')}
+              >
+                剧本
+              </Button>
+              <Button
+                size="small"
+                type={activeTab === 'audio' ? 'primary' : 'default'}
+                className={`rounded-full px-3 ${activeTab === 'audio' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'}`}
+                onClick={() => setActiveTab('audio')}
+              >
+                音频
+              </Button>
+              <Button
+                size="small"
+                type={activeTab === 'image' ? 'primary' : 'default'}
+                className={`rounded-full px-3 ${activeTab === 'image' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'}`}
+                onClick={() => setActiveTab('image')}
+              >
+                图片
+              </Button>
+              <Button
+                size="small"
+                type={activeTab === 'video' ? 'primary' : 'default'}
+                className={`rounded-full px-3 ${activeTab === 'video' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'}`}
+                onClick={() => setActiveTab('video')}
+              >
+                视频
+              </Button>
             </div>
           </div>
 
-          {/* 导入小说创作 */}
-          <div className="w-full h-40 rounded-lg border border-gray-300 bg-white px-6 py-4 flex flex-col justify-between">
-            <div>
-              <div className="text-lg font-semibold mb-2">导入小说创作</div>
-              <div className="text-gray-500 text-sm">上传你的小说文本（支持 .txt、.md、.docx 格式），我们将帮助你生成大纲与分幕</div>
-            </div>
+          {/* 内容区域 */}
+          <div className="flex-grow p-4 overflow-auto min-h-0">
+            <div className="bg-white rounded-lg border border-gray-200 h-full flex flex-col">
+              {/* 卡片内容区域 */}
+              <div className="flex-grow p-4 overflow-auto">
+                <div className="space-y-4">
+                  {/* 画面1 */}
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center">
+                        <span className="text-xs text-white font-medium">G</span>
+                      </div>
+                      <span className="text-sm font-medium text-gray-800">画面：1  时长：00:00'-00:05'</span>
+                    </div>
 
-            <div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".txt,.md,.docx"
-                className="hidden"
-                onChange={handleFileChange}
-              />
-              <button
-                className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-60"
-                onClick={handlePickFile}
-                disabled={isUploading}
-              >
-                {isUploading ? '处理中...' : '选择文件'}
-              </button>
-              {selectedFileName && (
-                <span className="ml-3 text-sm text-gray-600 align-middle">{selectedFileName}</span>
-              )}
-              {isUploading && uploadProgress && (
-                <div className="mt-3 p-4 bg-blue-50 border border-blue-200 rounded-md">
-                  <div className="flex items-center mb-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
-                    <span className="text-sm text-blue-700 font-medium">{uploadProgress}</span>
+                    <div className="space-y-2 text-sm text-gray-700 pl-8">
+                      <div className="break-words"><span className="font-medium">• 景别：</span>特写 → 全景</div>
+                      <div className="break-words"><span className="font-medium">• 运镜：</span>镜头从上往下摇</div>
+                      <div className="break-words">
+                        <span className="font-medium">• 画面：</span>
+                        <div className="ml-4 space-y-1 mt-1 text-gray-600">
+                          <div className="break-words">○ 从餐车顶部一个褪色的黄红招牌【特写】开始，招牌上"外粥·24小时"的字样残缺不全，闪烁着不稳定的红光。</div>
+                          <div className="break-words">○ 镜头【下摇】，红光在逐渐暗淡的路面上洒下了一片微弱的光晕。雨丝在灯光下清晰可见。</div>
+                          <div className="break-words">○ 镜头最终定格在餐车旁的金属桌椅，几张惆怅的桌椅在外面，虽然、格雷独自一人坐在餐桌角落的位置。</div>
+                          <div className="break-words">○ 音效：环境雨声，远处城市交通噪音，霓虹灯"滋滋"的电流声。</div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  
-                  {/* 进度条 */}
-                  {taskProgress > 0 && (
-                    <div className="mb-2">
-                      <div className="flex justify-between text-xs text-blue-600 mb-1">
-                        <span>处理进度</span>
-                        <span>{taskProgress}%</span>
+
+                  {/* 画面2 */}
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm font-medium text-gray-800">画面：2  时长：00:05'-00:10'</span>
+                    </div>
+
+                    <div className="space-y-2 text-sm text-gray-700 pl-8">
+                      <div className="break-words"><span className="font-medium">• 景别：</span>中近景</div>
+                      <div className="break-words"><span className="font-medium">• 运镜：</span>固定</div>
+                      <div className="break-words">
+                        <span className="font-medium">• 画面：</span>虽然，格雷。深灰色连帽衫的视线垂得很低，只露出尖细的下颌线。他指间握着皱巴巴的纸巾，缓慢地擦去嘴角边的汁液。面前的是早已被泪水打湿的热粥。他的动作缓慢且理。
                       </div>
-                      <div className="w-full bg-blue-200 rounded-full h-2">
-                        <div 
-                          className="bg-blue-600 h-2 rounded-full transition-all duration-300 ease-out"
-                          style={{ width: `${taskProgress}%` }}
-                        ></div>
-                      </div>
                     </div>
-                  )}
-                  
-                  {/* 任务状态 */}
-                  {taskStatus && (
-                    <div className="text-xs text-blue-600 mb-2">
-                      状态：{taskStatus}
-                    </div>
-                  )}
-                  
-                  {/* 任务ID - 已删除显示 */}
-                  {/* {currentTaskId && (
-                    <div className="text-xs text-gray-500 mb-2">
-                      任务ID：{currentTaskId}
-                    </div>
-                  )} */}
-                  
-                  <div className="text-xs text-blue-600">
-                    💡 提示：AI处理可能需要几分钟时间，请您耐心等待
                   </div>
                 </div>
-              )}
+              </div>
+
+              {/* 卡片底部输入区域 */}
+              <div className="border-t border-gray-100 p-4">
+                <div className="mb-3">
+                  <Select
+                    value={selectedModel}
+                    onChange={setSelectedModel}
+                    className="w-full"
+                    size="small"
+                    placeholder="Gemini2.5pro"
+                  >
+                    <Option value="gemini-2.5pro">Gemini2.5pro</Option>
+                    <Option value="deepseek-r1">DeepSeek-R1</Option>
+                    <Option value="gpt-4">GPT-4</Option>
+                  </Select>
+                </div>
+
+                <div className="flex space-x-2">
+                  <textarea
+                    className="flex-1 h-10 border border-gray-300 rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    placeholder="简单描述你想要的互动剧"
+                  />
+                  <Button
+                    type="primary"
+                    className="bg-blue-500 hover:bg-blue-600"
+                  >
+                    一键生成
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
+
+        <div className="flex-1 bg-pink-200 border-r p-4">
+          <h2>中间面板 - 已移除</h2>
+          <div className="bg-white p-2 mt-2 rounded">简化测试区域</div>
+        </div>
+
+        {/* 右侧面板 - 手机预览区域 (固定宽度) */}
+        <div className="w-80 bg-gray-100 flex flex-col overflow-hidden">
+          {/* 预览头部 */}
+          <div className="p-3 border-b border-gray-200 bg-white">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Icon icon="ri:circle-fill" className="w-2 h-2 text-blue-500" />
+                <span className="text-sm font-medium text-gray-800">分镜4</span>
+                <Icon icon="ri:arrow-down-s-line" className="w-4 h-4 text-gray-400" />
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button size="small" type="text" className="text-xs text-blue-500 border border-blue-200 rounded">
+                  <Icon icon="ri:download-line" className="w-3 h-3 mr-1" />
+                  下载
+                </Button>
+                <Button size="small" type="text" className="text-xs text-blue-500 border border-blue-200 rounded">
+                  插入选项
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* 手机预览容器 */}
+          <div className="flex-grow overflow-auto min-h-0 p-2.5">
+            <div className="h-full flex items-center justify-center">
+              <div className="relative w-full max-w-xs" style={{ height: '700px' }}>
+                {/* 手机外框 - 响应式高度 */}
+                <div className="w-full h-full mx-auto bg-black rounded-[2.5rem] p-2 shadow-2xl" style={{ aspectRatio: '9/16' }}>
+                  {/* 手机屏幕 */}
+                  <div className="w-full h-full bg-gray-900 rounded-[2rem] overflow-hidden relative">
+                    {/* 刘海屏设计 */}
+                    <div className="absolute top-3 left-1/2 transform -translate-x-1/2 w-32 h-6 bg-black rounded-full z-10"></div>
+
+                    {/* 视频播放内容 */}
+                    <div className="absolute inset-0 overflow-hidden">
+                      {hasVideo ? (
+                        /* 真实视频播放 */
+                        <video
+                          ref={videoRef}
+                          src={videoSrc}
+                          className="w-full h-full object-cover"
+                          onClick={togglePlay}
+                          onTimeUpdate={(e) => {
+                            const video = e.currentTarget;
+                            if (video.duration && !isDragging) {
+                              setProgress((video.currentTime / video.duration) * 100);
+                            }
+                          }}
+                          onLoadedMetadata={handleVideoLoaded}
+                        />
+                      ) : (
+                        <>
+                          {/* 默认雪景背景 */}
+                          <div className="relative w-full h-full">
+                            {/* 雪景背景 - 模拟真实照片效果 */}
+                            <div className="absolute inset-0 bg-gradient-to-b from-blue-100 via-gray-200 to-blue-200">
+                              {/* 背景纹理 */}
+                              <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-gray-300/30"></div>
+
+                              {/* 雪花效果 - 更真实的大小和分布 */}
+                              <div className="absolute inset-0">
+                                {Array.from({ length: 35 }, (_, i) => (
+                                  <div
+                                    key={i}
+                                    className={`absolute bg-white rounded-full opacity-80 ${
+                                      Math.random() > 0.7 ? 'w-1.5 h-1.5' : 'w-1 h-1'
+                                    }`}
+                                    style={{
+                                      left: `${Math.random() * 100}%`,
+                                      top: `${Math.random() * 100}%`,
+                                      boxShadow: '0 0 2px rgba(255,255,255,0.5)'
+                                    }}
+                                  ></div>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* 人物照片模拟 */}
+                            <div className="absolute inset-0">
+                              {/* 男主角 - 前景中心位置 */}
+                              <div className="absolute top-16 left-8 w-32 h-48 rounded-lg overflow-hidden">
+                                <div className="w-full h-full bg-gradient-to-b from-amber-100 via-orange-200 to-amber-300 relative">
+                                  {/* 脸部区域 */}
+                                  <div className="absolute top-4 left-6 w-20 h-24 bg-gradient-to-b from-pink-200 to-orange-200 rounded-lg">
+                                    {/* 眼睛 */}
+                                    <div className="absolute top-6 left-3 w-2 h-1 bg-gray-700 rounded-full"></div>
+                                    <div className="absolute top-6 right-3 w-2 h-1 bg-gray-700 rounded-full"></div>
+                                    {/* 嘴巴 */}
+                                    <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 w-3 h-1 bg-red-300 rounded-full"></div>
+                                  </div>
+                                  {/* 头发 */}
+                                  <div className="absolute top-2 left-4 w-24 h-16 bg-gradient-to-b from-gray-800 to-gray-600 rounded-t-lg"></div>
+                                  {/* 衣服 - 黑色外套 */}
+                                  <div className="absolute bottom-0 left-0 w-full h-20 bg-gradient-to-b from-gray-900 to-black"></div>
+                                </div>
+                              </div>
+
+                              {/* 女主角 - 右侧较远位置 */}
+                              <div className="absolute top-28 right-6 w-24 h-36 rounded-lg overflow-hidden opacity-90">
+                                <div className="w-full h-full bg-gradient-to-b from-pink-100 via-rose-200 to-pink-300 relative">
+                                  {/* 脸部区域 */}
+                                  <div className="absolute top-3 left-3 w-16 h-18 bg-gradient-to-b from-pink-200 to-rose-200 rounded-lg">
+                                    {/* 眼睛 */}
+                                    <div className="absolute top-4 left-2 w-1.5 h-0.5 bg-gray-700 rounded-full"></div>
+                                    <div className="absolute top-4 right-2 w-1.5 h-0.5 bg-gray-700 rounded-full"></div>
+                                  </div>
+                                  {/* 头发 */}
+                                  <div className="absolute top-1 left-2 w-18 h-12 bg-gradient-to-b from-amber-800 to-amber-600 rounded-t-lg"></div>
+                                  {/* 衣服 */}
+                                  <div className="absolute bottom-0 left-0 w-full h-16 bg-gradient-to-b from-gray-700 to-gray-800"></div>
+                                </div>
+                              </div>
+
+                              {/* 景深模糊效果 */}
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent"></div>
+                            </div>
+
+                            {/* 字幕区域 */}
+                            <div className="absolute bottom-24 left-6 right-6">
+                              <div className="text-white text-base font-medium text-center leading-relaxed drop-shadow-lg">
+                                她前夫要是看到这个场景
+                              </div>
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+
+                      {/* 播放控制按钮 */}
+                      {hasVideo && (
+                        <div className="absolute inset-0 flex items-center justify-center z-10">
+                          <button
+                            onClick={togglePlay}
+                            className="bg-black/50 text-white rounded-full p-4 hover:bg-black/70 transition-all transform hover:scale-110"
+                          >
+                            <Icon
+                              icon={isPlaying ? "ri:pause-fill" : "ri:play-fill"}
+                              className="w-8 h-8"
+                            />
+                          </button>
+                        </div>
+                      )}
+
+                      <>
+                        {/* 进度条 */}
+                        <div className="absolute bottom-20 left-4 right-4 z-10">
+                            <div className="flex items-center justify-between text-white text-xs mb-1">
+                              <span>{timeDisplay}</span>
+                              <span>{totalTimeDisplay}</span>
+                            </div>
+                            <div className="relative">
+                              <div
+                                className="w-full h-1 bg-white/30 rounded-full cursor-pointer select-none"
+                                onMouseDown={handleMouseDown}
+                                onMouseMove={handleMouseMove}
+                                onMouseUp={handleMouseUp}
+                                onMouseLeave={handleMouseLeave}
+                              >
+                                <div
+                                  className="h-1 bg-white rounded-full relative"
+                                  style={{ width: `${progress}%` }}
+                                >
+                                  <div
+                                    className={`absolute right-0 top-1/2 transform -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-lg cursor-grab ${isDragging ? 'cursor-grabbing scale-110' : 'hover:scale-110'} transition-transform duration-150`}
+                                    onMouseDown={handleMouseDown}
+                                  ></div>
+                                </div>
+                              </div>
+                              {/* 不可见的拖拽区域，增加交互面积 */}
+                              <div
+                                className="absolute -top-2 -bottom-2 left-0 right-0 cursor-pointer"
+                                onMouseDown={handleMouseDown}
+                                onMouseMove={handleMouseMove}
+                                onMouseUp={handleMouseUp}
+                                onMouseLeave={handleMouseLeave}
+                              ></div>
+                            </div>
+                          </div>
+
+                          {/* 底部操作栏 */}
+                          <div className="absolute bottom-0 left-0 right-0 h-16 bg-black/60 flex items-center justify-around backdrop-blur-sm">
+                            <div className="text-center">
+                              <Icon icon="ri:chat-1-line" className="w-5 h-5 text-white mb-1" />
+                              <div className="text-white text-xs">数据</div>
+                            </div>
+                            <div className="text-center">
+                              <Icon icon="ri:heart-line" className="w-5 h-5 text-white mb-1" />
+                              <div className="text-white text-xs">喜欢</div>
+                            </div>
+                          </div>
+                        </>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
       </div>
     </div>
   );
 }
 
 export default ShortplayEntryPage;
-
-

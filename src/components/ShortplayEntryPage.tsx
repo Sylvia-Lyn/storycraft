@@ -201,30 +201,37 @@ function ShortplayEntryPage() {
               {/* 卡片底部输入区域 */}
               <div className="border-t border-gray-100 p-4">
                 <div className="mb-3">
-                  <Select
-                    value={selectedModel}
-                    onChange={setSelectedModel}
-                    className="w-full"
-                    size="small"
-                    placeholder="Gemini2.5pro"
-                  >
-                    <Option value="gemini-2.5pro">Gemini2.5pro</Option>
-                    <Option value="deepseek-r1">DeepSeek-R1</Option>
-                    <Option value="gpt-4">GPT-4</Option>
-                  </Select>
+                  <div className="relative w-40">
+                    <select
+                      value={selectedModel}
+                      onChange={(e) => setSelectedModel(e.target.value)}
+                      className="w-full h-9 pl-3 pr-8 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none"
+                    >
+                      <option value="gemini-2.5pro">Gemini2.5pro</option>
+                      <option value="deepseek-r1">DeepSeek-R1</option>
+                      <option value="gpt-4">GPT-4</option>
+                    </select>
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                      <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M1 1L6 6L11 1" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="flex space-x-2">
-                  <textarea
-                    className="flex-1 h-10 border border-gray-300 rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                    placeholder="简单描述你想要的互动剧"
-                  />
-                  <Button
-                    type="primary"
-                    className="bg-blue-500 hover:bg-blue-600"
+                <div className="flex space-x-3">
+                  <div className="flex-1 relative">
+                    <input
+                      type="text"
+                      className="w-full h-10 pl-4 pr-4 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="简单描述你想要的互动剧"
+                    />
+                  </div>
+                  <button
+                    className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors"
                   >
                     一键生成
-                  </Button>
+                  </button>
                 </div>
               </div>
             </div>

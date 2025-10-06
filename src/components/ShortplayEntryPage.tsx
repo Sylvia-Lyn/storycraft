@@ -2,6 +2,9 @@ import React, { useState, useRef } from 'react';
 import { Icon } from '@iconify/react';
 import { Button, Select } from 'antd';
 
+// 一键创作API基础路径
+const STORYAI_API_BASE = '/episode-api/storyai';
+
 const { Option } = Select;
 
 function ShortplayEntryPage() {
@@ -91,7 +94,7 @@ function ShortplayEntryPage() {
 
     setIsGenerating(true);
     try {
-      const response = await fetch('/episode-api/series/create', {
+      const response = await fetch(`${STORYAI_API_BASE}/series/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

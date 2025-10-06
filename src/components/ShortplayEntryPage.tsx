@@ -370,7 +370,7 @@ function ShortplayEntryPage() {
 
                       <>
                         {/* 进度条 */}
-                        <div className="absolute bottom-20 left-4 right-4 z-10">
+                        <div className="absolute bottom-12 left-4 right-4 z-10">
                             <div className="flex items-center justify-between text-white text-xs mb-1">
                               <span>{timeDisplay}</span>
                               <span>{totalTimeDisplay}</span>
@@ -405,14 +405,12 @@ function ShortplayEntryPage() {
                           </div>
 
                           {/* 底部操作栏 */}
-                          <div className="absolute bottom-0 left-0 right-0 h-16 bg-black/60 flex items-center justify-around backdrop-blur-sm">
+                          <div className="absolute bottom-0 left-0 right-0 h-8 bg-black/60 flex items-center justify-around backdrop-blur-sm">
                             <div className="text-center">
-                              <Icon icon="ri:chat-1-line" className="w-5 h-5 text-white mb-1" />
-                              <div className="text-white text-xs">数据</div>
+                              <div className="text-white text-sm">续梦</div>
                             </div>
                             <div className="text-center">
-                              <Icon icon="ri:heart-line" className="w-5 h-5 text-white mb-1" />
-                              <div className="text-white text-xs">喜欢</div>
+                              <div className="text-white text-sm">我的</div>
                             </div>
                           </div>
                         </>

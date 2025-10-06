@@ -575,14 +575,12 @@ function ShortplayEntryPage() {
                     <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
                       <Icon icon="ri:user-line" className="w-4 h-4 text-gray-600" />
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-1">
-                        <span className="text-sm font-medium text-gray-800">男1</span>
-                        <Icon icon="ri:arrow-down-s-line" className="w-4 h-4 text-gray-400" />
-                      </div>
-                      <div className="text-sm text-gray-600">他抬头更是惊骇到了极点</div>
-                      <div className="text-xs text-gray-400 mt-1">00:45'-00:49'</div>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm font-medium text-gray-800">男1</span>
+                      <Icon icon="ri:arrow-down-s-line" className="w-4 h-4 text-gray-400" />
                     </div>
+                    <div className="flex-1 text-sm text-gray-600">他抬头更是惊骇到了极点</div>
+                    <div className="text-xs text-gray-400">00:45'-00:49'</div>
                     <div className="flex items-center space-x-2">
                       <Icon icon="ri:time-line" className="w-4 h-4 text-gray-400" />
                       <Icon icon="ri:delete-bin-line" className="w-4 h-4 text-gray-400 cursor-pointer hover:text-red-500" />
@@ -596,14 +594,12 @@ function ShortplayEntryPage() {
                     <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
                       <Icon icon="ri:user-line" className="w-4 h-4 text-gray-600" />
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-1">
-                        <span className="text-sm font-medium text-gray-800">男1</span>
-                        <Icon icon="ri:arrow-down-s-line" className="w-4 h-4 text-gray-400" />
-                      </div>
-                      <div className="text-sm text-gray-600">不知道会有什么程度</div>
-                      <div className="text-xs text-gray-400 mt-1">00:49'-00:53'</div>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm font-medium text-gray-800">男1</span>
+                      <Icon icon="ri:arrow-down-s-line" className="w-4 h-4 text-gray-400" />
                     </div>
+                    <div className="flex-1 text-sm text-gray-600">不知道会有什么程度</div>
+                    <div className="text-xs text-gray-400">00:49'-00:53'</div>
                     <div className="flex items-center space-x-2">
                       <Icon icon="ri:time-line" className="w-4 h-4 text-gray-400" />
                       <Icon icon="ri:delete-bin-line" className="w-4 h-4 text-gray-400 cursor-pointer hover:text-red-500" />
@@ -617,13 +613,11 @@ function ShortplayEntryPage() {
                     <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
                       <Icon icon="ri:music-2-line" className="w-4 h-4 text-white" />
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-1">
-                        <span className="text-sm font-medium text-gray-800">音效</span>
-                      </div>
-                      <div className="text-sm text-gray-600">需要悲伤的，沉重的.mp3</div>
-                      <div className="text-xs text-gray-400 mt-1">00:49'-00:59'</div>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm font-medium text-gray-800">音效</span>
                     </div>
+                    <div className="flex-1 text-sm text-gray-600">需要悲伤的，沉重的.mp3</div>
+                    <div className="text-xs text-gray-400">00:49'-00:59'</div>
                     <div className="flex items-center space-x-2">
                       <Icon icon="ri:time-line" className="w-4 h-4 text-gray-400" />
                       <Icon icon="ri:delete-bin-line" className="w-4 h-4 text-gray-400 cursor-pointer hover:text-red-500" />

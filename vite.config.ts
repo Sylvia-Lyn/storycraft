@@ -26,9 +26,13 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/api': {
+        target: 'http://localhost:5173',
+        changeOrigin: true,
+      },
+      '/episode-api': {
         target: 'http://8.136.8.24:8321',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
+        rewrite: (path) => path.replace(/^\/episode-api/, ''),
       },
     },
   },

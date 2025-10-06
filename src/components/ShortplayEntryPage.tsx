@@ -230,98 +230,204 @@ function ShortplayEntryPage() {
             <div className="bg-white rounded-lg border border-gray-200 h-full flex flex-col">
               {/* 卡片内容区域 */}
               <div className="flex-grow p-4 overflow-auto">
-                <div className="space-y-4">
-                  {/* 画面1 */}
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center">
-                        <span className="text-xs text-white font-medium">G</span>
+                {activeTab === 'script' && (
+                  <div className="space-y-4">
+                    {/* 画面1 */}
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center">
+                          <span className="text-xs text-white font-medium">G</span>
+                        </div>
+                        <span className="text-sm font-medium text-gray-800">画面：1  时长：00:00'-00:05'</span>
                       </div>
-                      <span className="text-sm font-medium text-gray-800">画面：1  时长：00:00'-00:05'</span>
+
+                      <div className="space-y-2 text-sm text-gray-700 pl-8">
+                        <div className="break-words"><span className="font-medium">• 景别：</span>特写 → 全景</div>
+                        <div className="break-words"><span className="font-medium">• 运镜：</span>镜头从上往下摇</div>
+                        <div className="break-words">
+                          <span className="font-medium">• 画面：</span>
+                          <div className="ml-4 space-y-1 mt-1 text-gray-600">
+                            <div className="break-words">○ 从餐车顶部一个褪色的黄红招牌【特写】开始，招牌上"外粥·24小时"的字样残缺不全，闪烁着不稳定的红光。</div>
+                            <div className="break-words">○ 镜头【下摇】，红光在逐渐暗淡的路面上洒下了一片微弱的光晕。雨丝在灯光下清晰可见。</div>
+                            <div className="break-words">○ 镜头最终定格在餐车旁的金属桌椅，几张惆怅的桌椅在外面，虽然、格雷独自一人坐在餐桌角落的位置。</div>
+                            <div className="break-words">○ 音效：环境雨声，远处城市交通噪音，霓虹灯"滋滋"的电流声。</div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="space-y-2 text-sm text-gray-700 pl-8">
-                      <div className="break-words"><span className="font-medium">• 景别：</span>特写 → 全景</div>
-                      <div className="break-words"><span className="font-medium">• 运镜：</span>镜头从上往下摇</div>
-                      <div className="break-words">
-                        <span className="font-medium">• 画面：</span>
-                        <div className="ml-4 space-y-1 mt-1 text-gray-600">
-                          <div className="break-words">○ 从餐车顶部一个褪色的黄红招牌【特写】开始，招牌上"外粥·24小时"的字样残缺不全，闪烁着不稳定的红光。</div>
-                          <div className="break-words">○ 镜头【下摇】，红光在逐渐暗淡的路面上洒下了一片微弱的光晕。雨丝在灯光下清晰可见。</div>
-                          <div className="break-words">○ 镜头最终定格在餐车旁的金属桌椅，几张惆怅的桌椅在外面，虽然、格雷独自一人坐在餐桌角落的位置。</div>
-                          <div className="break-words">○ 音效：环境雨声，远处城市交通噪音，霓虹灯"滋滋"的电流声。</div>
+                    {/* 画面2 */}
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm font-medium text-gray-800">画面：2  时长：00:05'-00:10'</span>
+                      </div>
+
+                      <div className="space-y-2 text-sm text-gray-700 pl-8">
+                        <div className="break-words"><span className="font-medium">• 景别：</span>中近景</div>
+                        <div className="break-words"><span className="font-medium">• 运镜：</span>固定</div>
+                        <div className="break-words">
+                          <span className="font-medium">• 画面：</span>虽然，格雷。深灰色连帽衫的视线垂得很低，只露出尖细的下颌线。他指间握着皱巴巴的纸巾，缓慢地擦去嘴角边的汁液。面前的是早已被泪水打湿的热粥。他的动作缓慢且理。
                         </div>
                       </div>
                     </div>
                   </div>
+                )}
 
-                  {/* 画面2 */}
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm font-medium text-gray-800">画面：2  时长：00:05'-00:10'</span>
-                    </div>
+                {activeTab === 'audio' && (
+                  <div className="space-y-4">
+                    {/* 配音选择区域 */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-gray-700">配音</span>
+                        <Icon icon="ri:arrow-down-s-line" className="w-4 h-4 text-gray-400" />
+                      </div>
 
-                    <div className="space-y-2 text-sm text-gray-700 pl-8">
-                      <div className="break-words"><span className="font-medium">• 景别：</span>中近景</div>
-                      <div className="break-words"><span className="font-medium">• 运镜：</span>固定</div>
-                      <div className="break-words">
-                        <span className="font-medium">• 画面：</span>虽然，格雷。深灰色连帽衫的视线垂得很低，只露出尖细的下颌线。他指间握着皱巴巴的纸巾，缓慢地擦去嘴角边的汁液。面前的是早已被泪水打湿的热粥。他的动作缓慢且理。
+                      {/* 已设置的配音人员 */}
+                      <div className="space-y-3">
+                        <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                          <div className="w-8 h-8 bg-amber-600 rounded-full flex items-center justify-center">
+                            <span className="text-xs text-white font-medium">楚</span>
+                          </div>
+                          <span className="text-sm text-gray-800">楚青</span>
+                          <div className="flex space-x-2 ml-auto">
+                            <button className="px-2 py-1 text-xs border border-gray-300 rounded text-gray-600">试听</button>
+                            <button className="px-2 py-1 text-xs border border-gray-300 rounded text-gray-600">删除</button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 音频文件列表 */}
+                      <div className="space-y-2">
+                        <div className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg">
+                          <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                            <Icon icon="ri:music-2-line" className="w-4 h-4 text-white" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="text-sm font-medium text-gray-800">清潮少年音.mp3</div>
+                          </div>
+                          <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+                            <span className="text-xs text-white font-medium">男</span>
+                          </div>
+                          <Icon icon="ri:arrow-down-s-line" className="w-4 h-4 text-gray-400" />
+                          <div className="flex space-x-2">
+                            <button className="px-3 py-1 text-xs border border-blue-500 text-blue-500 rounded">播放</button>
+                            <button className="px-3 py-1 text-xs bg-blue-500 text-white rounded">应用</button>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                )}
+
+                {activeTab === 'image' && (
+                  <div className="flex items-center justify-center h-full text-gray-500">
+                    <span>图片功能开发中...</span>
+                  </div>
+                )}
+
+                {activeTab === 'video' && (
+                  <div className="flex items-center justify-center h-full text-gray-500">
+                    <span>视频功能开发中...</span>
+                  </div>
+                )}
               </div>
 
               {/* 卡片底部输入区域 */}
               <div className="border-t border-gray-100 p-4">
-                <div className="mb-3">
-                  <div className="relative w-40">
-                    <select
-                      value={selectedModel}
-                      onChange={(e) => setSelectedModel(e.target.value)}
-                      className="w-full h-9 pl-3 pr-8 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none"
-                    >
-                      <option value="gemini-2.5pro">Gemini2.5pro</option>
-                      <option value="deepseek-r1">DeepSeek-R1</option>
-                      <option value="gpt-4">GPT-4</option>
-                    </select>
-                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                      <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M1 1L6 6L11 1" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
+                {(activeTab === 'script' || activeTab === 'image' || activeTab === 'video') && (
+                  <>
+                    <div className="mb-3">
+                      <div className="relative w-40">
+                        <select
+                          value={selectedModel}
+                          onChange={(e) => setSelectedModel(e.target.value)}
+                          className="w-full h-9 pl-3 pr-8 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none"
+                        >
+                          <option value="gemini-2.5pro">Gemini2.5pro</option>
+                          <option value="deepseek-r1">DeepSeek-R1</option>
+                          <option value="gpt-4">GPT-4</option>
+                        </select>
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                          <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex space-x-3">
+                      <div className="flex-1 relative">
+                        <input
+                          type="text"
+                          value={userInput}
+                          onChange={(e) => setUserInput(e.target.value)}
+                          className="w-full h-10 pl-4 pr-4 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="简单描述你想要的互动剧"
+                          disabled={isGenerating}
+                        />
+                      </div>
+                      <button
+                        onClick={handleGenerate}
+                        disabled={isGenerating || !userInput.trim()}
+                        className={`px-4 py-2 text-white text-sm font-medium rounded-lg transition-colors flex items-center space-x-2 ${
+                          isGenerating || !userInput.trim()
+                            ? 'bg-gray-400 cursor-not-allowed'
+                            : 'bg-blue-500 hover:bg-blue-600'
+                        }`}
+                      >
+                        {isGenerating && (
+                          <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                        )}
+                        <span>{isGenerating ? '生成中...' : '一键生成'}</span>
+                      </button>
+                    </div>
+                  </>
+                )}
+
+                {activeTab === 'audio' && (
+                  <div className="space-y-3">
+                    <div className="relative w-40">
+                      <select className="w-full h-9 pl-3 pr-8 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none">
+                        <option value="gemini-2.5pro">Gemini2.5pro</option>
+                        <option value="deepseek-r1">DeepSeek-R1</option>
+                        <option value="gpt-4">GPT-4</option>
+                      </select>
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                        <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M1 1L6 6L11 1" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </div>
+                    </div>
+
+                    <div className="relative w-40">
+                      <select className="w-full h-9 pl-3 pr-8 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none">
+                        <option value="male">男声</option>
+                        <option value="female">女声</option>
+                      </select>
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                        <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M1 1L6 6L11 1" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </div>
+                    </div>
+
+                    <div className="flex space-x-3">
+                      <div className="flex-1 relative">
+                        <input
+                          type="text"
+                          className="w-full h-10 pl-4 pr-4 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="简单描述你想要的互动剧"
+                        />
+                      </div>
+                      <button className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors">
+                        模型生成
+                      </button>
                     </div>
                   </div>
-                </div>
-
-                <div className="flex space-x-3">
-                  <div className="flex-1 relative">
-                    <input
-                      type="text"
-                      value={userInput}
-                      onChange={(e) => setUserInput(e.target.value)}
-                      className="w-full h-10 pl-4 pr-4 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="简单描述你想要的互动剧"
-                      disabled={isGenerating}
-                    />
-                  </div>
-                  <button
-                    onClick={handleGenerate}
-                    disabled={isGenerating || !userInput.trim()}
-                    className={`px-4 py-2 text-white text-sm font-medium rounded-lg transition-colors flex items-center space-x-2 ${
-                      isGenerating || !userInput.trim()
-                        ? 'bg-gray-400 cursor-not-allowed'
-                        : 'bg-blue-500 hover:bg-blue-600'
-                    }`}
-                  >
-                    {isGenerating && (
-                      <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                    )}
-                    <span>{isGenerating ? '生成中...' : '一键生成'}</span>
-                  </button>
-                </div>
+                )}
               </div>
             </div>
           </div>

@@ -312,7 +312,7 @@ function ShortplayEntryPage() {
           <div className="p-4 bg-white border-b border-gray-100">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <svg width="24" height="22" viewBox="0 0 56 51" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg width="40" height="36" viewBox="0 0 56 51" fill="none" xmlns="http://www.w3.org/2000/svg">
                   {/* 边框 */}
                   <rect width="56" height="51" rx="10" fill="#3E83F6"/>
                   {/* Logo内容 - 星星 */}

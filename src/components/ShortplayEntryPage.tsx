@@ -10,6 +10,8 @@ function ShortplayEntryPage() {
   const [progress, setProgress] = useState<number>(75); // 进度百分比
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [hasVideo, setHasVideo] = useState<boolean>(true); // 默认有视频
+  const [userInput, setUserInput] = useState<string>(''); // 用户输入内容
+  const [isGenerating, setIsGenerating] = useState<boolean>(false); // 生成状态
   const videoRef = useRef<HTMLVideoElement>(null);
   const videoSrc = "/32767410413-1-192.mp4"; // 视频文件路径
 
@@ -79,6 +81,48 @@ function ShortplayEntryPage() {
   const totalMinutes = Math.floor(videoDuration / 60);
   const totalSeconds = Math.floor(videoDuration % 60);
   const totalTimeDisplay = `${totalMinutes.toString().padStart(2, '0')}:${totalSeconds.toString().padStart(2, '0')}`;
+
+  // 一键生成API调用
+  const handleGenerate = async () => {
+    if (!userInput.trim()) {
+      alert('请输入您想要的互动剧描述');
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const response = await fetch('http://8.136.8.24:8321/episode/create/async', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: "user123",
+          userInput: userInput.trim(),
+          seriesName: "修仙恋爱记",
+          seriesDescription: "修仙背景的爱情故事",
+          episodeTitle: "第一集：相遇",
+          episodeDescription: "男女主角初次相遇",
+          provider: selectedModel === 'deepseek-r1' ? 'deepseek' : 'gemini'
+        })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('生成成功:', result);
+        // 这里可以添加成功后的处理逻辑
+        alert('生成请求已提交，请稍后查看结果');
+        setUserInput(''); // 清空输入
+      } else {
+        throw new Error(`请求失败: ${response.status}`);
+      }
+    } catch (error) {
+      console.error('生成失败:', error);
+      alert('生成失败，请重试');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-blue-50 to-purple-50">
@@ -223,14 +267,29 @@ function ShortplayEntryPage() {
                   <div className="flex-1 relative">
                     <input
                       type="text"
+                      value={userInput}
+                      onChange={(e) => setUserInput(e.target.value)}
                       className="w-full h-10 pl-4 pr-4 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       placeholder="简单描述你想要的互动剧"
+                      disabled={isGenerating}
                     />
                   </div>
                   <button
-                    className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors"
+                    onClick={handleGenerate}
+                    disabled={isGenerating || !userInput.trim()}
+                    className={`px-4 py-2 text-white text-sm font-medium rounded-lg transition-colors flex items-center space-x-2 ${
+                      isGenerating || !userInput.trim()
+                        ? 'bg-gray-400 cursor-not-allowed'
+                        : 'bg-blue-500 hover:bg-blue-600'
+                    }`}
                   >
-                    一键生成
+                    {isGenerating && (
+                      <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    )}
+                    <span>{isGenerating ? '生成中...' : '一键生成'}</span>
                   </button>
                 </div>
               </div>

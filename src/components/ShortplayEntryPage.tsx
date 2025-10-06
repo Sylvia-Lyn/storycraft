@@ -1,11 +1,100 @@
 import React, { useState, useRef } from 'react';
 import { Icon } from '@iconify/react';
 import { Button, Select } from 'antd';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import {
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 // 一键创作API基础路径
 const STORYAI_API_BASE = '/episode-api/storyai';
 
 const { Option } = Select;
+
+// 可排序的音频项组件
+interface AudioItem {
+  id: string;
+  type: 'voice' | 'sound';
+  speaker: string;
+  content: string;
+  timeRange: string;
+  icon: string;
+}
+
+interface SortableAudioItemProps {
+  item: AudioItem;
+}
+
+function SortableAudioItem({ item }: SortableAudioItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`bg-white rounded-lg border border-gray-200 px-3 py-2 cursor-move transition-all ${
+        isDragging ? 'scale-95 shadow-lg' : ''
+      }`}
+      {...attributes}
+    >
+      <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-2">
+          <div {...listeners}>
+            <Icon icon="ri:drag-move-line" className="w-4 h-4 text-gray-400 cursor-grab" />
+          </div>
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+            item.type === 'sound' ? 'bg-blue-500' : 'bg-gray-100'
+          }`}>
+            <Icon
+              icon={item.icon}
+              className={`w-4 h-4 ${item.type === 'sound' ? 'text-white' : 'text-gray-600'}`}
+            />
+          </div>
+        </div>
+        <div className="flex items-center space-x-2">
+          <span className="text-sm font-medium text-gray-800">{item.speaker}</span>
+          {item.type === 'voice' && (
+            <Icon icon="ri:arrow-down-s-line" className="w-4 h-4 text-gray-400" />
+          )}
+        </div>
+        <div className="flex-1 text-sm text-gray-600">{item.content}</div>
+        <div className="text-xs text-gray-400">{item.timeRange}</div>
+        <div className="flex items-center space-x-2">
+          <Icon icon="ri:time-line" className="w-4 h-4 text-gray-400" />
+          <Icon icon="ri:delete-bin-line" className="w-4 h-4 text-gray-400 cursor-pointer hover:text-red-500" />
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function ShortplayEntryPage() {
   const [activeTab, setActiveTab] = useState<string>('script');
@@ -15,11 +104,237 @@ function ShortplayEntryPage() {
   const [hasVideo, setHasVideo] = useState<boolean>(true); // 默认有视频
   const [userInput, setUserInput] = useState<string>(''); // 用户输入内容
   const [isGenerating, setIsGenerating] = useState<boolean>(false); // 生成状态
+
+  // 音频数据状态
+  const [audioItems, setAudioItems] = useState([
+    {
+      id: 'audio-1',
+      type: 'voice',
+      speaker: '男1',
+      content: '他抬头更是惊骇到了极点',
+      timeRange: '00:45\'-00:49\'',
+      icon: 'ri:user-line'
+    },
+    {
+      id: 'audio-2',
+      type: 'voice',
+      speaker: '男1',
+      content: '不知道会有什么程度',
+      timeRange: '00:49\'-00:53\'',
+      icon: 'ri:user-line'
+    },
+    {
+      id: 'audio-3',
+      type: 'sound',
+      speaker: '音效',
+      content: '需要悲伤的，沉重的.mp3',
+      timeRange: '00:49\'-00:59\'',
+      icon: 'ri:music-2-line'
+    }
+  ]);
+
+  // 图片数据状态
+  const [imageItems, setImageItems] = useState([
+    {
+      id: 'img-1',
+      description: '真实照片质感线波丽符写，银灰蓝色发丝浸润透光，反光材质玻璃感雾染柔雾...',
+      parameters: '柯达5219胶片颗粒｜快门速度1/48｜色温2800K｜F1.8浅景深｜霓虹辉光强度120%',
+      timeRange: '00:00\'-00:05\'',
+      image: '/api/placeholder/80/80'
+    },
+    {
+      id: 'img-2',
+      description: '金黄色调，手绘插画，金箔岩精美，华贵，奇秘，华丽异域风情纱丽少女，黑...',
+      parameters: '柯达5219胶片颗粒｜快门速度1/48｜色温2800K｜F1.8浅景深｜霓虹辉光强度120%',
+      timeRange: '00:05\'-00:10\'',
+      image: '/api/placeholder/80/80'
+    },
+    {
+      id: 'img-3',
+      description: '一头黑色的长发如瀑布般垂落，发间点缀着古老经生铜，有韵的闪烁着光芒。唯...',
+      parameters: '柯达5219胶片颗粒｜快门速度1/48｜色温2800K｜F1.8浅景深｜霓虹辉光强度120%',
+      timeRange: '00:11\'-00:15\'',
+      image: '/api/placeholder/80/80'
+    },
+    {
+      id: 'img-4',
+      description: '高定风，漫画中国古代金发美女，厚涂肌理，被紧细腺，超写实，超清晰，王...',
+      parameters: '柯达5219胶片颗粒｜快门速度1/48｜色温2800K｜F1.8浅景深｜霓虹辉光强度120%',
+      timeRange: '00:16\'-00:20\'',
+      image: '/api/placeholder/80/80'
+    },
+    {
+      id: 'img-5',
+      description: '古风女，深色长发，粉红衣服，花朵发饰，雨夜，怯感，颓靡，病娇，女脸上身...',
+      parameters: '柯达5219胶片颗粒｜快门速度1/48｜色温2800K｜F1.8浅景深｜霓虹辉光强度120%',
+      timeRange: '00:21\'-00:25\'',
+      image: '/api/placeholder/80/80'
+    }
+  ]);
+
+  // 编辑时间状态
+  const [editingTimeId, setEditingTimeId] = useState<string | null>(null);
+  const [editingStartMinutes, setEditingStartMinutes] = useState<string>('');
+  const [editingStartSeconds, setEditingStartSeconds] = useState<string>('');
+  const [editingEndMinutes, setEditingEndMinutes] = useState<string>('');
+  const [editingEndSeconds, setEditingEndSeconds] = useState<string>('');
+
+  // 视频数据状态 (使用与图片相同的数据结构)
+  const [videoItems, setVideoItems] = useState([
+    {
+      id: 'video-1',
+      description: '真实照片质感线波丽符写，银灰蓝色发丝浸润透光，反光材质玻璃感雾染柔雾...',
+      parameters: '柯达5219胶片颗粒｜快门速度1/48｜色温2800K｜F1.8浅景深｜霓虹辉光强度120%',
+      timeRange: '00:00\'-00:05\'',
+      image: '/api/placeholder/80/80'
+    },
+    {
+      id: 'video-2',
+      description: '金黄色调，手绘插画，金箔岩精美，华贵，奇秘，华丽异域风情纱丽少女，黑...',
+      parameters: '柯达5219胶片颗粒｜快门速度1/48｜色温2800K｜F1.8浅景深｜霓虹辉光强度120%',
+      timeRange: '00:05\'-00:10\'',
+      image: '/api/placeholder/80/80'
+    },
+    {
+      id: 'video-3',
+      description: '一头黑色的长发如瀑布般垂落，发间点缀着古老经生铜，有韵的闪烁着光芒。唯...',
+      parameters: '柯达5219胶片颗粒｜快门速度1/48｜色温2800K｜F1.8浅景深｜霓虹辉光强度120%',
+      timeRange: '00:11\'-00:15\'',
+      image: '/api/placeholder/80/80'
+    },
+    {
+      id: 'video-4',
+      description: '高定风，漫画中国古代金发美女，厚涂肌理，被紧细腺，超写实，超清晰，王...',
+      parameters: '柯达5219胶片颗粒｜快门速度1/48｜色温2800K｜F1.8浅景深｜霓虹辉光强度120%',
+      timeRange: '00:16\'-00:20\'',
+      image: '/api/placeholder/80/80'
+    },
+    {
+      id: 'video-5',
+      description: '古风女，深色长发，粉红衣服，花朵发饰，雨夜，怯感，颓靡，病娇，女脸上身...',
+      parameters: '柯达5219胶片颗粒｜快门速度1/48｜色温2800K｜F1.8浅景深｜霓虹辉光强度120%',
+      timeRange: '00:21\'-00:25\'',
+      image: '/api/placeholder/80/80'
+    }
+  ]);
   const videoRef = useRef<HTMLVideoElement>(null);
   const videoSrc = "/32767410413-1-192.mp4"; // 视频文件路径
 
   // 进度条拖拽状态
   const [isDragging, setIsDragging] = useState<boolean>(false);
+
+  // 拖拽传感器配置
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // 处理拖拽结束
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setAudioItems((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
+
+  // 时间解析和格式化函数
+  const parseTimeRange = (timeRange: string) => {
+    // 从 "00:00'-00:05'" 格式中提取开始和结束时间
+    const match = timeRange.match(/(\d{2}):(\d{2})'-(\d{2}):(\d{2})'/);
+    if (match) {
+      return {
+        startMinutes: match[1],
+        startSeconds: match[2],
+        endMinutes: match[3],
+        endSeconds: match[4]
+      };
+    }
+    return { startMinutes: '00', startSeconds: '00', endMinutes: '00', endSeconds: '05' };
+  };
+
+  const formatTimeRange = (startMin: string, startSec: string, endMin: string, endSec: string) => {
+    return `${startMin.padStart(2, '0')}:${startSec.padStart(2, '0')}'-${endMin.padStart(2, '0')}:${endSec.padStart(2, '0')}'`;
+  };
+
+  // 编辑时间相关函数
+  const startEditTime = (itemId: string, currentTimeRange: string) => {
+    console.log('Starting edit for item:', itemId, 'timeRange:', currentTimeRange);
+    const timeData = parseTimeRange(currentTimeRange);
+    console.log('Parsed time data:', timeData);
+
+    setEditingTimeId(itemId);
+    setEditingStartMinutes(timeData.startMinutes);
+    setEditingStartSeconds(timeData.startSeconds);
+    setEditingEndMinutes(timeData.endMinutes);
+    setEditingEndSeconds(timeData.endSeconds);
+  };
+
+  const saveTimeEdit = (itemId: string, isImage: boolean = true) => {
+    // 验证输入是否有效
+    if (!editingStartMinutes || !editingStartSeconds || !editingEndMinutes || !editingEndSeconds) return;
+
+    // 在保存时补零
+    const startMin = editingStartMinutes.padStart(2, '0');
+    const startSec = editingStartSeconds.padStart(2, '0');
+    const endMin = editingEndMinutes.padStart(2, '0');
+    const endSec = editingEndSeconds.padStart(2, '0');
+
+    const newTimeRange = formatTimeRange(startMin, startSec, endMin, endSec);
+
+    const updateItems = (items: typeof imageItems) =>
+      items.map(item => {
+        if (item.id === itemId) {
+          return { ...item, timeRange: newTimeRange };
+        }
+        return item;
+      });
+
+    if (isImage) {
+      setImageItems(updateItems);
+    } else {
+      setVideoItems(updateItems);
+    }
+
+    setEditingTimeId(null);
+    setEditingStartMinutes('');
+    setEditingStartSeconds('');
+    setEditingEndMinutes('');
+    setEditingEndSeconds('');
+  };
+
+  const cancelTimeEdit = () => {
+    setEditingTimeId(null);
+    setEditingStartMinutes('');
+    setEditingStartSeconds('');
+    setEditingEndMinutes('');
+    setEditingEndSeconds('');
+  };
+
+  // 处理时间输入的辅助函数
+  const handleTimeInput = (value: string, max: number) => {
+    // 只允许数字输入，最多2位
+    const numValue = value.replace(/\D/g, '').slice(0, 2);
+
+    if (numValue === '') return '';
+
+    const intValue = parseInt(numValue);
+    if (isNaN(intValue)) return '';
+
+    // 如果超过最大值，返回最大值对应的字符串
+    if (intValue > max) {
+      return max.toString();
+    }
+
+    return numValue;
+  };
 
   // 处理进度条拖拽
   const handleProgressMove = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -84,6 +399,7 @@ function ShortplayEntryPage() {
   const totalMinutes = Math.floor(videoDuration / 60);
   const totalSeconds = Math.floor(videoDuration % 60);
   const totalTimeDisplay = `${totalMinutes.toString().padStart(2, '0')}:${totalSeconds.toString().padStart(2, '0')}`;
+
 
   // 一键生成API调用
   const handleGenerate = async () => {
@@ -327,14 +643,54 @@ function ShortplayEntryPage() {
                 )}
 
                 {activeTab === 'image' && (
-                  <div className="flex items-center justify-center h-full text-gray-500">
-                    <span>图片功能开发中...</span>
+                  <div className="space-y-4">
+                    {/* 分镜选择区域 */}
+                    <div className="space-y-3">
+                      <div className="relative w-24">
+                        <select className="w-full h-9 pl-3 pr-8 text-sm rounded-lg bg-white focus:outline-none appearance-none">
+                          <option value="shot1">分镜1</option>
+                          <option value="shot2">分镜2</option>
+                          <option value="shot3">分镜3</option>
+                          <option value="shot4">分镜4</option>
+                        </select>
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                          <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 图片功能内容区域 */}
+                    <div className="flex items-center justify-center h-full text-gray-500">
+                      <span>图片功能开发中...</span>
+                    </div>
                   </div>
                 )}
 
                 {activeTab === 'video' && (
-                  <div className="flex items-center justify-center h-full text-gray-500">
-                    <span>视频功能开发中...</span>
+                  <div className="space-y-4">
+                    {/* 分镜选择区域 */}
+                    <div className="space-y-3">
+                      <div className="relative w-24">
+                        <select className="w-full h-9 pl-3 pr-8 text-sm rounded-lg bg-white focus:outline-none appearance-none">
+                          <option value="shot1">分镜1</option>
+                          <option value="shot2">分镜2</option>
+                          <option value="shot3">分镜3</option>
+                          <option value="shot4">分镜4</option>
+                        </select>
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                          <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 视频功能内容区域 */}
+                    <div className="flex items-center justify-center h-full text-gray-500">
+                      <span>视频功能开发中...</span>
+                    </div>
                   </div>
                 )}
               </div>
@@ -568,68 +924,327 @@ function ShortplayEntryPage() {
             )}
 
             {activeTab === 'audio' && (
-              <div className="space-y-4">
-                {/* 音频项1 */}
-                <div className="bg-white rounded-lg border border-gray-200 px-3 py-2">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                      <Icon icon="ri:user-line" className="w-4 h-4 text-gray-600" />
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm font-medium text-gray-800">男1</span>
-                      <Icon icon="ri:arrow-down-s-line" className="w-4 h-4 text-gray-400" />
-                    </div>
-                    <div className="flex-1 text-sm text-gray-600">他抬头更是惊骇到了极点</div>
-                    <div className="text-xs text-gray-400">00:45'-00:49'</div>
-                    <div className="flex items-center space-x-2">
-                      <Icon icon="ri:time-line" className="w-4 h-4 text-gray-400" />
-                      <Icon icon="ri:delete-bin-line" className="w-4 h-4 text-gray-400 cursor-pointer hover:text-red-500" />
-                    </div>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={audioItems.map(item => item.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="space-y-4">
+                    {audioItems.map((item) => (
+                      <SortableAudioItem key={item.id} item={item} />
+                    ))}
                   </div>
-                </div>
+                </SortableContext>
+              </DndContext>
+            )}
 
-                {/* 音频项2 */}
-                <div className="bg-white rounded-lg border border-gray-200 px-3 py-2">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                      <Icon icon="ri:user-line" className="w-4 h-4 text-gray-600" />
+            {activeTab === 'image' && (
+              <div className="space-y-3">
+                {imageItems.map((item, index) => (
+                  <div key={item.id} className="bg-white rounded-lg border border-gray-200 p-3 flex items-stretch space-x-3 min-h-[100px]">
+                    {/* 序号和操作按钮列 */}
+                    <div className="flex flex-col justify-between items-center h-full min-w-[20px]">
+                      <div className="text-lg font-medium text-blue-600">
+                        {index + 1}
+                      </div>
+                      <div className="flex flex-col items-center space-y-1">
+                        <button className="p-1 hover:bg-gray-100 rounded">
+                          <Icon icon="ri:add-circle-line" className="w-4 h-4 text-gray-400" />
+                        </button>
+                        <button className="p-1 hover:bg-gray-100 rounded">
+                          <Icon icon="ri:delete-bin-line" className="w-4 h-4 text-gray-400 hover:text-red-500" />
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm font-medium text-gray-800">男1</span>
-                      <Icon icon="ri:arrow-down-s-line" className="w-4 h-4 text-gray-400" />
-                    </div>
-                    <div className="flex-1 text-sm text-gray-600">不知道会有什么程度</div>
-                    <div className="text-xs text-gray-400">00:49'-00:53'</div>
-                    <div className="flex items-center space-x-2">
-                      <Icon icon="ri:time-line" className="w-4 h-4 text-gray-400" />
-                      <Icon icon="ri:delete-bin-line" className="w-4 h-4 text-gray-400 cursor-pointer hover:text-red-500" />
-                    </div>
-                  </div>
-                </div>
 
-                {/* 音频项3 */}
-                <div className="bg-white rounded-lg border border-gray-200 px-3 py-2">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                      <Icon icon="ri:music-2-line" className="w-4 h-4 text-white" />
+                    {/* 图片缩略图 */}
+                    <div className="w-20 h-20 bg-gray-200 rounded-lg flex-shrink-0 overflow-hidden">
+                      <div className="w-full h-full bg-gradient-to-br from-purple-200 via-pink-200 to-blue-200"></div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm font-medium text-gray-800">音效</span>
-                    </div>
-                    <div className="flex-1 text-sm text-gray-600">需要悲伤的，沉重的.mp3</div>
-                    <div className="text-xs text-gray-400">00:49'-00:59'</div>
-                    <div className="flex items-center space-x-2">
-                      <Icon icon="ri:time-line" className="w-4 h-4 text-gray-400" />
-                      <Icon icon="ri:delete-bin-line" className="w-4 h-4 text-gray-400 cursor-pointer hover:text-red-500" />
+
+                    {/* 内容区域 */}
+                    <div className="flex-1 min-w-0 flex space-x-4">
+                      {/* 左侧：描述 */}
+                      <div className="flex-1 text-sm text-gray-800 leading-relaxed">
+                        {item.description}
+                      </div>
+                      {/* 右侧：参数和时间 */}
+                      <div className="flex-1 flex flex-col justify-between">
+                        <div className="text-xs text-gray-500 leading-relaxed">
+                          {item.parameters}
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          {editingTimeId === item.id ? (
+                            <div className="flex items-center space-x-1 text-xs text-gray-400">
+                              {/* 开始时间编辑 - 分钟 */}
+                              <input
+                                type="number"
+                                min="0"
+                                max="59"
+                                value={editingStartMinutes}
+                                onChange={(e) => {
+                                  const value = Math.max(0, Math.min(59, parseInt(e.target.value) || 0));
+                                  setEditingStartMinutes(value.toString());
+                                }}
+                                className="text-xs w-8 text-center bg-transparent outline-none"
+                                placeholder="00"
+                                maxLength={2}
+                              />
+                              <span>:</span>
+                              {/* 开始时间编辑 - 秒钟 */}
+                              <input
+                                type="number"
+                                min="0"
+                                max="59"
+                                value={editingStartSeconds}
+                                onChange={(e) => {
+                                  const value = Math.max(0, Math.min(59, parseInt(e.target.value) || 0));
+                                  setEditingStartSeconds(value.toString());
+                                }}
+                                className="text-xs w-8 text-center bg-transparent outline-none"
+                                placeholder="00"
+                                maxLength={2}
+                              />
+                              <span>-</span>
+                              {/* 结束时间编辑 - 分钟 */}
+                              <input
+                                type="number"
+                                min="0"
+                                max="59"
+                                value={editingEndMinutes}
+                                onChange={(e) => {
+                                  const value = Math.max(0, Math.min(59, parseInt(e.target.value) || 0));
+                                  setEditingEndMinutes(value.toString());
+                                }}
+                                className="text-xs w-8 text-center bg-transparent outline-none"
+                                placeholder="00"
+                                maxLength={2}
+                              />
+                              <span>:</span>
+                              {/* 结束时间编辑 - 秒钟 */}
+                              <input
+                                type="number"
+                                min="0"
+                                max="59"
+                                value={editingEndSeconds}
+                                onChange={(e) => {
+                                  const value = Math.max(0, Math.min(59, parseInt(e.target.value) || 0));
+                                  setEditingEndSeconds(value.toString());
+                                }}
+                                className="text-xs w-8 text-center bg-transparent outline-none"
+                                placeholder="00"
+                                maxLength={2}
+                              />
+                              {/* 统一的保存和取消按钮 */}
+                              <button
+                                onClick={() => saveTimeEdit(item.id, true)}
+                                className="text-green-600 hover:text-green-800 ml-1 p-0 border-0 bg-transparent outline-none cursor-pointer"
+                              >
+                                <Icon icon="ri:check-line" className="w-3 h-3" />
+                              </button>
+                              <button
+                                onClick={cancelTimeEdit}
+                                className="text-red-600 hover:text-red-800 p-0 border-0 bg-transparent outline-none cursor-pointer"
+                              >
+                                <Icon icon="ri:close-line" className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center space-x-1 text-xs text-gray-400">
+                              {(() => {
+                                const timeData = parseTimeRange(item.timeRange);
+                                return (
+                                  <>
+                                    <span>{timeData.startMinutes}:{timeData.startSeconds}</span>
+                                    <span>-</span>
+                                    <span>{timeData.endMinutes}:{timeData.endSeconds}</span>
+                                    <button
+                                      onClick={() => startEditTime(item.id, item.timeRange)}
+                                      className="text-gray-400 hover:text-blue-600 ml-1 p-0 border-0 bg-transparent outline-none cursor-pointer"
+                                    >
+                                      <Icon icon="ri:edit-line" className="w-3 h-3" />
+                                    </button>
+                                  </>
+                                );
+                              })()}
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
+                ))}
               </div>
             )}
 
-            {(activeTab === 'image' || activeTab === 'video') && (
-              <div className="flex items-center justify-center h-full text-gray-500">
-                <span>{activeTab === 'image' ? '图片' : '视频'}功能开发中...</span>
+            {activeTab === 'video' && (
+              <div className="space-y-3">
+                {videoItems.map((item, index) => (
+                  <div key={item.id} className="bg-white rounded-lg border border-gray-200 p-3 flex items-stretch space-x-3 min-h-[100px]">
+                    {/* 序号和操作按钮列 */}
+                    <div className="flex flex-col justify-between items-center h-full min-w-[20px]">
+                      <div className="text-lg font-medium text-blue-600">
+                        {index + 1}
+                      </div>
+                      <div className="flex flex-col items-center space-y-1">
+                        <button className="p-1 hover:bg-gray-100 rounded">
+                          <Icon icon="ri:add-circle-line" className="w-4 h-4 text-gray-400" />
+                        </button>
+                        <button className="p-1 hover:bg-gray-100 rounded">
+                          <Icon icon="ri:delete-bin-line" className="w-4 h-4 text-gray-400 hover:text-red-500" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* 视频缩略图 */}
+                    <div className="w-20 h-20 bg-gray-200 rounded-lg flex-shrink-0 overflow-hidden">
+                      <div className="w-full h-full bg-gradient-to-br from-indigo-200 via-purple-200 to-pink-200"></div>
+                    </div>
+
+                    {/* 内容区域 */}
+                    <div className="flex-1 min-w-0 flex space-x-4">
+                      {/* 左侧：描述 */}
+                      <div className="flex-1 text-sm text-gray-800 leading-relaxed">
+                        {item.description}
+                      </div>
+                      {/* 右侧：参数和时间 */}
+                      <div className="flex-1 flex flex-col justify-between">
+                        <div className="text-xs text-gray-500 leading-relaxed">
+                          {item.parameters}
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          {editingTimeId === item.id ? (
+                            <div className="flex items-center space-x-1 text-xs text-gray-400">
+                              {/* 开始时间编辑 - 分钟 */}
+                              <input
+                                type="number"
+                                min="0"
+                                max="59"
+                                value={editingStartMinutes}
+                                onChange={(e) => {
+                                  const value = Math.max(0, Math.min(59, parseInt(e.target.value) || 0));
+                                  setEditingStartMinutes(value.toString());
+                                }}
+                                className="text-xs w-8 text-center bg-transparent outline-none"
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    saveTimeEdit(item.id, false);
+                                  } else if (e.key === 'Escape') {
+                                    cancelTimeEdit();
+                                  }
+                                }}
+                                placeholder="00"
+                                maxLength={2}
+                              />
+                              <span>:</span>
+                              {/* 开始时间编辑 - 秒钟 */}
+                              <input
+                                type="number"
+                                min="0"
+                                max="59"
+                                value={editingStartSeconds}
+                                onChange={(e) => {
+                                  const value = Math.max(0, Math.min(59, parseInt(e.target.value) || 0));
+                                  setEditingStartSeconds(value.toString());
+                                }}
+                                className="text-xs w-8 text-center bg-transparent outline-none"
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    saveTimeEdit(item.id, false);
+                                  } else if (e.key === 'Escape') {
+                                    cancelTimeEdit();
+                                  }
+                                }}
+                                placeholder="00"
+                                maxLength={2}
+                              />
+                              <span>-</span>
+                              {/* 结束时间编辑 - 分钟 */}
+                              <input
+                                type="number"
+                                min="0"
+                                max="59"
+                                value={editingEndMinutes}
+                                onChange={(e) => {
+                                  const value = Math.max(0, Math.min(59, parseInt(e.target.value) || 0));
+                                  setEditingEndMinutes(value.toString());
+                                }}
+                                className="text-xs w-8 text-center bg-transparent outline-none"
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    saveTimeEdit(item.id, false);
+                                  } else if (e.key === 'Escape') {
+                                    cancelTimeEdit();
+                                  }
+                                }}
+                                placeholder="00"
+                                maxLength={2}
+                              />
+                              <span>:</span>
+                              {/* 结束时间编辑 - 秒钟 */}
+                              <input
+                                type="number"
+                                min="0"
+                                max="59"
+                                value={editingEndSeconds}
+                                onChange={(e) => {
+                                  const value = Math.max(0, Math.min(59, parseInt(e.target.value) || 0));
+                                  setEditingEndSeconds(value.toString());
+                                }}
+                                className="text-xs w-8 text-center bg-transparent outline-none"
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    saveTimeEdit(item.id, false);
+                                  } else if (e.key === 'Escape') {
+                                    cancelTimeEdit();
+                                  }
+                                }}
+                                placeholder="00"
+                                maxLength={2}
+                              />
+                              {/* 统一的保存和取消按钮 */}
+                              <button
+                                onClick={() => saveTimeEdit(item.id, false)}
+                                className="text-green-600 hover:text-green-800 ml-1"
+                              >
+                                <Icon icon="ri:check-line" className="w-3 h-3" />
+                              </button>
+                              <button
+                                onClick={cancelTimeEdit}
+                                className="text-red-600 hover:text-red-800 p-0 border-0 bg-transparent outline-none cursor-pointer"
+                              >
+                                <Icon icon="ri:close-line" className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center space-x-1 text-xs text-gray-400">
+                              {(() => {
+                                const timeData = parseTimeRange(item.timeRange);
+                                return (
+                                  <>
+                                    <span>{timeData.startMinutes}:{timeData.startSeconds}</span>
+                                    <span>-</span>
+                                    <span>{timeData.endMinutes}:{timeData.endSeconds}</span>
+                                    <button
+                                      onClick={() => startEditTime(item.id, item.timeRange)}
+                                      className="text-gray-400 hover:text-blue-600 ml-1 p-0 border-0 bg-transparent outline-none cursor-pointer"
+                                    >
+                                      <Icon icon="ri:edit-line" className="w-3 h-3" />
+                                    </button>
+                                  </>
+                                );
+                              })()}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>

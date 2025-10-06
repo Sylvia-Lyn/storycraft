@@ -94,10 +94,18 @@ function ShortplayEntryPage() {
 
     setIsGenerating(true);
     try {
+      // 从localStorage获取token
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('未找到有效的身份验证令牌，请重新登录');
+        return;
+      }
+
       const response = await fetch(`${STORYAI_API_BASE}/series/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-Prompt-Manager-Token': token || '',
         },
         body: JSON.stringify({
           userId: "use123",

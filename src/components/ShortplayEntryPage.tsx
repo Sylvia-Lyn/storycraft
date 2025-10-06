@@ -220,13 +220,113 @@ function ShortplayEntryPage() {
           </div>
         </div>
 
-        <div className="flex-1 bg-pink-200 border-r p-4">
-          <h2>中间面板 - 已移除</h2>
-          <div className="bg-white p-2 mt-2 rounded">简化测试区域</div>
+        {/* 中间面板 - 剧本编辑区域 */}
+        <div className="flex-1 bg-gray-50 border-r border-gray-200 flex flex-col overflow-hidden">
+          {/* 剧本标题栏 */}
+          <div className="p-4 bg-white border-b border-gray-100">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <Icon icon="ri:star-fill" className="w-4 h-4 text-blue-500" />
+                <span className="text-base font-medium text-gray-900">剧本</span>
+                <div className="flex items-center space-x-1 text-sm text-gray-600">
+                  <span>1-2夜内</span>
+                  <span>废弃工厂</span>
+                  <span>(分支B)</span>
+                  <Icon icon="ri:arrow-down-s-line" className="w-4 h-4" />
+                </div>
+              </div>
+              <Icon icon="ri:add-circle-line" className="w-5 h-5 text-gray-400 cursor-pointer hover:text-gray-600" />
+            </div>
+          </div>
+
+          {/* 剧本内容区域 */}
+          <div className="flex-grow p-4 overflow-auto min-h-0">
+            <div className="space-y-4">
+              {/* 画面脚本1 */}
+              <div className="bg-white rounded-lg border border-gray-200 p-4">
+                <div className="text-sm text-blue-600 mb-2 font-medium">画面脚本：瞬移技术下忙中的希，用自己的外套盖在她身上，他始起身，踏上濡湿下吊与最后一丝希望。</div>
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <div className="flex items-start space-x-2">
+                      <span className="text-sm font-medium text-gray-800 min-w-0">千草折 (Chigusa Inori)：</span>
+                      <div className="flex-1">
+                        <span className="text-sm text-gray-600">(急切地) 嗯！你快走！诗织她已经...</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-start space-x-2">
+                      <span className="text-sm font-medium text-gray-800 min-w-0">神谷瞬 (Kamiya Shun)：</span>
+                      <div className="flex-1">
+                        <span className="text-sm text-gray-600">(打断她，大步走向诗织) 不！我不能就这么放弃她！</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex justify-end mt-3">
+                  <Icon icon="ri:delete-bin-line" className="w-4 h-4 text-gray-400 cursor-pointer hover:text-red-500" />
+                </div>
+              </div>
+
+              {/* 画面脚本2 */}
+              <div className="bg-white rounded-lg border border-gray-200 p-4">
+                <div className="text-sm text-blue-600 mb-2 font-medium">画面脚本：他张开双臂，没有害怕何威胁，拥住诗织的前额。</div>
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <div className="flex items-start space-x-2">
+                      <span className="text-sm font-medium text-gray-800 min-w-0">神谷瞬 (Kamiya Shun)：</span>
+                      <div className="flex-1">
+                        <span className="text-sm text-gray-600">(声音颤抖但坚大声) 诗织！看着我！我爱你！神谷瞬！你忘了我们一起在天台许的愿吗？你说要买一家全世界最好吃的蛋糕店！</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex justify-end mt-3">
+                  <Icon icon="ri:delete-bin-line" className="w-4 h-4 text-gray-400 cursor-pointer hover:text-red-500" />
+                </div>
+              </div>
+
+              {/* 画面脚本3 */}
+              <div className="bg-white rounded-lg border border-gray-200 p-4">
+                <div className="text-sm text-blue-600 mb-2 font-medium">画面脚本：魔化的诗织动作一顿，浑浊的眼中似乎闪过了一丝迷茫，她往后一步，仍徘徊在方向纠结。</div>
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <div className="flex items-start space-x-2">
+                      <span className="text-sm font-medium text-gray-800 min-w-0">夏目诗织 (Natsume Shiori)：</span>
+                      <div className="flex-1">
+                        <span className="text-sm text-gray-600">(低语，含泪不清) ......蛋糕......好子......好像......</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex justify-end mt-3">
+                  <Icon icon="ri:delete-bin-line" className="w-4 h-4 text-gray-400 cursor-pointer hover:text-red-500" />
+                </div>
+              </div>
+
+              {/* 画面脚本4 */}
+              <div className="bg-white rounded-lg border border-gray-200 p-4">
+                <div className="text-sm text-blue-600 mb-2 font-medium">画面脚本：瞬着到一丝希望，眼中燃起了光芒，趁住此时，诗织的速攻被挡弹跳的可塑感载攻代。她拉她挡起出一声失魂，眼中重新的光芒闪闪烁现了。</div>
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <div className="flex items-start space-x-2">
+                      <span className="text-sm font-medium text-gray-800 min-w-0">夏目诗织 (Natsume Shiori)：</span>
+                      <div className="flex-1">
+                        <span className="text-sm text-gray-600">(尖叫) 肉——！！！</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex justify-end mt-3">
+                  <Icon icon="ri:delete-bin-line" className="w-4 h-4 text-gray-400 cursor-pointer hover:text-red-500" />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* 右侧面板 - 手机预览区域 (固定宽度) */}
-        <div className="w-80 bg-gray-100 flex flex-col overflow-hidden">
+        {/* 右侧面板 - 手机预览区域 (固定宽度340px) */}
+        <div className="bg-gray-100 flex flex-col overflow-hidden" style={{ width: '340px' }}>
           {/* 预览头部 */}
           <div className="p-3 border-b border-gray-200 bg-white">
             <div className="flex items-center justify-between">

@@ -204,6 +204,7 @@ export const enUS = {
     works: 'My Works',
     knowledgeBase: 'Knowledge Base',
     workflow: 'Workflow',
+    oneClickCreate: 'One-Click Create',
     myProfile: 'My Profile',
     characters: 'Character Settings',
     relations: 'Relationship Map',

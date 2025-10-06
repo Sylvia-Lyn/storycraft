@@ -204,6 +204,7 @@ export const zhCN = {
     works: '我的作品',
     knowledgeBase: '知识库',
     workflow: '工作流',
+    oneClickCreate: '一键创作',
     myProfile: '我的',
     characters: '角色设定',
     relations: '关系图',

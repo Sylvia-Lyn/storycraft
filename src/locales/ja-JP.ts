@@ -204,6 +204,7 @@ export const jaJP = {
     works: '私の作品',
     knowledgeBase: '知識ベース',
     workflow: 'ワークフロー',
+    oneClickCreate: 'ワンクリック作成',
     myProfile: 'マイプロフィール',
     characters: 'キャラクター設定',
     relations: '関係図',

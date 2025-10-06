@@ -94,11 +94,24 @@ function ShortplayEntryPage() {
 
     setIsGenerating(true);
     try {
-      // 从localStorage获取token
+      // 从localStorage获取token和user信息
       const token = localStorage.getItem('token');
+      const userStr = localStorage.getItem('user');
+
       if (!token) {
         alert('未找到有效的身份验证令牌，请重新登录');
         return;
+      }
+
+      // 解析user信息获取userId
+      let userId = "use123"; // 默认值
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          userId = user.userId || userId;
+        } catch (error) {
+          console.warn('解析用户信息失败，使用默认userId:', error);
+        }
       }
 
       const response = await fetch(`${STORYAI_API_BASE}/series/create`, {
@@ -108,7 +121,7 @@ function ShortplayEntryPage() {
           'X-Prompt-Manager-Token': token || '',
         },
         body: JSON.stringify({
-          userId: "use123",
+          userId: userId,
           seriesName: "修仙恋爱记",
           seriesDescription: "修仙背景的爱情故事",
           userInput: userInput.trim(),

@@ -277,9 +277,16 @@ function ShortplayEntryPage() {
                   <div className="space-y-4">
                     {/* 配音选择区域 */}
                     <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-700">配音</span>
-                        <Icon icon="ri:arrow-down-s-line" className="w-4 h-4 text-gray-400" />
+                      <div className="relative w-full">
+                        <select className="w-full h-9 pl-3 pr-8 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none">
+                          <option value="dubbing">配音</option>
+                          <option value="sound_effects">音效</option>
+                        </select>
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                          <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </div>
                       </div>
 
                       {/* 已设置的配音人员 */}

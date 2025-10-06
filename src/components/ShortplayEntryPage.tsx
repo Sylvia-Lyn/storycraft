@@ -570,7 +570,7 @@ function ShortplayEntryPage() {
             {activeTab === 'audio' && (
               <div className="space-y-4">
                 {/* 音频项1 */}
-                <div className="bg-white rounded-lg border border-gray-200 p-4">
+                <div className="bg-white rounded-lg border border-gray-200 px-3 py-2">
                   <div className="flex items-center space-x-3">
                     <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
                       <Icon icon="ri:user-line" className="w-4 h-4 text-gray-600" />
@@ -589,7 +589,7 @@ function ShortplayEntryPage() {
                 </div>
 
                 {/* 音频项2 */}
-                <div className="bg-white rounded-lg border border-gray-200 p-4">
+                <div className="bg-white rounded-lg border border-gray-200 px-3 py-2">
                   <div className="flex items-center space-x-3">
                     <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
                       <Icon icon="ri:user-line" className="w-4 h-4 text-gray-600" />
@@ -608,7 +608,7 @@ function ShortplayEntryPage() {
                 </div>
 
                 {/* 音频项3 */}
-                <div className="bg-white rounded-lg border border-gray-200 p-4">
+                <div className="bg-white rounded-lg border border-gray-200 px-3 py-2">
                   <div className="flex items-center space-x-3">
                     <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
                       <Icon icon="ri:music-2-line" className="w-4 h-4 text-white" />

@@ -456,13 +456,26 @@ function ShortplayEntryPage() {
                     <path d="M34.8333 15.3109C34.7333 15.0213 34.5515 14.767 34.3098 14.5787C34.0681 14.3904 33.7769 14.2762 33.4717 14.2501L24.4625 12.9359L20.425 4.75011C20.2954 4.48241 20.0929 4.25665 19.8409 4.09868C19.5889 3.94072 19.2974 3.85693 19 3.85693C18.7026 3.85693 18.4111 3.94072 18.1591 4.09868C17.9071 4.25665 17.7047 4.48241 17.575 4.75011L13.5375 12.9201L4.52834 14.2501C4.2353 14.2918 3.9598 14.4147 3.73311 14.605C3.50642 14.7953 3.33761 15.0454 3.24584 15.3268C3.16183 15.6018 3.1543 15.8944 3.22403 16.1734C3.29377 16.4523 3.43815 16.707 3.64167 16.9101L10.1808 23.2434L8.59751 32.2368C8.54098 32.5336 8.57058 32.8404 8.6828 33.121C8.79503 33.4015 8.98519 33.6441 9.23084 33.8201C9.47027 33.9913 9.75266 34.0923 10.0463 34.1119C10.34 34.1315 10.6333 34.0688 10.8933 33.9309L19 29.7034L27.075 33.9468C27.2972 34.0721 27.5482 34.1376 27.8033 34.1368C28.1387 34.138 28.4658 34.0326 28.7375 33.8359C28.9832 33.66 29.1733 33.4174 29.2855 33.1368C29.3978 32.8563 29.4274 32.5494 29.3708 32.2526L27.7875 23.2593L34.3267 16.9259C34.5553 16.7323 34.7242 16.4777 34.8139 16.1918C34.9036 15.9059 34.9103 15.6005 34.8333 15.3109ZM25.0958 21.6443C24.9102 21.8239 24.7712 22.0462 24.6912 22.2918C24.6112 22.5374 24.5924 22.7989 24.6367 23.0534L25.7767 29.6876L19.8233 26.5209C19.5943 26.399 19.3387 26.3352 19.0792 26.3352C18.8196 26.3352 18.5641 26.399 18.335 26.5209L12.3817 29.6876L13.5217 23.0534C13.5659 22.7989 13.5472 22.5374 13.4671 22.2918C13.3871 22.0462 13.2482 21.8239 13.0625 21.6443L8.31251 16.8943L14.9783 15.9284C15.2348 15.8928 15.4787 15.7947 15.6885 15.6429C15.8983 15.4911 16.0676 15.2901 16.1817 15.0576L19 9.02511L21.9767 15.0734C22.0907 15.3059 22.2601 15.5069 22.4699 15.6587C22.6797 15.8105 22.9235 15.9086 23.18 15.9443L29.8458 16.9101L25.0958 21.6443Z" fill="white"/>
                   </g>
                 </svg>
-                <span className="text-base font-medium text-gray-900">剧本</span>
-                <div className="flex items-center space-x-1 text-sm text-gray-600">
-                  <span>1-2夜内</span>
-                  <span>废弃工厂</span>
-                  <span>(分支B)</span>
-                  <Icon icon="ri:arrow-down-s-line" className="w-4 h-4" />
-                </div>
+                <span className="text-base font-medium text-gray-900">
+                  {activeTab === 'script' && '剧本'}
+                  {activeTab === 'audio' && '场次'}
+                  {activeTab === 'image' && '图片'}
+                  {activeTab === 'video' && '视频'}
+                </span>
+                {activeTab === 'script' && (
+                  <div className="flex items-center space-x-1 text-sm text-gray-600">
+                    <span>1-2夜内</span>
+                    <span>废弃工厂</span>
+                    <span>(分支B)</span>
+                    <Icon icon="ri:arrow-down-s-line" className="w-4 h-4" />
+                  </div>
+                )}
+                {activeTab === 'audio' && (
+                  <div className="flex items-center space-x-1 text-sm text-gray-600">
+                    <span>1-2夜内 废弃工厂 (分支B)</span>
+                    <Icon icon="ri:arrow-down-s-line" className="w-4 h-4" />
+                  </div>
+                )}
               </div>
               <Icon icon="ri:add-circle-line" className="w-5 h-5 text-gray-400 cursor-pointer hover:text-gray-600" />
             </div>
@@ -470,87 +483,161 @@ function ShortplayEntryPage() {
 
           {/* 剧本内容区域 */}
           <div className="flex-grow p-4 overflow-auto min-h-0">
-            <div className="space-y-4">
-              {/* 画面脚本1 */}
-              <div className="bg-white rounded-lg border border-gray-200 p-4">
-                <div className="text-sm text-blue-600 mb-2 font-medium">画面脚本：瞬移技术下忙中的希，用自己的外套盖在她身上，他始起身，踏上濡湿下吊与最后一丝希望。</div>
-                <div className="space-y-3">
-                  <div className="space-y-1">
-                    <div className="flex items-start space-x-2">
-                      <span className="text-sm font-medium text-gray-800 min-w-0">千草折 (Chigusa Inori)：</span>
-                      <div className="flex-1">
-                        <span className="text-sm text-gray-600">(急切地) 嗯！你快走！诗织她已经...</span>
+            {activeTab === 'script' && (
+              <div className="space-y-4">
+                {/* 画面脚本1 */}
+                <div className="bg-white rounded-lg border border-gray-200 p-4">
+                  <div className="text-sm text-blue-600 mb-2 font-medium">画面脚本：瞬移技术下忙中的希，用自己的外套盖在她身上，他始起身，踏上濡湿下吊与最后一丝希望。</div>
+                  <div className="space-y-3">
+                    <div className="space-y-1">
+                      <div className="flex items-start space-x-2">
+                        <span className="text-sm font-medium text-gray-800 min-w-0">千草折 (Chigusa Inori)：</span>
+                        <div className="flex-1">
+                          <span className="text-sm text-gray-600">(急切地) 嗯！你快走！诗织她已经...</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-start space-x-2">
+                        <span className="text-sm font-medium text-gray-800 min-w-0">神谷瞬 (Kamiya Shun)：</span>
+                        <div className="flex-1">
+                          <span className="text-sm text-gray-600">(打断她，大步走向诗织) 不！我不能就这么放弃她！</span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                  <div className="space-y-1">
-                    <div className="flex items-start space-x-2">
-                      <span className="text-sm font-medium text-gray-800 min-w-0">神谷瞬 (Kamiya Shun)：</span>
-                      <div className="flex-1">
-                        <span className="text-sm text-gray-600">(打断她，大步走向诗织) 不！我不能就这么放弃她！</span>
-                      </div>
-                    </div>
+                  <div className="flex justify-end mt-3">
+                    <Icon icon="ri:delete-bin-line" className="w-4 h-4 text-gray-400 cursor-pointer hover:text-red-500" />
                   </div>
                 </div>
-                <div className="flex justify-end mt-3">
-                  <Icon icon="ri:delete-bin-line" className="w-4 h-4 text-gray-400 cursor-pointer hover:text-red-500" />
-                </div>
-              </div>
 
-              {/* 画面脚本2 */}
-              <div className="bg-white rounded-lg border border-gray-200 p-4">
-                <div className="text-sm text-blue-600 mb-2 font-medium">画面脚本：他张开双臂，没有害怕何威胁，拥住诗织的前额。</div>
-                <div className="space-y-3">
-                  <div className="space-y-1">
-                    <div className="flex items-start space-x-2">
-                      <span className="text-sm font-medium text-gray-800 min-w-0">神谷瞬 (Kamiya Shun)：</span>
-                      <div className="flex-1">
-                        <span className="text-sm text-gray-600">(声音颤抖但坚大声) 诗织！看着我！我爱你！神谷瞬！你忘了我们一起在天台许的愿吗？你说要买一家全世界最好吃的蛋糕店！</span>
+                {/* 画面脚本2 */}
+                <div className="bg-white rounded-lg border border-gray-200 p-4">
+                  <div className="text-sm text-blue-600 mb-2 font-medium">画面脚本：他张开双臂，没有害怕何威胁，拥住诗织的前额。</div>
+                  <div className="space-y-3">
+                    <div className="space-y-1">
+                      <div className="flex items-start space-x-2">
+                        <span className="text-sm font-medium text-gray-800 min-w-0">神谷瞬 (Kamiya Shun)：</span>
+                        <div className="flex-1">
+                          <span className="text-sm text-gray-600">(声音颤抖但坚大声) 诗织！看着我！我爱你！神谷瞬！你忘了我们一起在天台许的愿吗？你说要买一家全世界最好吃的蛋糕店！</span>
+                        </div>
                       </div>
                     </div>
                   </div>
+                  <div className="flex justify-end mt-3">
+                    <Icon icon="ri:delete-bin-line" className="w-4 h-4 text-gray-400 cursor-pointer hover:text-red-500" />
+                  </div>
                 </div>
-                <div className="flex justify-end mt-3">
-                  <Icon icon="ri:delete-bin-line" className="w-4 h-4 text-gray-400 cursor-pointer hover:text-red-500" />
-                </div>
-              </div>
 
-              {/* 画面脚本3 */}
-              <div className="bg-white rounded-lg border border-gray-200 p-4">
-                <div className="text-sm text-blue-600 mb-2 font-medium">画面脚本：魔化的诗织动作一顿，浑浊的眼中似乎闪过了一丝迷茫，她往后一步，仍徘徊在方向纠结。</div>
-                <div className="space-y-3">
-                  <div className="space-y-1">
-                    <div className="flex items-start space-x-2">
-                      <span className="text-sm font-medium text-gray-800 min-w-0">夏目诗织 (Natsume Shiori)：</span>
-                      <div className="flex-1">
-                        <span className="text-sm text-gray-600">(低语，含泪不清) ......蛋糕......好子......好像......</span>
+                {/* 画面脚本3 */}
+                <div className="bg-white rounded-lg border border-gray-200 p-4">
+                  <div className="text-sm text-blue-600 mb-2 font-medium">画面脚本：魔化的诗织动作一顿，浑浊的眼中似乎闪过了一丝迷茫，她往后一步，仍徘徊在方向纠结。</div>
+                  <div className="space-y-3">
+                    <div className="space-y-1">
+                      <div className="flex items-start space-x-2">
+                        <span className="text-sm font-medium text-gray-800 min-w-0">夏目诗织 (Natsume Shiori)：</span>
+                        <div className="flex-1">
+                          <span className="text-sm text-gray-600">(低语，含泪不清) ......蛋糕......好子......好像......</span>
+                        </div>
                       </div>
                     </div>
                   </div>
+                  <div className="flex justify-end mt-3">
+                    <Icon icon="ri:delete-bin-line" className="w-4 h-4 text-gray-400 cursor-pointer hover:text-red-500" />
+                  </div>
                 </div>
-                <div className="flex justify-end mt-3">
-                  <Icon icon="ri:delete-bin-line" className="w-4 h-4 text-gray-400 cursor-pointer hover:text-red-500" />
-                </div>
-              </div>
 
-              {/* 画面脚本4 */}
-              <div className="bg-white rounded-lg border border-gray-200 p-4">
-                <div className="text-sm text-blue-600 mb-2 font-medium">画面脚本：瞬着到一丝希望，眼中燃起了光芒，趁住此时，诗织的速攻被挡弹跳的可塑感载攻代。她拉她挡起出一声失魂，眼中重新的光芒闪闪烁现了。</div>
-                <div className="space-y-3">
-                  <div className="space-y-1">
-                    <div className="flex items-start space-x-2">
-                      <span className="text-sm font-medium text-gray-800 min-w-0">夏目诗织 (Natsume Shiori)：</span>
-                      <div className="flex-1">
-                        <span className="text-sm text-gray-600">(尖叫) 肉——！！！</span>
+                {/* 画面脚本4 */}
+                <div className="bg-white rounded-lg border border-gray-200 p-4">
+                  <div className="text-sm text-blue-600 mb-2 font-medium">画面脚本：瞬着到一丝希望，眼中燃起了光芒，趁住此时，诗织的速攻被挡弹跳的可塑感载攻代。她拉她挡起出一声失魂，眼中重新的光芒闪闪烁现了。</div>
+                  <div className="space-y-3">
+                    <div className="space-y-1">
+                      <div className="flex items-start space-x-2">
+                        <span className="text-sm font-medium text-gray-800 min-w-0">夏目诗织 (Natsume Shiori)：</span>
+                        <div className="flex-1">
+                          <span className="text-sm text-gray-600">(尖叫) 肉——！！！</span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-                <div className="flex justify-end mt-3">
-                  <Icon icon="ri:delete-bin-line" className="w-4 h-4 text-gray-400 cursor-pointer hover:text-red-500" />
+                  <div className="flex justify-end mt-3">
+                    <Icon icon="ri:delete-bin-line" className="w-4 h-4 text-gray-400 cursor-pointer hover:text-red-500" />
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
+
+            {activeTab === 'audio' && (
+              <div className="space-y-4">
+                {/* 音频项1 */}
+                <div className="bg-white rounded-lg border border-gray-200 p-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                      <Icon icon="ri:user-line" className="w-4 h-4 text-gray-600" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <span className="text-sm font-medium text-gray-800">男1</span>
+                        <Icon icon="ri:arrow-down-s-line" className="w-4 h-4 text-gray-400" />
+                      </div>
+                      <div className="text-sm text-gray-600">他抬头更是惊骇到了极点</div>
+                      <div className="text-xs text-gray-400 mt-1">00:45'-00:49'</div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Icon icon="ri:time-line" className="w-4 h-4 text-gray-400" />
+                      <Icon icon="ri:delete-bin-line" className="w-4 h-4 text-gray-400 cursor-pointer hover:text-red-500" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 音频项2 */}
+                <div className="bg-white rounded-lg border border-gray-200 p-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                      <Icon icon="ri:user-line" className="w-4 h-4 text-gray-600" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <span className="text-sm font-medium text-gray-800">男1</span>
+                        <Icon icon="ri:arrow-down-s-line" className="w-4 h-4 text-gray-400" />
+                      </div>
+                      <div className="text-sm text-gray-600">不知道会有什么程度</div>
+                      <div className="text-xs text-gray-400 mt-1">00:49'-00:53'</div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Icon icon="ri:time-line" className="w-4 h-4 text-gray-400" />
+                      <Icon icon="ri:delete-bin-line" className="w-4 h-4 text-gray-400 cursor-pointer hover:text-red-500" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 音频项3 */}
+                <div className="bg-white rounded-lg border border-gray-200 p-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                      <Icon icon="ri:music-2-line" className="w-4 h-4 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <span className="text-sm font-medium text-gray-800">音效</span>
+                      </div>
+                      <div className="text-sm text-gray-600">需要悲伤的，沉重的.mp3</div>
+                      <div className="text-xs text-gray-400 mt-1">00:49'-00:59'</div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Icon icon="ri:time-line" className="w-4 h-4 text-gray-400" />
+                      <Icon icon="ri:delete-bin-line" className="w-4 h-4 text-gray-400 cursor-pointer hover:text-red-500" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {(activeTab === 'image' || activeTab === 'video') && (
+              <div className="flex items-center justify-center h-full text-gray-500">
+                <span>{activeTab === 'image' ? '图片' : '视频'}功能开发中...</span>
+              </div>
+            )}
           </div>
         </div>
 

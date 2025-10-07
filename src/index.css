@@ -117,3 +117,8 @@ button:hover {
 .welcome-select .ant-select-selector {
   transition: none !important;
 }
+
+/* Hide scrollbar for WebKit browsers (Chrome, Safari, Edge) */
+textarea::-webkit-scrollbar {
+  display: none;
+}

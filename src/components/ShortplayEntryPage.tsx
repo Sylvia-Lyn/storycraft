@@ -208,6 +208,374 @@ function SortableScriptCard({ item }: SortableScriptCardProps) {
   );
 }
 
+// 底部输入区域组件
+interface BottomInputAreaProps {
+  activeTab: string;
+  selectedModel: string;
+  onModelChange: (model: string) => void;
+  userInput: string;
+  onInputChange: (value: string) => void;
+  isGenerating: boolean;
+  onGenerate: () => void;
+  placeholder?: string;
+  // 音频tab特有属性
+  voiceType?: string;
+  onVoiceTypeChange?: (voice: string) => void;
+  // 图片tab特有属性
+  backgroundType?: string;
+  onBackgroundTypeChange?: (bg: string) => void;
+  style?: string;
+  onStyleChange?: (style: string) => void;
+  // 视频tab特有属性
+  videoLength?: string;
+  onVideoLengthChange?: (length: string) => void;
+  resolution?: string;
+  onResolutionChange?: (res: string) => void;
+  singleGenerate?: boolean;
+  onSingleGenerateChange?: (single: boolean) => void;
+}
+
+function BottomInputArea({
+  activeTab,
+  selectedModel,
+  onModelChange,
+  userInput,
+  onInputChange,
+  isGenerating,
+  onGenerate,
+  placeholder = "简单描述你想要的互动剧",
+  // 音频tab属性
+  voiceType = "male",
+  onVoiceTypeChange,
+  // 图片tab属性
+  backgroundType = "背景",
+  onBackgroundTypeChange,
+  style = "古风",
+  onStyleChange,
+  // 视频tab属性
+  videoLength = "2s",
+  onVideoLengthChange,
+  resolution = "1080p",
+  onResolutionChange,
+  singleGenerate = false,
+  onSingleGenerateChange
+}: BottomInputAreaProps) {
+  return (
+    <div className="border-t border-gray-100 p-4">
+      {activeTab === 'script' && (
+        <>
+          <div className="mb-3">
+            <div className="relative w-40">
+              <select
+                value={selectedModel}
+                onChange={(e) => onModelChange(e.target.value)}
+                className="w-full h-9 pl-3 pr-8 text-xs rounded-lg bg-white focus:outline-none appearance-none text-black/50"
+              >
+                <option value="gemini-2.5pro">Gemini2.5pro</option>
+                <option value="deepseek-r1">DeepSeek-R1</option>
+                <option value="gpt-4">GPT-4</option>
+              </select>
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M1 1L6 6L11 1" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div className="relative">
+            <textarea
+              value={userInput}
+              onChange={(e) => onInputChange(e.target.value)}
+              className="w-full h-12 py-2 pl-4 pr-24 text-xs rounded-lg bg-white focus:outline-none resize-none overflow-y-auto"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', border: '1px solid rgba(116, 116, 116, 0.41)' }}
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+              placeholder={placeholder}
+              disabled={isGenerating}
+            />
+            <button
+              onClick={onGenerate}
+              disabled={isGenerating || !userInput.trim()}
+              className={`absolute bottom-2 right-2 px-3 py-1 text-white text-xs font-medium rounded transition-colors flex items-center space-x-1 ${
+                isGenerating || !userInput.trim()
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-blue-500 hover:bg-blue-600'
+              }`}
+            >
+              {isGenerating && (
+                <svg className="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              )}
+              <span>{isGenerating ? '生成中...' : '一键生成'}</span>
+            </button>
+          </div>
+        </>
+      )}
+
+      {activeTab === 'audio' && (
+        <>
+          <div className="mb-3">
+            <div className="flex space-x-3">
+              <div className="relative w-32">
+                <select
+                  value={selectedModel}
+                  onChange={(e) => onModelChange(e.target.value)}
+                  className="w-full h-9 pl-3 pr-8 text-xs rounded-lg bg-white focus:outline-none appearance-none text-black/50"
+                >
+                  <option value="gemini-2.5pro">Gemini2.5pro</option>
+                  <option value="deepseek-r1">DeepSeek-R1</option>
+                  <option value="gpt-4">GPT-4</option>
+                </select>
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                  <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M1 1L6 6L11 1" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+              </div>
+
+              <div className="relative w-20">
+                <select
+                  value={voiceType}
+                  onChange={(e) => onVoiceTypeChange?.(e.target.value)}
+                  className="w-full h-9 pl-3 pr-8 text-xs rounded-lg bg-white focus:outline-none appearance-none text-black/50"
+                >
+                  <option value="male">男声</option>
+                  <option value="female">女声</option>
+                </select>
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                  <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M1 1L6 6L11 1" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="relative">
+            <textarea
+              value={userInput}
+              onChange={(e) => onInputChange(e.target.value)}
+              className="w-full h-12 py-2 pl-4 pr-24 text-xs rounded-lg bg-white focus:outline-none resize-none overflow-y-auto"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', border: '1px solid rgba(116, 116, 116, 0.41)' }}
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+              placeholder={placeholder}
+              disabled={isGenerating}
+            />
+            <button
+              onClick={onGenerate}
+              disabled={isGenerating || !userInput.trim()}
+              className={`absolute bottom-2 right-2 px-3 py-1 text-white text-xs font-medium rounded transition-colors ${
+                isGenerating || !userInput.trim()
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-blue-500 hover:bg-blue-600'
+              }`}
+            >
+              {isGenerating ? '生成中...' : '模型生成'}
+            </button>
+          </div>
+        </>
+      )}
+
+      {activeTab === 'image' && (
+        <>
+          <div className="mb-3">
+            <div className="flex space-x-3">
+              <div className="relative w-32">
+                <select
+                  value={selectedModel}
+                  onChange={(e) => onModelChange(e.target.value)}
+                  className="w-full h-9 pl-3 pr-8 text-xs rounded-lg bg-white focus:outline-none appearance-none text-black/50"
+                >
+                  <option value="gemini-2.5pro">Gemini2.5pro</option>
+                  <option value="deepseek-r1">DeepSeek-R1</option>
+                  <option value="gpt-4">GPT-4</option>
+                </select>
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                  <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M1 1L6 6L11 1" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+              </div>
+
+              <div className="relative w-20">
+                <select
+                  value={backgroundType}
+                  onChange={(e) => onBackgroundTypeChange?.(e.target.value)}
+                  className="w-full h-9 pl-3 pr-8 text-xs rounded-lg bg-white focus:outline-none appearance-none text-black/50"
+                >
+                  <option value="背景">背景</option>
+                  <option value="人物">人物</option>
+                  <option value="物体">物体</option>
+                </select>
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                  <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M1 1L6 6L11 1" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+              </div>
+
+              <div className="relative w-20">
+                <select
+                  value={style}
+                  onChange={(e) => onStyleChange?.(e.target.value)}
+                  className="w-full h-9 pl-3 pr-8 text-xs rounded-lg bg-white focus:outline-none appearance-none text-black/50"
+                >
+                  <option value="古风">古风</option>
+                  <option value="现代">现代</option>
+                  <option value="科幻">科幻</option>
+                  <option value="卡通">卡通</option>
+                </select>
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                  <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M1 1L6 6L11 1" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="relative">
+            <textarea
+              value={userInput}
+              onChange={(e) => onInputChange(e.target.value)}
+              className="w-full h-12 py-2 pl-4 pr-24 text-xs rounded-lg bg-white focus:outline-none resize-none overflow-y-auto"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', border: '1px solid rgba(116, 116, 116, 0.41)' }}
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+              placeholder={placeholder}
+              disabled={isGenerating}
+            />
+            <button
+              onClick={onGenerate}
+              disabled={isGenerating || !userInput.trim()}
+              className={`absolute bottom-2 right-2 px-3 py-1 text-white text-xs font-medium rounded transition-colors ${
+                isGenerating || !userInput.trim()
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-blue-500 hover:bg-blue-600'
+              }`}
+            >
+              {isGenerating ? '生成中...' : '一键生成'}
+            </button>
+          </div>
+        </>
+      )}
+
+      {activeTab === 'video' && (
+        <>
+          <div className="mb-3">
+            <div className="flex space-x-2">
+              <div className="relative w-32">
+                <select
+                  value={selectedModel}
+                  onChange={(e) => onModelChange(e.target.value)}
+                  className="w-full h-9 pl-3 pr-8 text-xs rounded-lg bg-white focus:outline-none appearance-none text-black/50"
+                >
+                  <option value="gemini-2.5pro">Gemini2.5pro</option>
+                  <option value="deepseek-r1">DeepSeek-R1</option>
+                  <option value="gpt-4">GPT-4</option>
+                </select>
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                  <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M1 1L6 6L11 1" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+              </div>
+
+              <div className="relative w-24">
+                <select
+                  value={videoLength}
+                  onChange={(e) => onVideoLengthChange?.(e.target.value)}
+                  className="w-full h-9 pl-3 pr-8 text-xs rounded-lg bg-white focus:outline-none appearance-none text-black/50"
+                >
+                  <option value="2s">秒时长 2s</option>
+                  <option value="5s">秒时长 5s</option>
+                  <option value="10s">秒时长 10s</option>
+                </select>
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                  <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M1 1L6 6L11 1" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+              </div>
+
+              <div className="relative w-24">
+                <select
+                  value={resolution}
+                  onChange={(e) => onResolutionChange?.(e.target.value)}
+                  className="w-full h-9 pl-3 pr-8 text-xs rounded-lg bg-white focus:outline-none appearance-none text-black/50"
+                >
+                  <option value="1080p">分辨率 1080p</option>
+                  <option value="720p">分辨率 720p</option>
+                  <option value="4K">分辨率 4K</option>
+                </select>
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                  <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M1 1L6 6L11 1" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+              </div>
+
+              <div className="relative w-24">
+                <select
+                  value={singleGenerate ? "single" : "batch"}
+                  onChange={(e) => onSingleGenerateChange?.(e.target.value === "single")}
+                  className="w-full h-9 pl-3 pr-8 text-xs rounded-lg bg-white focus:outline-none appearance-none text-black/50"
+                >
+                  <option value="batch">单集生成</option>
+                  <option value="single">单个生成</option>
+                </select>
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                  <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M1 1L6 6L11 1" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="relative">
+            <textarea
+              value={userInput}
+              onChange={(e) => onInputChange(e.target.value)}
+              className="w-full h-12 py-2 pl-12 pr-24 text-xs rounded-lg bg-white focus:outline-none resize-none overflow-y-auto"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', border: '1px solid rgba(116, 116, 116, 0.41)' }}
+              placeholder={placeholder}
+              disabled={isGenerating}
+            />
+            <label className="absolute left-2 top-1/2 transform -translate-y-1/2 w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center cursor-pointer hover:bg-gray-200">
+              <Icon icon="ri:image-line" className="w-4 h-4 text-gray-400" />
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    // Handle image upload here
+                    console.log('Image uploaded:', file);
+                  }
+                }}
+              />
+            </label>
+            <button
+              onClick={onGenerate}
+              disabled={isGenerating || !userInput.trim()}
+              className={`absolute bottom-2 right-2 px-3 py-1 text-white text-xs font-medium rounded transition-colors ${
+                isGenerating || !userInput.trim()
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-blue-500 hover:bg-blue-600'
+              }`}
+            >
+              {isGenerating ? '生成中...' : '一键生成'}
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 // 通用标题栏组件
 interface SectionHeaderProps {
   title: string;
@@ -401,6 +769,14 @@ function ShortplayEntryPage() {
   const [hasVideo, setHasVideo] = useState<boolean>(true); // 默认有视频
   const [userInput, setUserInput] = useState<string>(''); // 用户输入内容
   const [isGenerating, setIsGenerating] = useState<boolean>(false); // 生成状态
+
+  // 底部输入区域的额外状态
+  const [voiceType, setVoiceType] = useState<string>('male');
+  const [backgroundType, setBackgroundType] = useState<string>('背景');
+  const [style, setStyle] = useState<string>('古风');
+  const [videoLength, setVideoLength] = useState<string>('2s');
+  const [resolution, setResolution] = useState<string>('1080p');
+  const [singleGenerate, setSingleGenerate] = useState<boolean>(false);
 
   // 场次管理状态
   const [selectedScene, setSelectedScene] = useState<string>('1-2夜内 废弃工厂 (分支B)');
@@ -1070,104 +1446,27 @@ function ShortplayEntryPage() {
               </div>
 
               {/* 卡片底部输入区域 */}
-              <div className="border-t border-gray-100 p-4">
-                {(activeTab === 'script' || activeTab === 'image' || activeTab === 'video') && (
-                  <>
-                    <div className="mb-3">
-                      <div className="relative w-40">
-                        <select
-                          value={selectedModel}
-                          onChange={(e) => setSelectedModel(e.target.value)}
-                          className="w-full h-9 pl-3 pr-8 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none"
-                        >
-                          <option value="gemini-2.5pro">Gemini2.5pro</option>
-                          <option value="deepseek-r1">DeepSeek-R1</option>
-                          <option value="gpt-4">GPT-4</option>
-                        </select>
-                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                          <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M1 1L6 6L11 1" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex space-x-3">
-                      <div className="flex-1 relative">
-                        <input
-                          type="text"
-                          value={userInput}
-                          onChange={(e) => setUserInput(e.target.value)}
-                          className="w-full h-10 pl-4 pr-4 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          placeholder="简单描述你想要的互动剧"
-                          disabled={isGenerating}
-                        />
-                      </div>
-                      <button
-                        onClick={handleGenerate}
-                        disabled={isGenerating || !userInput.trim()}
-                        className={`px-4 py-2 text-white text-sm font-medium rounded-lg transition-colors flex items-center space-x-2 ${
-                          isGenerating || !userInput.trim()
-                            ? 'bg-gray-400 cursor-not-allowed'
-                            : 'bg-blue-500 hover:bg-blue-600'
-                        }`}
-                      >
-                        {isGenerating && (
-                          <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                        )}
-                        <span>{isGenerating ? '生成中...' : '一键生成'}</span>
-                      </button>
-                    </div>
-                  </>
-                )}
-
-                {activeTab === 'audio' && (
-                  <div className="space-y-3">
-                    <div className="flex space-x-3">
-                      <div className="relative w-32">
-                        <select className="w-full h-9 pl-3 pr-8 text-sm rounded-lg bg-white focus:outline-none appearance-none">
-                          <option value="gemini-2.5pro">Gemini2.5pro</option>
-                          <option value="deepseek-r1">DeepSeek-R1</option>
-                          <option value="gpt-4">GPT-4</option>
-                        </select>
-                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                          <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M1 1L6 6L11 1" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        </div>
-                      </div>
-
-                      <div className="relative w-20">
-                        <select className="w-full h-9 pl-3 pr-8 text-sm rounded-lg bg-white focus:outline-none appearance-none">
-                          <option value="male">男声</option>
-                          <option value="female">女声</option>
-                        </select>
-                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                          <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M1 1L6 6L11 1" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex space-x-3">
-                      <div className="flex-1 relative">
-                        <input
-                          type="text"
-                          className="w-full h-10 pl-4 pr-4 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          placeholder="简单描述你想要的互动剧"
-                        />
-                      </div>
-                      <button className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors">
-                        模型生成
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
+              <BottomInputArea
+                activeTab={activeTab}
+                selectedModel={selectedModel}
+                onModelChange={setSelectedModel}
+                userInput={userInput}
+                onInputChange={setUserInput}
+                isGenerating={isGenerating}
+                onGenerate={handleGenerate}
+                voiceType={voiceType}
+                onVoiceTypeChange={setVoiceType}
+                backgroundType={backgroundType}
+                onBackgroundTypeChange={setBackgroundType}
+                style={style}
+                onStyleChange={setStyle}
+                videoLength={videoLength}
+                onVideoLengthChange={setVideoLength}
+                resolution={resolution}
+                onResolutionChange={setResolution}
+                singleGenerate={singleGenerate}
+                onSingleGenerateChange={setSingleGenerate}
+              />
             </div>
           </div>
         </div>

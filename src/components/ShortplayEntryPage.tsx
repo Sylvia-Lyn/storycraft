@@ -54,6 +54,17 @@ function SortableAudioItem({ item }: SortableAudioItemProps) {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
+    // 防止拖动时字体变形
+    WebkitFontSmoothing: 'antialiased',
+    MozOsxFontSmoothing: 'grayscale',
+    // 强制硬件加速，避免亚像素渲染问题
+    willChange: isDragging ? 'transform' : 'auto',
+    // 确保像素完美渲染
+    backfaceVisibility: 'hidden',
+    transformStyle: 'preserve-3d',
+    // 防止拖动时卡片伸缩
+    width: isDragging ? '100%' : 'auto',
+    zIndex: isDragging ? 1000 : 'auto',
   };
 
   return (
@@ -61,7 +72,7 @@ function SortableAudioItem({ item }: SortableAudioItemProps) {
       ref={setNodeRef}
       style={style}
       className={`bg-white rounded-lg border border-gray-200 px-3 py-2 cursor-move transition-all ${
-        isDragging ? 'scale-95 shadow-lg' : ''
+        isDragging ? 'shadow-lg z-10' : ''
       }`}
       {...attributes}
     >
@@ -91,6 +102,107 @@ function SortableAudioItem({ item }: SortableAudioItemProps) {
           <Icon icon="ri:time-line" className="w-4 h-4 text-gray-400" />
           <Icon icon="ri:delete-bin-line" className="w-4 h-4 text-gray-400 cursor-pointer hover:text-red-500" />
         </div>
+      </div>
+    </div>
+  );
+}
+
+// 剧本卡片组件
+interface ScriptCardProps {
+  id: string;
+  description: string;
+  dialogues: Array<{
+    character: string;
+    content: string;
+  }>;
+  descriptionColor?: string;
+  characterColor?: string;
+  contentColor?: string;
+  onDelete?: (id: string) => void;
+}
+
+interface SortableScriptCardProps {
+  item: ScriptCardProps;
+}
+
+
+function SortableScriptCard({ item }: SortableScriptCardProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    // 防止拖动时字体变形
+    WebkitFontSmoothing: 'antialiased',
+    MozOsxFontSmoothing: 'grayscale',
+    // 强制硬件加速，避免亚像素渲染问题
+    willChange: isDragging ? 'transform' : 'auto',
+    // 确保像素完美渲染
+    backfaceVisibility: 'hidden',
+    transformStyle: 'preserve-3d',
+    // 防止拖动时卡片伸缩
+    width: isDragging ? '100%' : 'auto',
+    zIndex: isDragging ? 1000 : 'auto',
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      className={`flex items-center space-x-4 transition-all ${
+        isDragging ? 'shadow-lg z-10' : ''
+      }`}
+    >
+      <div className="flex-1 bg-white rounded-lg border border-gray-200 p-4">
+        {/* 拖拽手柄 */}
+        <div className="flex items-start space-x-3">
+          <div
+            {...listeners}
+            className="cursor-grab active:cursor-grabbing mt-1 p-1 hover:bg-gray-100 rounded"
+            title="拖拽排序"
+          >
+            <Icon icon="ri:drag-move-2-line" className="w-4 h-4 text-gray-400" />
+          </div>
+
+          <div className="flex-1">
+            <div className={`text-sm mb-2 font-medium ${item.descriptionColor || 'text-blue-600'}`}>
+              画面脚本：{item.description}
+            </div>
+            <div className="space-y-3">
+              {item.dialogues.map((dialogue, index) => (
+                <div key={index} className="space-y-1">
+                  <div className="flex items-start space-x-2">
+                    <span className={`text-sm font-medium min-w-0 ${item.characterColor || 'text-gray-800'}`}>
+                      {dialogue.character}：
+                    </span>
+                    <div className="flex-1">
+                      <span className={`text-sm ${item.contentColor || 'text-gray-600'}`}>
+                        {dialogue.content}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* 独立的删除按钮列 */}
+      <div className="flex items-center">
+        <Icon
+          icon="ri:delete-bin-line"
+          className="w-4 h-4 text-gray-400 cursor-pointer hover:text-red-500"
+          onClick={() => item.onDelete?.(item.id)}
+        />
       </div>
     </div>
   );
@@ -300,6 +412,54 @@ function ShortplayEntryPage() {
     '4-1深夜 地下室 (分支E)'
   ]);
 
+  // 剧本卡片数据状态
+  const [scriptCards, setScriptCards] = useState<ScriptCardProps[]>([
+    {
+      id: 'script-1',
+      description: '瞬移技术下忙中的希，用自己的外套盖在她身上，他始起身，踏上濡湿下吊与最后一丝希望。',
+      dialogues: [
+        {
+          character: '千草折 (Chigusa Inori)',
+          content: '(急切地) 嗯！你快走！诗织她已经...'
+        },
+        {
+          character: '神谷瞬 (Kamiya Shun)',
+          content: '(打断她，大步走向诗织) 不！我不能就这么放弃她！'
+        }
+      ]
+    },
+    {
+      id: 'script-2',
+      description: '他张开双臂，没有害怕何威胁，拥住诗织的前额。',
+      dialogues: [
+        {
+          character: '神谷瞬 (Kamiya Shun)',
+          content: '(声音颤抖但坚大声) 诗织！看着我！我爱你！神谷瞬！你忘了我们一起在天台许的愿吗？你说要买一家全世界最好吃的蛋糕店！'
+        }
+      ]
+    },
+    {
+      id: 'script-3',
+      description: '魔化的诗织动作一顿，浑浊的眼中似乎闪过了一丝迷茫，她往后一步，仍徘徊在方向纠结。',
+      dialogues: [
+        {
+          character: '夏目诗织 (Natsume Shiori)',
+          content: '(低语，含泪不清) ......蛋糕......好子......好像......'
+        }
+      ]
+    },
+    {
+      id: 'script-4',
+      description: '瞬着到一丝希望，眼中燃起了光芒，趁住此时，诗织的速攻被挡弹跳的可塑感载攻代。她拉她挡起出一声失魂，眼中重新的光芒闪闪烁现了。',
+      dialogues: [
+        {
+          character: '夏目诗织 (Natsume Shiori)',
+          content: '(尖叫) 肉——！！！'
+        }
+      ]
+    }
+  ]);
+
   // 音频数据状态
   const [audioItems, setAudioItems] = useState([
     {
@@ -438,6 +598,25 @@ function ShortplayEntryPage() {
         return arrayMove(items, oldIndex, newIndex);
       });
     }
+  };
+
+  // 剧本卡片拖动处理
+  const handleScriptDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setScriptCards((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
+
+  // 删除剧本卡片
+  const handleDeleteScriptCard = (id: string) => {
+    setScriptCards((items) => items.filter((item) => item.id !== id));
   };
 
   // 时间解析和格式化函数
@@ -1016,87 +1195,28 @@ function ShortplayEntryPage() {
           {/* 剧本内容区域 */}
           <div className="flex-grow p-4 overflow-auto min-h-0">
             {activeTab === 'script' && (
-              <div className="space-y-4">
-                {/* 画面脚本1 */}
-                <div className="bg-white rounded-lg border border-gray-200 p-4">
-                  <div className="text-sm text-blue-600 mb-2 font-medium">画面脚本：瞬移技术下忙中的希，用自己的外套盖在她身上，他始起身，踏上濡湿下吊与最后一丝希望。</div>
-                  <div className="space-y-3">
-                    <div className="space-y-1">
-                      <div className="flex items-start space-x-2">
-                        <span className="text-sm font-medium text-gray-800 min-w-0">千草折 (Chigusa Inori)：</span>
-                        <div className="flex-1">
-                          <span className="text-sm text-gray-600">(急切地) 嗯！你快走！诗织她已经...</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="space-y-1">
-                      <div className="flex items-start space-x-2">
-                        <span className="text-sm font-medium text-gray-800 min-w-0">神谷瞬 (Kamiya Shun)：</span>
-                        <div className="flex-1">
-                          <span className="text-sm text-gray-600">(打断她，大步走向诗织) 不！我不能就这么放弃她！</span>
-                        </div>
-                      </div>
-                    </div>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleScriptDragEnd}
+              >
+                <SortableContext
+                  items={scriptCards.map(item => item.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="space-y-4">
+                    {scriptCards.map((item) => (
+                      <SortableScriptCard
+                        key={item.id}
+                        item={{
+                          ...item,
+                          onDelete: handleDeleteScriptCard
+                        }}
+                      />
+                    ))}
                   </div>
-                  <div className="flex justify-end mt-3">
-                    <Icon icon="ri:delete-bin-line" className="w-4 h-4 text-gray-400 cursor-pointer hover:text-red-500" />
-                  </div>
-                </div>
-
-                {/* 画面脚本2 */}
-                <div className="bg-white rounded-lg border border-gray-200 p-4">
-                  <div className="text-sm text-blue-600 mb-2 font-medium">画面脚本：他张开双臂，没有害怕何威胁，拥住诗织的前额。</div>
-                  <div className="space-y-3">
-                    <div className="space-y-1">
-                      <div className="flex items-start space-x-2">
-                        <span className="text-sm font-medium text-gray-800 min-w-0">神谷瞬 (Kamiya Shun)：</span>
-                        <div className="flex-1">
-                          <span className="text-sm text-gray-600">(声音颤抖但坚大声) 诗织！看着我！我爱你！神谷瞬！你忘了我们一起在天台许的愿吗？你说要买一家全世界最好吃的蛋糕店！</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex justify-end mt-3">
-                    <Icon icon="ri:delete-bin-line" className="w-4 h-4 text-gray-400 cursor-pointer hover:text-red-500" />
-                  </div>
-                </div>
-
-                {/* 画面脚本3 */}
-                <div className="bg-white rounded-lg border border-gray-200 p-4">
-                  <div className="text-sm text-blue-600 mb-2 font-medium">画面脚本：魔化的诗织动作一顿，浑浊的眼中似乎闪过了一丝迷茫，她往后一步，仍徘徊在方向纠结。</div>
-                  <div className="space-y-3">
-                    <div className="space-y-1">
-                      <div className="flex items-start space-x-2">
-                        <span className="text-sm font-medium text-gray-800 min-w-0">夏目诗织 (Natsume Shiori)：</span>
-                        <div className="flex-1">
-                          <span className="text-sm text-gray-600">(低语，含泪不清) ......蛋糕......好子......好像......</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex justify-end mt-3">
-                    <Icon icon="ri:delete-bin-line" className="w-4 h-4 text-gray-400 cursor-pointer hover:text-red-500" />
-                  </div>
-                </div>
-
-                {/* 画面脚本4 */}
-                <div className="bg-white rounded-lg border border-gray-200 p-4">
-                  <div className="text-sm text-blue-600 mb-2 font-medium">画面脚本：瞬着到一丝希望，眼中燃起了光芒，趁住此时，诗织的速攻被挡弹跳的可塑感载攻代。她拉她挡起出一声失魂，眼中重新的光芒闪闪烁现了。</div>
-                  <div className="space-y-3">
-                    <div className="space-y-1">
-                      <div className="flex items-start space-x-2">
-                        <span className="text-sm font-medium text-gray-800 min-w-0">夏目诗织 (Natsume Shiori)：</span>
-                        <div className="flex-1">
-                          <span className="text-sm text-gray-600">(尖叫) 肉——！！！</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex justify-end mt-3">
-                    <Icon icon="ri:delete-bin-line" className="w-4 h-4 text-gray-400 cursor-pointer hover:text-red-500" />
-                  </div>
-                </div>
-              </div>
+                </SortableContext>
+              </DndContext>
             )}
 
             {activeTab === 'audio' && (

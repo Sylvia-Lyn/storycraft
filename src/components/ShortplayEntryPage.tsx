@@ -220,6 +220,7 @@ interface BottomInputAreaProps {
   isGenerating: boolean;
   onGenerate: () => void;
   placeholder?: string;
+  generationStatus?: string;
   // 音频tab特有属性
   voiceType?: string;
   onVoiceTypeChange?: (voice: string) => void;
@@ -246,6 +247,7 @@ function BottomInputArea({
   isGenerating,
   onGenerate,
   placeholder,
+  generationStatus,
   // 音频tab属性
   voiceType = "male",
   onVoiceTypeChange,
@@ -289,6 +291,19 @@ function BottomInputArea({
               </div>
             </div>
           </div>
+
+          {/* 生成状态显示 */}
+          {isGenerating && generationStatus && (
+            <div className="mb-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center space-x-2">
+                <svg className="animate-spin w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span className="text-sm text-blue-700">{generationStatus}</span>
+              </div>
+            </div>
+          )}
 
           <div className="relative">
             <textarea
@@ -1325,6 +1340,8 @@ function ShortplayEntryPage() {
   const [hasVideo, setHasVideo] = useState<boolean>(true); // 默认有视频
   const [userInput, setUserInput] = useState<string>(''); // 用户输入内容
   const [isGenerating, setIsGenerating] = useState<boolean>(false); // 生成状态
+  const [generatedContent, setGeneratedContent] = useState<string>(''); // 生成的内容
+  const [generationStatus, setGenerationStatus] = useState<string>(''); // 生成状态文本
 
   // 底部输入区域的额外状态
   const [voiceType, setVoiceType] = useState<string>('male');
@@ -1743,27 +1760,27 @@ function ShortplayEntryPage() {
     }
 
     setIsGenerating(true);
+    setGenerationStatus('正在创建剧本任务...');
+
     try {
-      // 从localStorage获取token和user信息
-      const token = localStorage.getItem('token');
+      // 从localStorage获取user信息
       const userStr = localStorage.getItem('user');
 
-      if (!token) {
-        alert(t('shortplayEntry.input.authTokenError'));
-        return;
-      }
-
       // 解析user信息获取userId
-      let userId = "use123"; // 默认值
+      let userId = "12"; // 默认值
       if (userStr) {
         try {
           const user = JSON.parse(userStr);
           userId = user.userId || userId;
         } catch (error) {
-          console.warn(t('shortplayEntry.input.userInfoParseError') + ', userId:', error);
+          console.warn(t('shortplayEntry.input.userInfoParseError'), error);
         }
       }
 
+      // 从localStorage获取token
+      const token = localStorage.getItem('token');
+
+      // 第一步：创建剧本生成任务
       const response = await fetch(`${STORYAI_API_BASE}/series/create`, {
         method: 'POST',
         headers: {
@@ -1772,35 +1789,80 @@ function ShortplayEntryPage() {
         },
         body: JSON.stringify({
           userId: userId,
-          seriesName: t('shortplayEntry.examples.series.name'),
-          seriesDescription: t('shortplayEntry.examples.series.description'),
           userInput: userInput.trim(),
-          prompt: userInput.trim(),
-          status: "DRAFT",
-          episodes: []
+          seriesName: "美丽的童话",
+          seriesDescription: "美丽的童话",
+          provider: ""
         })
       });
 
-      if (response.ok) {
-        const result = await response.json();
-        console.log(t('shortplayEntry.input.generateSuccess') + ':', result);
-
-        // 检查返回的code是否为0表示成功
-        if (result.code === 0) {
-          const { seriesId, episodeId, message } = result.data;
-          alert(`${message}\n剧集ID: ${seriesId}\n剧集ID: ${episodeId}`);
-          setUserInput(''); // 清空输入
-        } else {
-          throw new Error(result.message || t('shortplayEntry.input.generateFailed'));
-        }
-      } else {
+      if (!response.ok) {
         throw new Error(`请求失败: ${response.status}`);
       }
+
+      const result = await response.json();
+      console.log('剧本生成任务创建成功:', result);
+
+      if (result.code !== 0 || !result.data?.seriesId) {
+        throw new Error(result.message || '创建任务失败');
+      }
+
+      const seriesId = result.data.seriesId;
+      setGenerationStatus('剧本生成中，请稍候...');
+
+      // 第二步：轮询获取生成结果
+      const pollForResult = async (): Promise<void> => {
+        try {
+          const detailResponse = await fetch(`${STORYAI_API_BASE}/series/detail?seriesId=${seriesId}&includeEpisodes=true`, {
+            method: 'GET',
+            headers: {
+              'X-Prompt-Manager-Token': token || '',
+            }
+          });
+
+          if (!detailResponse.ok) {
+            throw new Error(`获取详情失败: ${detailResponse.status}`);
+          }
+
+          const detailResult = await detailResponse.json();
+          console.log('轮询结果:', detailResult);
+
+          if (detailResult.code === 0 && detailResult.data && detailResult.data.series) {
+            const { generationStatus: status, content } = detailResult.data.series;
+
+            if (status === 'COMPLETED') {
+              // 生成完成
+              setGenerationStatus('生成完成！');
+              setGeneratedContent(content || '');
+              setUserInput(''); // 清空输入
+              setIsGenerating(false);
+              alert('剧本生成完成！');
+            } else if (status === 'PROCESSING') {
+              // 继续轮询
+              setGenerationStatus('正在生成剧本内容...');
+              setTimeout(pollForResult, 3000); // 3秒后重试
+            } else {
+              // 其他状态，可能是失败
+              throw new Error(`生成状态异常: ${status}`);
+            }
+          } else {
+            throw new Error(detailResult.message || '获取生成状态失败');
+          }
+        } catch (pollError) {
+          console.error('轮询过程出错:', pollError);
+          // 继续重试轮询，不立即失败
+          setTimeout(pollForResult, 5000); // 5秒后重试
+        }
+      };
+
+      // 开始轮询
+      setTimeout(pollForResult, 2000); // 2秒后开始第一次轮询
+
     } catch (error) {
       console.error(t('shortplayEntry.input.generateFailed') + ':', error);
-      alert(t('shortplayEntry.input.generateFailed'));
-    } finally {
+      alert(t('shortplayEntry.input.generateFailed') + ': ' + (error as Error).message);
       setIsGenerating(false);
+      setGenerationStatus('');
     }
   };
 
@@ -1882,44 +1944,61 @@ function ShortplayEntryPage() {
               <div className="flex-grow p-4 overflow-auto">
                 {activeTab === 'script' && (
                   <div className="space-y-4">
-                    {/* 画面1 */}
-                    <div className="space-y-3">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center">
-                          <span className="text-xs text-white font-medium">G</span>
+                    {/* 生成的内容显示 */}
+                    {generatedContent ? (
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <div className="flex items-center space-x-2 mb-3">
+                          <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                            <span className="text-xs text-white font-medium">AI</span>
+                          </div>
+                          <span className="text-sm font-medium text-green-800">AI生成的剧本内容</span>
                         </div>
-                        <span className="text-sm font-medium text-gray-800">画面：1  时长：00:00'-00:05'</span>
+                        <div className="text-sm text-gray-700 whitespace-pre-wrap">
+                          {generatedContent}
+                        </div>
                       </div>
+                    ) : (
+                      <>
+                        {/* 默认示例内容 */}
+                        <div className="space-y-3">
+                          <div className="flex items-center space-x-2">
+                            <div className="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center">
+                              <span className="text-xs text-white font-medium">G</span>
+                            </div>
+                            <span className="text-sm font-medium text-gray-800">画面：1  时长：00:00'-00:05'</span>
+                          </div>
 
-                      <div className="space-y-2 text-sm text-gray-700 pl-8">
-                        <div className="break-words"><span className="font-medium">• 景别：</span>特写 → 全景</div>
-                        <div className="break-words"><span className="font-medium">• 运镜：</span>镜头从上往下摇</div>
-                        <div className="break-words">
-                          <span className="font-medium">• 画面：</span>
-                          <div className="ml-4 space-y-1 mt-1 text-gray-600">
-                            <div className="break-words">○ 从餐车顶部一个褪色的黄红招牌【特写】开始，招牌上"外粥·24小时"的字样残缺不全，闪烁着不稳定的红光。</div>
-                            <div className="break-words">○ 镜头【下摇】，红光在逐渐暗淡的路面上洒下了一片微弱的光晕。雨丝在灯光下清晰可见。</div>
-                            <div className="break-words">○ 镜头最终定格在餐车旁的金属桌椅，几张惆怅的桌椅在外面，虽然、格雷独自一人坐在餐桌角落的位置。</div>
-                            <div className="break-words">○ 音效：环境雨声，远处城市交通噪音，霓虹灯"滋滋"的电流声。</div>
+                          <div className="space-y-2 text-sm text-gray-700 pl-8">
+                            <div className="break-words"><span className="font-medium">• 景别：</span>特写 → 全景</div>
+                            <div className="break-words"><span className="font-medium">• 运镜：</span>镜头从上往下摇</div>
+                            <div className="break-words">
+                              <span className="font-medium">• 画面：</span>
+                              <div className="ml-4 space-y-1 mt-1 text-gray-600">
+                                <div className="break-words">○ 从餐车顶部一个褪色的黄红招牌【特写】开始，招牌上"外粥·24小时"的字样残缺不全，闪烁着不稳定的红光。</div>
+                                <div className="break-words">○ 镜头【下摇】，红光在逐渐暗淡的路面上洒下了一片微弱的光晕。雨丝在灯光下清晰可见。</div>
+                                <div className="break-words">○ 镜头最终定格在餐车旁的金属桌椅，几张惆怅的桌椅在外面，虽然、格雷独自一人坐在餐桌角落的位置。</div>
+                                <div className="break-words">○ 音效：环境雨声，远处城市交通噪音，霓虹灯"滋滋"的电流声。</div>
+                              </div>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </div>
 
-                    {/* 画面2 */}
-                    <div className="space-y-3">
-                      <div className="flex items-center space-x-2">
-                        <span className="text-sm font-medium text-gray-800">画面：2  时长：00:05'-00:10'</span>
-                      </div>
+                        {/* 画面2 */}
+                        <div className="space-y-3">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-sm font-medium text-gray-800">画面：2  时长：00:05'-00:10'</span>
+                          </div>
 
-                      <div className="space-y-2 text-sm text-gray-700 pl-8">
-                        <div className="break-words"><span className="font-medium">• 景别：</span>中近景</div>
-                        <div className="break-words"><span className="font-medium">• 运镜：</span>固定</div>
-                        <div className="break-words">
-                          <span className="font-medium">• 画面：</span>虽然，格雷。深灰色连帽衫的视线垂得很低，只露出尖细的下颌线。他指间握着皱巴巴的纸巾，缓慢地擦去嘴角边的汁液。面前的是早已被泪水打湿的热粥。他的动作缓慢且理。
+                          <div className="space-y-2 text-sm text-gray-700 pl-8">
+                            <div className="break-words"><span className="font-medium">• 景别：</span>中近景</div>
+                            <div className="break-words"><span className="font-medium">• 运镜：</span>固定</div>
+                            <div className="break-words">
+                              <span className="font-medium">• 画面：</span>虽然，格雷。深灰色连帽衫的视线垂得很低，只露出尖细的下颌线。他指间握着皱巴巴的纸巾，缓慢地擦去嘴角边的汁液。面前的是早已被泪水打湿的热粥。他的动作缓慢且理。
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
+                      </>
+                    )}
                   </div>
                 )}
 
@@ -2039,6 +2118,7 @@ function ShortplayEntryPage() {
                 isGenerating={isGenerating}
                 onGenerate={handleGenerate}
                 placeholder={t('shortplayEntry.input.placeholder')}
+                generationStatus={generationStatus}
                 voiceType={voiceType}
                 onVoiceTypeChange={setVoiceType}
                 backgroundType={backgroundType}

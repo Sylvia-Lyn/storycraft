@@ -576,6 +576,556 @@ function BottomInputArea({
   );
 }
 
+// 可排序的图片项组件
+interface SortableImageItemProps {
+  item: ImageItem;
+  index: number;
+  editingTimeId: string | null;
+  editingStartMinutes: string;
+  editingStartSeconds: string;
+  editingEndMinutes: string;
+  editingEndSeconds: string;
+  onEditingStartMinutesChange: (value: string) => void;
+  onEditingStartSecondsChange: (value: string) => void;
+  onEditingEndMinutesChange: (value: string) => void;
+  onEditingEndSecondsChange: (value: string) => void;
+  onStartEditTime: (itemId: string, timeRange: string) => void;
+  onSaveTimeEdit: (itemId: string) => void;
+  onCancelTimeEdit: () => void;
+  parseTimeRange: (timeRange: string) => { startMinutes: string; startSeconds: string; endMinutes: string; endSeconds: string; };
+}
+
+function SortableImageItem({
+  item,
+  index,
+  editingTimeId,
+  editingStartMinutes,
+  editingStartSeconds,
+  editingEndMinutes,
+  editingEndSeconds,
+  onEditingStartMinutesChange,
+  onEditingStartSecondsChange,
+  onEditingEndMinutesChange,
+  onEditingEndSecondsChange,
+  onStartEditTime,
+  onSaveTimeEdit,
+  onCancelTimeEdit,
+  parseTimeRange,
+}: SortableImageItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes}>
+      <ImageItemComponent
+        item={item}
+        index={index}
+        editingTimeId={editingTimeId}
+        editingStartMinutes={editingStartMinutes}
+        editingStartSeconds={editingStartSeconds}
+        editingEndMinutes={editingEndMinutes}
+        editingEndSeconds={editingEndSeconds}
+        onEditingStartMinutesChange={onEditingStartMinutesChange}
+        onEditingStartSecondsChange={onEditingStartSecondsChange}
+        onEditingEndMinutesChange={onEditingEndMinutesChange}
+        onEditingEndSecondsChange={onEditingEndSecondsChange}
+        onStartEditTime={onStartEditTime}
+        onSaveTimeEdit={onSaveTimeEdit}
+        onCancelTimeEdit={onCancelTimeEdit}
+        parseTimeRange={parseTimeRange}
+        dragListeners={listeners}
+      />
+    </div>
+  );
+}
+
+// 图片项组件
+interface ImageItem {
+  id: string;
+  description: string;
+  parameters: string;
+  timeRange: string;
+}
+
+interface ImageItemProps {
+  item: ImageItem;
+  index: number;
+  editingTimeId: string | null;
+  editingStartMinutes: string;
+  editingStartSeconds: string;
+  editingEndMinutes: string;
+  editingEndSeconds: string;
+  onEditingStartMinutesChange: (value: string) => void;
+  onEditingStartSecondsChange: (value: string) => void;
+  onEditingEndMinutesChange: (value: string) => void;
+  onEditingEndSecondsChange: (value: string) => void;
+  onStartEditTime: (itemId: string, timeRange: string) => void;
+  onSaveTimeEdit: (itemId: string) => void;
+  onCancelTimeEdit: () => void;
+  parseTimeRange: (timeRange: string) => { startMinutes: string; startSeconds: string; endMinutes: string; endSeconds: string; };
+  dragListeners?: any;
+}
+
+function ImageItemComponent({
+  item,
+  index,
+  editingTimeId,
+  editingStartMinutes,
+  editingStartSeconds,
+  editingEndMinutes,
+  editingEndSeconds,
+  onEditingStartMinutesChange,
+  onEditingStartSecondsChange,
+  onEditingEndMinutesChange,
+  onEditingEndSecondsChange,
+  onStartEditTime,
+  onSaveTimeEdit,
+  onCancelTimeEdit,
+  parseTimeRange,
+  dragListeners,
+}: ImageItemProps) {
+  return (
+    <div className="bg-white rounded-lg border border-gray-200 p-3 flex items-stretch space-x-3 min-h-[100px]">
+      {/* 序号和操作按钮列 */}
+      <div className="flex flex-col justify-between items-center h-full min-w-[20px]">
+        <div className="text-lg font-medium text-blue-600">
+          {index + 1}
+        </div>
+        <div className="flex flex-col items-center space-y-1">
+          {dragListeners && (
+            <button className="p-1 hover:bg-gray-100 rounded cursor-grab active:cursor-grabbing" {...dragListeners}>
+              <Icon icon="ri:drag-move-2-line" className="w-4 h-4 text-gray-400" />
+            </button>
+          )}
+          <button className="p-1 hover:bg-gray-100 rounded">
+            <Icon icon="ri:add-circle-line" className="w-4 h-4 text-gray-400" />
+          </button>
+          <button className="p-1 hover:bg-gray-100 rounded">
+            <Icon icon="ri:delete-bin-line" className="w-4 h-4 text-gray-400 hover:text-red-500" />
+          </button>
+        </div>
+      </div>
+
+      {/* 图片缩略图 */}
+      <div className="w-20 h-20 bg-gray-200 rounded-lg flex-shrink-0 overflow-hidden">
+        <div className="w-full h-full bg-gradient-to-br from-purple-200 via-pink-200 to-blue-200"></div>
+      </div>
+
+      {/* 内容区域 */}
+      <div className="flex-1 min-w-0 flex space-x-4">
+        {/* 左侧：描述 */}
+        <div className="flex-1 text-sm text-gray-800 leading-relaxed">
+          {item.description}
+        </div>
+        {/* 右侧：参数和时间 */}
+        <div className="flex-1 flex flex-col justify-between">
+          <div className="text-xs text-gray-500 leading-relaxed">
+            {item.parameters}
+          </div>
+          <div className="flex items-center space-x-2">
+            {editingTimeId === item.id ? (
+              <div className="flex items-center space-x-1 text-xs text-gray-400">
+                {/* 开始时间编辑 - 分钟 */}
+                <input
+                  type="number"
+                  min="0"
+                  max="59"
+                  value={editingStartMinutes}
+                  onChange={(e) => {
+                    const value = Math.max(0, Math.min(59, parseInt(e.target.value) || 0));
+                    onEditingStartMinutesChange(value.toString());
+                  }}
+                  className="text-xs w-8 text-center bg-transparent outline-none"
+                  placeholder="00"
+                  maxLength={2}
+                />
+                <span>:</span>
+                {/* 开始时间编辑 - 秒钟 */}
+                <input
+                  type="number"
+                  min="0"
+                  max="59"
+                  value={editingStartSeconds}
+                  onChange={(e) => {
+                    const value = Math.max(0, Math.min(59, parseInt(e.target.value) || 0));
+                    onEditingStartSecondsChange(value.toString());
+                  }}
+                  className="text-xs w-8 text-center bg-transparent outline-none"
+                  placeholder="00"
+                  maxLength={2}
+                />
+                <span>-</span>
+                {/* 结束时间编辑 - 分钟 */}
+                <input
+                  type="number"
+                  min="0"
+                  max="59"
+                  value={editingEndMinutes}
+                  onChange={(e) => {
+                    const value = Math.max(0, Math.min(59, parseInt(e.target.value) || 0));
+                    onEditingEndMinutesChange(value.toString());
+                  }}
+                  className="text-xs w-8 text-center bg-transparent outline-none"
+                  placeholder="00"
+                  maxLength={2}
+                />
+                <span>:</span>
+                {/* 结束时间编辑 - 秒钟 */}
+                <input
+                  type="number"
+                  min="0"
+                  max="59"
+                  value={editingEndSeconds}
+                  onChange={(e) => {
+                    const value = Math.max(0, Math.min(59, parseInt(e.target.value) || 0));
+                    onEditingEndSecondsChange(value.toString());
+                  }}
+                  className="text-xs w-8 text-center bg-transparent outline-none"
+                  placeholder="00"
+                  maxLength={2}
+                />
+                {/* 统一的保存和取消按钮 */}
+                <button
+                  onClick={() => onSaveTimeEdit(item.id)}
+                  className="text-green-600 hover:text-green-800 ml-1 p-0 border-0 bg-transparent outline-none cursor-pointer"
+                >
+                  <Icon icon="ri:check-line" className="w-3 h-3" />
+                </button>
+                <button
+                  onClick={onCancelTimeEdit}
+                  className="text-red-600 hover:text-red-800 p-0 border-0 bg-transparent outline-none cursor-pointer"
+                >
+                  <Icon icon="ri:close-line" className="w-3 h-3" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-1 text-xs text-gray-400">
+                {(() => {
+                  const timeData = parseTimeRange(item.timeRange);
+                  return (
+                    <>
+                      <span>{timeData.startMinutes}:{timeData.startSeconds}</span>
+                      <span>-</span>
+                      <span>{timeData.endMinutes}:{timeData.endSeconds}</span>
+                      <button
+                        onClick={() => onStartEditTime(item.id, item.timeRange)}
+                        className="text-gray-400 hover:text-blue-600 ml-1 p-0 border-0 bg-transparent outline-none cursor-pointer"
+                      >
+                        <Icon icon="ri:edit-line" className="w-3 h-3" />
+                      </button>
+                    </>
+                  );
+                })()}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// 视频项组件
+interface VideoItem {
+  id: string;
+  description: string;
+  parameters: string;
+  timeRange: string;
+}
+
+interface VideoItemProps {
+  item: VideoItem;
+  index: number;
+  editingTimeId: string | null;
+  editingStartMinutes: string;
+  editingStartSeconds: string;
+  editingEndMinutes: string;
+  editingEndSeconds: string;
+  onEditingStartMinutesChange: (value: string) => void;
+  onEditingStartSecondsChange: (value: string) => void;
+  onEditingEndMinutesChange: (value: string) => void;
+  onEditingEndSecondsChange: (value: string) => void;
+  onStartEditTime: (itemId: string, timeRange: string) => void;
+  onSaveTimeEdit: (itemId: string) => void;
+  onCancelTimeEdit: () => void;
+  parseTimeRange: (timeRange: string) => { startMinutes: string; startSeconds: string; endMinutes: string; endSeconds: string; };
+  dragListeners?: any;
+}
+
+function VideoItemComponent({
+  item,
+  index,
+  editingTimeId,
+  editingStartMinutes,
+  editingStartSeconds,
+  editingEndMinutes,
+  editingEndSeconds,
+  onEditingStartMinutesChange,
+  onEditingStartSecondsChange,
+  onEditingEndMinutesChange,
+  onEditingEndSecondsChange,
+  onStartEditTime,
+  onSaveTimeEdit,
+  onCancelTimeEdit,
+  parseTimeRange,
+  dragListeners,
+}: VideoItemProps) {
+  return (
+    <div className="bg-white rounded-lg border border-gray-200 p-3 flex items-stretch space-x-3 min-h-[100px]">
+      {/* 序号和操作按钮列 */}
+      <div className="flex flex-col justify-between items-center h-full min-w-[20px]">
+        <div className="text-lg font-medium text-blue-600">
+          {index + 1}
+        </div>
+        <div className="flex flex-col items-center space-y-1">
+          {dragListeners && (
+            <button className="p-1 hover:bg-gray-100 rounded cursor-grab active:cursor-grabbing" {...dragListeners}>
+              <Icon icon="ri:drag-move-2-line" className="w-4 h-4 text-gray-400" />
+            </button>
+          )}
+          <button className="p-1 hover:bg-gray-100 rounded">
+            <Icon icon="ri:add-circle-line" className="w-4 h-4 text-gray-400" />
+          </button>
+          <button className="p-1 hover:bg-gray-100 rounded">
+            <Icon icon="ri:delete-bin-line" className="w-4 h-4 text-gray-400 hover:text-red-500" />
+          </button>
+        </div>
+      </div>
+
+      {/* 视频缩略图 */}
+      <div className="w-20 h-20 bg-gray-200 rounded-lg flex-shrink-0 overflow-hidden">
+        <div className="w-full h-full bg-gradient-to-br from-indigo-200 via-purple-200 to-pink-200"></div>
+      </div>
+
+      {/* 内容区域 */}
+      <div className="flex-1 min-w-0 flex space-x-4">
+        {/* 左侧：描述 */}
+        <div className="flex-1 text-sm text-gray-800 leading-relaxed">
+          {item.description}
+        </div>
+        {/* 右侧：参数和时间 */}
+        <div className="flex-1 flex flex-col justify-between">
+          <div className="text-xs text-gray-500 leading-relaxed">
+            {item.parameters}
+          </div>
+          <div className="flex items-center space-x-2">
+            {editingTimeId === item.id ? (
+              <div className="flex items-center space-x-1 text-xs text-gray-400">
+                {/* 开始时间编辑 - 分钟 */}
+                <input
+                  type="number"
+                  min="0"
+                  max="59"
+                  value={editingStartMinutes}
+                  onChange={(e) => {
+                    const value = Math.max(0, Math.min(59, parseInt(e.target.value) || 0));
+                    onEditingStartMinutesChange(value.toString());
+                  }}
+                  className="text-xs w-8 text-center bg-transparent outline-none"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      onSaveTimeEdit(item.id);
+                    } else if (e.key === 'Escape') {
+                      onCancelTimeEdit();
+                    }
+                  }}
+                  placeholder="00"
+                  maxLength={2}
+                />
+                <span>:</span>
+                {/* 开始时间编辑 - 秒钟 */}
+                <input
+                  type="number"
+                  min="0"
+                  max="59"
+                  value={editingStartSeconds}
+                  onChange={(e) => {
+                    const value = Math.max(0, Math.min(59, parseInt(e.target.value) || 0));
+                    onEditingStartSecondsChange(value.toString());
+                  }}
+                  className="text-xs w-8 text-center bg-transparent outline-none"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      onSaveTimeEdit(item.id);
+                    } else if (e.key === 'Escape') {
+                      onCancelTimeEdit();
+                    }
+                  }}
+                  placeholder="00"
+                  maxLength={2}
+                />
+                <span>-</span>
+                {/* 结束时间编辑 - 分钟 */}
+                <input
+                  type="number"
+                  min="0"
+                  max="59"
+                  value={editingEndMinutes}
+                  onChange={(e) => {
+                    const value = Math.max(0, Math.min(59, parseInt(e.target.value) || 0));
+                    onEditingEndMinutesChange(value.toString());
+                  }}
+                  className="text-xs w-8 text-center bg-transparent outline-none"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      onSaveTimeEdit(item.id);
+                    } else if (e.key === 'Escape') {
+                      onCancelTimeEdit();
+                    }
+                  }}
+                  placeholder="00"
+                  maxLength={2}
+                />
+                <span>:</span>
+                {/* 结束时间编辑 - 秒钟 */}
+                <input
+                  type="number"
+                  min="0"
+                  max="59"
+                  value={editingEndSeconds}
+                  onChange={(e) => {
+                    const value = Math.max(0, Math.min(59, parseInt(e.target.value) || 0));
+                    onEditingEndSecondsChange(value.toString());
+                  }}
+                  className="text-xs w-8 text-center bg-transparent outline-none"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      onSaveTimeEdit(item.id);
+                    } else if (e.key === 'Escape') {
+                      onCancelTimeEdit();
+                    }
+                  }}
+                  placeholder="00"
+                  maxLength={2}
+                />
+                {/* 统一的保存和取消按钮 */}
+                <button
+                  onClick={() => onSaveTimeEdit(item.id)}
+                  className="text-green-600 hover:text-green-800 ml-1"
+                >
+                  <Icon icon="ri:check-line" className="w-3 h-3" />
+                </button>
+                <button
+                  onClick={onCancelTimeEdit}
+                  className="text-red-600 hover:text-red-800 p-0 border-0 bg-transparent outline-none cursor-pointer"
+                >
+                  <Icon icon="ri:close-line" className="w-3 h-3" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-1 text-xs text-gray-400">
+                {(() => {
+                  const timeData = parseTimeRange(item.timeRange);
+                  return (
+                    <>
+                      <span>{timeData.startMinutes}:{timeData.startSeconds}</span>
+                      <span>-</span>
+                      <span>{timeData.endMinutes}:{timeData.endSeconds}</span>
+                      <button
+                        onClick={() => onStartEditTime(item.id, item.timeRange)}
+                        className="text-gray-400 hover:text-blue-600 ml-1 p-0 border-0 bg-transparent outline-none cursor-pointer"
+                      >
+                        <Icon icon="ri:edit-line" className="w-3 h-3" />
+                      </button>
+                    </>
+                  );
+                })()}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// 可排序的视频项组件
+interface SortableVideoItemProps {
+  item: VideoItem;
+  index: number;
+  editingTimeId: string | null;
+  editingStartMinutes: string;
+  editingStartSeconds: string;
+  editingEndMinutes: string;
+  editingEndSeconds: string;
+  onEditingStartMinutesChange: (value: string) => void;
+  onEditingStartSecondsChange: (value: string) => void;
+  onEditingEndMinutesChange: (value: string) => void;
+  onEditingEndSecondsChange: (value: string) => void;
+  onStartEditTime: (itemId: string, timeRange: string) => void;
+  onSaveTimeEdit: (itemId: string) => void;
+  onCancelTimeEdit: () => void;
+  parseTimeRange: (timeRange: string) => { startMinutes: string; startSeconds: string; endMinutes: string; endSeconds: string; };
+}
+
+function SortableVideoItem({
+  item,
+  index,
+  editingTimeId,
+  editingStartMinutes,
+  editingStartSeconds,
+  editingEndMinutes,
+  editingEndSeconds,
+  onEditingStartMinutesChange,
+  onEditingStartSecondsChange,
+  onEditingEndMinutesChange,
+  onEditingEndSecondsChange,
+  onStartEditTime,
+  onSaveTimeEdit,
+  onCancelTimeEdit,
+  parseTimeRange,
+}: SortableVideoItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes}>
+      <VideoItemComponent
+        item={item}
+        index={index}
+        editingTimeId={editingTimeId}
+        editingStartMinutes={editingStartMinutes}
+        editingStartSeconds={editingStartSeconds}
+        editingEndMinutes={editingEndMinutes}
+        editingEndSeconds={editingEndSeconds}
+        onEditingStartMinutesChange={onEditingStartMinutesChange}
+        onEditingStartSecondsChange={onEditingStartSecondsChange}
+        onEditingEndMinutesChange={onEditingEndMinutesChange}
+        onEditingEndSecondsChange={onEditingEndSecondsChange}
+        onStartEditTime={onStartEditTime}
+        onSaveTimeEdit={onSaveTimeEdit}
+        onCancelTimeEdit={onCancelTimeEdit}
+        parseTimeRange={parseTimeRange}
+        dragListeners={listeners}
+      />
+    </div>
+  );
+}
+
 // 通用标题栏组件
 interface SectionHeaderProps {
   title: string;
@@ -968,6 +1518,34 @@ function ShortplayEntryPage() {
 
     if (over && active.id !== over.id) {
       setAudioItems((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
+
+  // 图片拖拽处理
+  const handleImageDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setImageItems((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
+
+  // 视频拖拽处理
+  const handleVideoDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setVideoItems((items) => {
         const oldIndex = items.findIndex((item) => item.id === active.id);
         const newIndex = items.findIndex((item) => item.id === over.id);
 
@@ -1538,309 +2116,75 @@ function ShortplayEntryPage() {
             )}
 
             {activeTab === 'image' && (
-              <div className="space-y-3">
-                {imageItems.map((item, index) => (
-                  <div key={item.id} className="bg-white rounded-lg border border-gray-200 p-3 flex items-stretch space-x-3 min-h-[100px]">
-                    {/* 序号和操作按钮列 */}
-                    <div className="flex flex-col justify-between items-center h-full min-w-[20px]">
-                      <div className="text-lg font-medium text-blue-600">
-                        {index + 1}
-                      </div>
-                      <div className="flex flex-col items-center space-y-1">
-                        <button className="p-1 hover:bg-gray-100 rounded">
-                          <Icon icon="ri:add-circle-line" className="w-4 h-4 text-gray-400" />
-                        </button>
-                        <button className="p-1 hover:bg-gray-100 rounded">
-                          <Icon icon="ri:delete-bin-line" className="w-4 h-4 text-gray-400 hover:text-red-500" />
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* 图片缩略图 */}
-                    <div className="w-20 h-20 bg-gray-200 rounded-lg flex-shrink-0 overflow-hidden">
-                      <div className="w-full h-full bg-gradient-to-br from-purple-200 via-pink-200 to-blue-200"></div>
-                    </div>
-
-                    {/* 内容区域 */}
-                    <div className="flex-1 min-w-0 flex space-x-4">
-                      {/* 左侧：描述 */}
-                      <div className="flex-1 text-sm text-gray-800 leading-relaxed">
-                        {item.description}
-                      </div>
-                      {/* 右侧：参数和时间 */}
-                      <div className="flex-1 flex flex-col justify-between">
-                        <div className="text-xs text-gray-500 leading-relaxed">
-                          {item.parameters}
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          {editingTimeId === item.id ? (
-                            <div className="flex items-center space-x-1 text-xs text-gray-400">
-                              {/* 开始时间编辑 - 分钟 */}
-                              <input
-                                type="number"
-                                min="0"
-                                max="59"
-                                value={editingStartMinutes}
-                                onChange={(e) => {
-                                  const value = Math.max(0, Math.min(59, parseInt(e.target.value) || 0));
-                                  setEditingStartMinutes(value.toString());
-                                }}
-                                className="text-xs w-8 text-center bg-transparent outline-none"
-                                placeholder="00"
-                                maxLength={2}
-                              />
-                              <span>:</span>
-                              {/* 开始时间编辑 - 秒钟 */}
-                              <input
-                                type="number"
-                                min="0"
-                                max="59"
-                                value={editingStartSeconds}
-                                onChange={(e) => {
-                                  const value = Math.max(0, Math.min(59, parseInt(e.target.value) || 0));
-                                  setEditingStartSeconds(value.toString());
-                                }}
-                                className="text-xs w-8 text-center bg-transparent outline-none"
-                                placeholder="00"
-                                maxLength={2}
-                              />
-                              <span>-</span>
-                              {/* 结束时间编辑 - 分钟 */}
-                              <input
-                                type="number"
-                                min="0"
-                                max="59"
-                                value={editingEndMinutes}
-                                onChange={(e) => {
-                                  const value = Math.max(0, Math.min(59, parseInt(e.target.value) || 0));
-                                  setEditingEndMinutes(value.toString());
-                                }}
-                                className="text-xs w-8 text-center bg-transparent outline-none"
-                                placeholder="00"
-                                maxLength={2}
-                              />
-                              <span>:</span>
-                              {/* 结束时间编辑 - 秒钟 */}
-                              <input
-                                type="number"
-                                min="0"
-                                max="59"
-                                value={editingEndSeconds}
-                                onChange={(e) => {
-                                  const value = Math.max(0, Math.min(59, parseInt(e.target.value) || 0));
-                                  setEditingEndSeconds(value.toString());
-                                }}
-                                className="text-xs w-8 text-center bg-transparent outline-none"
-                                placeholder="00"
-                                maxLength={2}
-                              />
-                              {/* 统一的保存和取消按钮 */}
-                              <button
-                                onClick={() => saveTimeEdit(item.id, true)}
-                                className="text-green-600 hover:text-green-800 ml-1 p-0 border-0 bg-transparent outline-none cursor-pointer"
-                              >
-                                <Icon icon="ri:check-line" className="w-3 h-3" />
-                              </button>
-                              <button
-                                onClick={cancelTimeEdit}
-                                className="text-red-600 hover:text-red-800 p-0 border-0 bg-transparent outline-none cursor-pointer"
-                              >
-                                <Icon icon="ri:close-line" className="w-3 h-3" />
-                              </button>
-                            </div>
-                          ) : (
-                            <div className="flex items-center space-x-1 text-xs text-gray-400">
-                              {(() => {
-                                const timeData = parseTimeRange(item.timeRange);
-                                return (
-                                  <>
-                                    <span>{timeData.startMinutes}:{timeData.startSeconds}</span>
-                                    <span>-</span>
-                                    <span>{timeData.endMinutes}:{timeData.endSeconds}</span>
-                                    <button
-                                      onClick={() => startEditTime(item.id, item.timeRange)}
-                                      className="text-gray-400 hover:text-blue-600 ml-1 p-0 border-0 bg-transparent outline-none cursor-pointer"
-                                    >
-                                      <Icon icon="ri:edit-line" className="w-3 h-3" />
-                                    </button>
-                                  </>
-                                );
-                              })()}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleImageDragEnd}
+              >
+                <SortableContext
+                  items={imageItems.map(item => item.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="space-y-3">
+                    {imageItems.map((item, index) => (
+                      <SortableImageItem
+                        key={item.id}
+                        item={item}
+                        index={index}
+                        editingTimeId={editingTimeId}
+                        editingStartMinutes={editingStartMinutes}
+                        editingStartSeconds={editingStartSeconds}
+                        editingEndMinutes={editingEndMinutes}
+                        editingEndSeconds={editingEndSeconds}
+                        onEditingStartMinutesChange={setEditingStartMinutes}
+                        onEditingStartSecondsChange={setEditingStartSeconds}
+                        onEditingEndMinutesChange={setEditingEndMinutes}
+                        onEditingEndSecondsChange={setEditingEndSeconds}
+                        onStartEditTime={startEditTime}
+                        onSaveTimeEdit={(itemId) => saveTimeEdit(itemId, true)}
+                        onCancelTimeEdit={cancelTimeEdit}
+                        parseTimeRange={parseTimeRange}
+                      />
+                    ))}
                   </div>
-                ))}
-              </div>
+                </SortableContext>
+              </DndContext>
             )}
 
             {activeTab === 'video' && (
-              <div className="space-y-3">
-                {videoItems.map((item, index) => (
-                  <div key={item.id} className="bg-white rounded-lg border border-gray-200 p-3 flex items-stretch space-x-3 min-h-[100px]">
-                    {/* 序号和操作按钮列 */}
-                    <div className="flex flex-col justify-between items-center h-full min-w-[20px]">
-                      <div className="text-lg font-medium text-blue-600">
-                        {index + 1}
-                      </div>
-                      <div className="flex flex-col items-center space-y-1">
-                        <button className="p-1 hover:bg-gray-100 rounded">
-                          <Icon icon="ri:add-circle-line" className="w-4 h-4 text-gray-400" />
-                        </button>
-                        <button className="p-1 hover:bg-gray-100 rounded">
-                          <Icon icon="ri:delete-bin-line" className="w-4 h-4 text-gray-400 hover:text-red-500" />
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* 视频缩略图 */}
-                    <div className="w-20 h-20 bg-gray-200 rounded-lg flex-shrink-0 overflow-hidden">
-                      <div className="w-full h-full bg-gradient-to-br from-indigo-200 via-purple-200 to-pink-200"></div>
-                    </div>
-
-                    {/* 内容区域 */}
-                    <div className="flex-1 min-w-0 flex space-x-4">
-                      {/* 左侧：描述 */}
-                      <div className="flex-1 text-sm text-gray-800 leading-relaxed">
-                        {item.description}
-                      </div>
-                      {/* 右侧：参数和时间 */}
-                      <div className="flex-1 flex flex-col justify-between">
-                        <div className="text-xs text-gray-500 leading-relaxed">
-                          {item.parameters}
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          {editingTimeId === item.id ? (
-                            <div className="flex items-center space-x-1 text-xs text-gray-400">
-                              {/* 开始时间编辑 - 分钟 */}
-                              <input
-                                type="number"
-                                min="0"
-                                max="59"
-                                value={editingStartMinutes}
-                                onChange={(e) => {
-                                  const value = Math.max(0, Math.min(59, parseInt(e.target.value) || 0));
-                                  setEditingStartMinutes(value.toString());
-                                }}
-                                className="text-xs w-8 text-center bg-transparent outline-none"
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') {
-                                    saveTimeEdit(item.id, false);
-                                  } else if (e.key === 'Escape') {
-                                    cancelTimeEdit();
-                                  }
-                                }}
-                                placeholder="00"
-                                maxLength={2}
-                              />
-                              <span>:</span>
-                              {/* 开始时间编辑 - 秒钟 */}
-                              <input
-                                type="number"
-                                min="0"
-                                max="59"
-                                value={editingStartSeconds}
-                                onChange={(e) => {
-                                  const value = Math.max(0, Math.min(59, parseInt(e.target.value) || 0));
-                                  setEditingStartSeconds(value.toString());
-                                }}
-                                className="text-xs w-8 text-center bg-transparent outline-none"
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') {
-                                    saveTimeEdit(item.id, false);
-                                  } else if (e.key === 'Escape') {
-                                    cancelTimeEdit();
-                                  }
-                                }}
-                                placeholder="00"
-                                maxLength={2}
-                              />
-                              <span>-</span>
-                              {/* 结束时间编辑 - 分钟 */}
-                              <input
-                                type="number"
-                                min="0"
-                                max="59"
-                                value={editingEndMinutes}
-                                onChange={(e) => {
-                                  const value = Math.max(0, Math.min(59, parseInt(e.target.value) || 0));
-                                  setEditingEndMinutes(value.toString());
-                                }}
-                                className="text-xs w-8 text-center bg-transparent outline-none"
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') {
-                                    saveTimeEdit(item.id, false);
-                                  } else if (e.key === 'Escape') {
-                                    cancelTimeEdit();
-                                  }
-                                }}
-                                placeholder="00"
-                                maxLength={2}
-                              />
-                              <span>:</span>
-                              {/* 结束时间编辑 - 秒钟 */}
-                              <input
-                                type="number"
-                                min="0"
-                                max="59"
-                                value={editingEndSeconds}
-                                onChange={(e) => {
-                                  const value = Math.max(0, Math.min(59, parseInt(e.target.value) || 0));
-                                  setEditingEndSeconds(value.toString());
-                                }}
-                                className="text-xs w-8 text-center bg-transparent outline-none"
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') {
-                                    saveTimeEdit(item.id, false);
-                                  } else if (e.key === 'Escape') {
-                                    cancelTimeEdit();
-                                  }
-                                }}
-                                placeholder="00"
-                                maxLength={2}
-                              />
-                              {/* 统一的保存和取消按钮 */}
-                              <button
-                                onClick={() => saveTimeEdit(item.id, false)}
-                                className="text-green-600 hover:text-green-800 ml-1"
-                              >
-                                <Icon icon="ri:check-line" className="w-3 h-3" />
-                              </button>
-                              <button
-                                onClick={cancelTimeEdit}
-                                className="text-red-600 hover:text-red-800 p-0 border-0 bg-transparent outline-none cursor-pointer"
-                              >
-                                <Icon icon="ri:close-line" className="w-3 h-3" />
-                              </button>
-                            </div>
-                          ) : (
-                            <div className="flex items-center space-x-1 text-xs text-gray-400">
-                              {(() => {
-                                const timeData = parseTimeRange(item.timeRange);
-                                return (
-                                  <>
-                                    <span>{timeData.startMinutes}:{timeData.startSeconds}</span>
-                                    <span>-</span>
-                                    <span>{timeData.endMinutes}:{timeData.endSeconds}</span>
-                                    <button
-                                      onClick={() => startEditTime(item.id, item.timeRange)}
-                                      className="text-gray-400 hover:text-blue-600 ml-1 p-0 border-0 bg-transparent outline-none cursor-pointer"
-                                    >
-                                      <Icon icon="ri:edit-line" className="w-3 h-3" />
-                                    </button>
-                                  </>
-                                );
-                              })()}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleVideoDragEnd}
+              >
+                <SortableContext
+                  items={videoItems.map(item => item.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="space-y-3">
+                    {videoItems.map((item, index) => (
+                      <SortableVideoItem
+                        key={item.id}
+                        item={item}
+                        index={index}
+                        editingTimeId={editingTimeId}
+                        editingStartMinutes={editingStartMinutes}
+                        editingStartSeconds={editingStartSeconds}
+                        editingEndMinutes={editingEndMinutes}
+                        editingEndSeconds={editingEndSeconds}
+                        onEditingStartMinutesChange={setEditingStartMinutes}
+                        onEditingStartSecondsChange={setEditingStartSeconds}
+                        onEditingEndMinutesChange={setEditingEndMinutes}
+                        onEditingEndSecondsChange={setEditingEndSeconds}
+                        onStartEditTime={startEditTime}
+                        onSaveTimeEdit={(itemId) => saveTimeEdit(itemId, false)}
+                        onCancelTimeEdit={cancelTimeEdit}
+                        parseTimeRange={parseTimeRange}
+                      />
+                    ))}
                   </div>
-                ))}
-              </div>
+                </SortableContext>
+              </DndContext>
             )}
           </div>
         </div>

@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Icon } from '@iconify/react';
 import { Button, Select } from 'antd';
+import { useI18n } from '../contexts/I18nContext';
 import {
   DndContext,
   closestCenter,
@@ -127,6 +128,7 @@ interface SortableScriptCardProps {
 
 
 function SortableScriptCard({ item }: SortableScriptCardProps) {
+  const { t } = useI18n();
   const {
     attributes,
     listeners,
@@ -168,14 +170,14 @@ function SortableScriptCard({ item }: SortableScriptCardProps) {
           <div
             {...listeners}
             className="cursor-grab active:cursor-grabbing mt-1 p-1 hover:bg-gray-100 rounded"
-            title="拖拽排序"
+            title={t('shortplayEntry.dragSort.title')}
           >
             <Icon icon="ri:drag-move-2-line" className="w-4 h-4 text-gray-400" />
           </div>
 
           <div className="flex-1">
             <div className={`text-sm mb-2 font-medium ${item.descriptionColor || 'text-blue-600'}`}>
-              画面脚本：{item.description}
+              {t('shortplayEntry.dragSort.scriptDescription')}{item.description}
             </div>
             <div className="space-y-3">
               {item.dialogues.map((dialogue, index) => (
@@ -243,7 +245,7 @@ function BottomInputArea({
   onInputChange,
   isGenerating,
   onGenerate,
-  placeholder = "简单描述你想要的互动剧",
+  placeholder,
   // 音频tab属性
   voiceType = "male",
   onVoiceTypeChange,
@@ -260,6 +262,11 @@ function BottomInputArea({
   singleGenerate = false,
   onSingleGenerateChange
 }: BottomInputAreaProps) {
+  const { t } = useI18n();
+
+  // Use translated placeholder if not provided
+  const finalPlaceholder = placeholder || t('shortplayEntry.input.placeholder');
+
   return (
     <div className="border-t border-gray-100 p-4">
       {activeTab === 'script' && (
@@ -289,8 +296,7 @@ function BottomInputArea({
               onChange={(e) => onInputChange(e.target.value)}
               className="w-full h-12 py-2 pl-4 pr-24 text-xs rounded-lg bg-white focus:outline-none resize-none overflow-y-auto"
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', border: '1px solid rgba(116, 116, 116, 0.41)' }}
-              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-              placeholder={placeholder}
+              placeholder={finalPlaceholder}
               disabled={isGenerating}
             />
             <button
@@ -308,7 +314,7 @@ function BottomInputArea({
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
               )}
-              <span>{isGenerating ? '生成中...' : '一键生成'}</span>
+              <span>{isGenerating ? t('shortplayEntry.generation.generating') : t('shortplayEntry.generation.oneClickGenerate')}</span>
             </button>
           </div>
         </>
@@ -341,8 +347,8 @@ function BottomInputArea({
                   onChange={(e) => onVoiceTypeChange?.(e.target.value)}
                   className="w-full h-9 pl-3 pr-8 text-xs rounded-lg bg-white focus:outline-none appearance-none text-black/50"
                 >
-                  <option value="male">男声</option>
-                  <option value="female">女声</option>
+                  <option value="male">{t('shortplayEntry.audio.male')}</option>
+                  <option value="female">{t('shortplayEntry.audio.female')}</option>
                 </select>
                 <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
                   <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -359,8 +365,7 @@ function BottomInputArea({
               onChange={(e) => onInputChange(e.target.value)}
               className="w-full h-12 py-2 pl-4 pr-24 text-xs rounded-lg bg-white focus:outline-none resize-none overflow-y-auto"
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', border: '1px solid rgba(116, 116, 116, 0.41)' }}
-              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-              placeholder={placeholder}
+              placeholder={finalPlaceholder}
               disabled={isGenerating}
             />
             <button
@@ -372,7 +377,7 @@ function BottomInputArea({
                   : 'bg-blue-500 hover:bg-blue-600'
               }`}
             >
-              {isGenerating ? '生成中...' : '模型生成'}
+              {isGenerating ? t('shortplayEntry.generation.generating') : t('shortplayEntry.generation.modelGenerate')}
             </button>
           </div>
         </>
@@ -405,9 +410,9 @@ function BottomInputArea({
                   onChange={(e) => onBackgroundTypeChange?.(e.target.value)}
                   className="w-full h-9 pl-3 pr-8 text-xs rounded-lg bg-white focus:outline-none appearance-none text-black/50"
                 >
-                  <option value="背景">背景</option>
-                  <option value="人物">人物</option>
-                  <option value="物体">物体</option>
+                  <option value="背景">{t('shortplayEntry.image.background')}</option>
+                  <option value="人物">{t('shortplayEntry.image.character')}</option>
+                  <option value="物体">{t('shortplayEntry.image.object')}</option>
                 </select>
                 <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
                   <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -422,10 +427,10 @@ function BottomInputArea({
                   onChange={(e) => onStyleChange?.(e.target.value)}
                   className="w-full h-9 pl-3 pr-8 text-xs rounded-lg bg-white focus:outline-none appearance-none text-black/50"
                 >
-                  <option value="古风">古风</option>
-                  <option value="现代">现代</option>
-                  <option value="科幻">科幻</option>
-                  <option value="卡通">卡通</option>
+                  <option value="古风">{t('shortplayEntry.image.ancient')}</option>
+                  <option value="现代">{t('shortplayEntry.image.modern')}</option>
+                  <option value="科幻">{t('shortplayEntry.image.scifi')}</option>
+                  <option value="卡通">{t('shortplayEntry.image.cartoon')}</option>
                 </select>
                 <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
                   <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -442,8 +447,7 @@ function BottomInputArea({
               onChange={(e) => onInputChange(e.target.value)}
               className="w-full h-12 py-2 pl-4 pr-24 text-xs rounded-lg bg-white focus:outline-none resize-none overflow-y-auto"
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', border: '1px solid rgba(116, 116, 116, 0.41)' }}
-              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-              placeholder={placeholder}
+              placeholder={finalPlaceholder}
               disabled={isGenerating}
             />
             <button
@@ -455,7 +459,7 @@ function BottomInputArea({
                   : 'bg-blue-500 hover:bg-blue-600'
               }`}
             >
-              {isGenerating ? '生成中...' : '一键生成'}
+              {isGenerating ? t('shortplayEntry.generation.generating') : t('shortplayEntry.generation.oneClickGenerate')}
             </button>
           </div>
         </>
@@ -488,9 +492,9 @@ function BottomInputArea({
                   onChange={(e) => onVideoLengthChange?.(e.target.value)}
                   className="w-full h-9 pl-3 pr-8 text-xs rounded-lg bg-white focus:outline-none appearance-none text-black/50"
                 >
-                  <option value="2s">秒时长 2s</option>
-                  <option value="5s">秒时长 5s</option>
-                  <option value="10s">秒时长 10s</option>
+                  <option value="2s">{t('shortplayEntry.video.duration2s')}</option>
+                  <option value="5s">{t('shortplayEntry.video.duration5s')}</option>
+                  <option value="10s">{t('shortplayEntry.video.duration10s')}</option>
                 </select>
                 <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
                   <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -505,9 +509,9 @@ function BottomInputArea({
                   onChange={(e) => onResolutionChange?.(e.target.value)}
                   className="w-full h-9 pl-3 pr-8 text-xs rounded-lg bg-white focus:outline-none appearance-none text-black/50"
                 >
-                  <option value="1080p">分辨率 1080p</option>
-                  <option value="720p">分辨率 720p</option>
-                  <option value="4K">分辨率 4K</option>
+                  <option value="1080p">{t('shortplayEntry.video.resolution1080p')}</option>
+                  <option value="720p">{t('shortplayEntry.video.resolution720p')}</option>
+                  <option value="4K">{t('shortplayEntry.video.resolution4k')}</option>
                 </select>
                 <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
                   <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -522,8 +526,8 @@ function BottomInputArea({
                   onChange={(e) => onSingleGenerateChange?.(e.target.value === "single")}
                   className="w-full h-9 pl-3 pr-8 text-xs rounded-lg bg-white focus:outline-none appearance-none text-black/50"
                 >
-                  <option value="batch">单集生成</option>
-                  <option value="single">单个生成</option>
+                  <option value="batch">{t('shortplayEntry.video.batchMode')}</option>
+                  <option value="single">{t('shortplayEntry.video.singleMode')}</option>
                 </select>
                 <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
                   <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -540,7 +544,7 @@ function BottomInputArea({
               onChange={(e) => onInputChange(e.target.value)}
               className="w-full h-12 py-2 pl-12 pr-24 text-xs rounded-lg bg-white focus:outline-none resize-none overflow-y-auto"
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', border: '1px solid rgba(116, 116, 116, 0.41)' }}
-              placeholder={placeholder}
+              placeholder={finalPlaceholder}
               disabled={isGenerating}
             />
             <label className="absolute left-2 top-1/2 transform -translate-y-1/2 w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center cursor-pointer hover:bg-gray-200">
@@ -567,7 +571,7 @@ function BottomInputArea({
                   : 'bg-blue-500 hover:bg-blue-600'
               }`}
             >
-              {isGenerating ? '生成中...' : '一键生成'}
+              {isGenerating ? t('shortplayEntry.generation.generating') : t('shortplayEntry.generation.oneClickGenerate')}
             </button>
           </div>
         </>
@@ -1136,6 +1140,7 @@ interface SectionHeaderProps {
 }
 
 function SectionHeader({ title, subtitle, subtitleOptions, onSubtitleChange, onOptionsChange }: SectionHeaderProps) {
+  const { t } = useI18n();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingValue, setEditingValue] = useState('');
@@ -1239,7 +1244,7 @@ function SectionHeader({ title, subtitle, subtitleOptions, onSubtitleChange, onO
                   <span
                     className="cursor-pointer hover:text-gray-800 transition-colors"
                     onClick={handleTextClick}
-                    title="点击编辑场次名称"
+                    title={t('shortplayEntry.scenes.editSceneName')}
                   >
                     {subtitle}
                   </span>
@@ -1247,7 +1252,7 @@ function SectionHeader({ title, subtitle, subtitleOptions, onSubtitleChange, onO
                     icon="ri:arrow-down-s-line"
                     className={`w-4 h-4 cursor-pointer hover:text-blue-500 transform transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`}
                     onClick={handleArrowClick}
-                    title="点击选择预设场次"
+                    title={t('shortplayEntry.scenes.selectPresetScene')}
                   />
                 </div>
               )}
@@ -1266,7 +1271,7 @@ function SectionHeader({ title, subtitle, subtitleOptions, onSubtitleChange, onO
                         }
                       }}
                       onDoubleClick={(e) => handleOptionDoubleClick(index, option, e)}
-                      title="单击选择，双击编辑"
+                      title={t('shortplayEntry.scenes.clickToSelectDoubleClickToEdit')}
                     >
                       {editingOptionIndex === index ? (
                         <input
@@ -1312,6 +1317,7 @@ function SectionHeader({ title, subtitle, subtitleOptions, onSubtitleChange, onO
 }
 
 function ShortplayEntryPage() {
+  const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<string>('script');
   const [selectedModel, setSelectedModel] = useState<string>('deepseek-r1');
   const [progress, setProgress] = useState<number>(75); // 进度百分比
@@ -1322,8 +1328,8 @@ function ShortplayEntryPage() {
 
   // 底部输入区域的额外状态
   const [voiceType, setVoiceType] = useState<string>('male');
-  const [backgroundType, setBackgroundType] = useState<string>('背景');
-  const [style, setStyle] = useState<string>('古风');
+  const [backgroundType, setBackgroundType] = useState<string>(t('shortplayEntry.image.background'));
+  const [style, setStyle] = useState<string>(t('shortplayEntry.image.ancient'));
   const [videoLength, setVideoLength] = useState<string>('2s');
   const [resolution, setResolution] = useState<string>('1080p');
   const [singleGenerate, setSingleGenerate] = useState<boolean>(false);
@@ -1732,7 +1738,7 @@ function ShortplayEntryPage() {
   // 一键生成API调用
   const handleGenerate = async () => {
     if (!userInput.trim()) {
-      alert('请输入您想要的互动剧描述');
+      alert(t('shortplayEntry.input.description'));
       return;
     }
 
@@ -1743,7 +1749,7 @@ function ShortplayEntryPage() {
       const userStr = localStorage.getItem('user');
 
       if (!token) {
-        alert('未找到有效的身份验证令牌，请重新登录');
+        alert(t('shortplayEntry.input.authTokenError'));
         return;
       }
 
@@ -1754,7 +1760,7 @@ function ShortplayEntryPage() {
           const user = JSON.parse(userStr);
           userId = user.userId || userId;
         } catch (error) {
-          console.warn('解析用户信息失败，使用默认userId:', error);
+          console.warn(t('shortplayEntry.input.userInfoParseError') + ', userId:', error);
         }
       }
 
@@ -1766,8 +1772,8 @@ function ShortplayEntryPage() {
         },
         body: JSON.stringify({
           userId: userId,
-          seriesName: "修仙恋爱记",
-          seriesDescription: "修仙背景的爱情故事",
+          seriesName: t('shortplayEntry.examples.series.name'),
+          seriesDescription: t('shortplayEntry.examples.series.description'),
           userInput: userInput.trim(),
           prompt: userInput.trim(),
           status: "DRAFT",
@@ -1777,7 +1783,7 @@ function ShortplayEntryPage() {
 
       if (response.ok) {
         const result = await response.json();
-        console.log('生成成功:', result);
+        console.log(t('shortplayEntry.input.generateSuccess') + ':', result);
 
         // 检查返回的code是否为0表示成功
         if (result.code === 0) {
@@ -1785,14 +1791,14 @@ function ShortplayEntryPage() {
           alert(`${message}\n剧集ID: ${seriesId}\n剧集ID: ${episodeId}`);
           setUserInput(''); // 清空输入
         } else {
-          throw new Error(result.message || '生成失败');
+          throw new Error(result.message || t('shortplayEntry.input.generateFailed'));
         }
       } else {
         throw new Error(`请求失败: ${response.status}`);
       }
     } catch (error) {
-      console.error('生成失败:', error);
-      alert('生成失败，请重试');
+      console.error(t('shortplayEntry.input.generateFailed') + ':', error);
+      alert(t('shortplayEntry.input.generateFailed'));
     } finally {
       setIsGenerating(false);
     }
@@ -2032,6 +2038,7 @@ function ShortplayEntryPage() {
                 onInputChange={setUserInput}
                 isGenerating={isGenerating}
                 onGenerate={handleGenerate}
+                placeholder={t('shortplayEntry.input.placeholder')}
                 voiceType={voiceType}
                 onVoiceTypeChange={setVoiceType}
                 backgroundType={backgroundType}
@@ -2053,9 +2060,9 @@ function ShortplayEntryPage() {
         <div className="flex-1 bg-gray-50 border-r border-gray-200 flex flex-col overflow-hidden">
           <SectionHeader
             title={
-              activeTab === 'script' ? '剧本' :
-              activeTab === 'audio' ? '场次' :
-              activeTab === 'image' ? '图片' : '视频'
+              activeTab === 'script' ? t('shortplayEntry.tabs.script') :
+              activeTab === 'audio' ? t('shortplayEntry.tabs.audio') :
+              activeTab === 'image' ? t('shortplayEntry.tabs.image') : t('shortplayEntry.tabs.video')
             }
             subtitle={
               activeTab === 'script' ? selectedScene :

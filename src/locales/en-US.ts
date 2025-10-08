@@ -548,6 +548,74 @@ export const enUS = {
     none: 'None',
   },
 
+  // Short Play Entry Page
+  shortplayEntry: {
+    title: 'Short Play Creation',
+    tabs: {
+      script: 'Script',
+      audio: 'Scene',
+      image: 'Image',
+      video: 'Video',
+    },
+    generation: {
+      generating: 'Generating...',
+      oneClickGenerate: 'One-click Generate',
+      modelGenerate: 'Model Generate',
+    },
+    input: {
+      placeholder: 'Simply describe the interactive drama you want',
+      description: 'Please enter your desired interactive drama description',
+      authTokenError: 'No valid authentication token found, please log in again',
+      generateSuccess: 'Generation successful',
+      generateFailed: 'Generation failed, please try again',
+      userInfoParseError: 'Failed to parse user information',
+    },
+    audio: {
+      voiceType: 'Voice Type',
+      male: 'Male Voice',
+      female: 'Female Voice',
+    },
+    image: {
+      backgroundType: 'Background Type',
+      background: 'Background',
+      character: 'Character',
+      object: 'Object',
+      style: 'Style',
+      ancient: 'Ancient Style',
+      modern: 'Modern',
+      scifi: 'Sci-fi',
+      cartoon: 'Cartoon',
+    },
+    video: {
+      duration: 'Duration',
+      duration2s: '2s Duration',
+      duration5s: '5s Duration',
+      duration10s: '10s Duration',
+      resolution: 'Resolution',
+      resolution1080p: '1080p Resolution',
+      resolution720p: '720p Resolution',
+      resolution4k: '4K Resolution',
+      generateMode: 'Generate Mode',
+      batchMode: 'Episode Generation',
+      singleMode: 'Single Generation',
+    },
+    dragSort: {
+      title: 'Drag to Sort',
+      scriptDescription: 'Scene Script: ',
+    },
+    scenes: {
+      editSceneName: 'Click to edit scene name',
+      selectPresetScene: 'Click to select preset scene',
+      clickToSelectDoubleClickToEdit: 'Click to select, double-click to edit',
+    },
+    examples: {
+      series: {
+        name: 'Cultivation Love Story',
+        description: 'Love story in cultivation background',
+      },
+    },
+  },
+
   // Language names mapping
   languageNames: {
     'zh-CN': '中文',

@@ -548,6 +548,74 @@ export const jaJP = {
     none: 'なし',
   },
 
+  // ショートプレイ作成ページ
+  shortplayEntry: {
+    title: 'ショートプレイ作成',
+    tabs: {
+      script: '台本',
+      audio: 'シーン',
+      image: '画像',
+      video: '動画',
+    },
+    generation: {
+      generating: '生成中...',
+      oneClickGenerate: 'ワンクリック生成',
+      modelGenerate: 'モデル生成',
+    },
+    input: {
+      placeholder: '希望するインタラクティブドラマを簡単に説明してください',
+      description: 'インタラクティブドラマの説明を入力してください',
+      authTokenError: '有効な認証トークンが見つかりません。再度ログインしてください',
+      generateSuccess: '生成成功',
+      generateFailed: '生成に失敗しました。再試行してください',
+      userInfoParseError: 'ユーザー情報の解析に失敗しました',
+    },
+    audio: {
+      voiceType: '音声タイプ',
+      male: '男性の声',
+      female: '女性の声',
+    },
+    image: {
+      backgroundType: '背景タイプ',
+      background: '背景',
+      character: 'キャラクター',
+      object: 'オブジェクト',
+      style: 'スタイル',
+      ancient: '古風',
+      modern: 'モダン',
+      scifi: 'SF',
+      cartoon: 'カートゥーン',
+    },
+    video: {
+      duration: '長さ',
+      duration2s: '2秒の長さ',
+      duration5s: '5秒の長さ',
+      duration10s: '10秒の長さ',
+      resolution: '解像度',
+      resolution1080p: '1080p解像度',
+      resolution720p: '720p解像度',
+      resolution4k: '4K解像度',
+      generateMode: '生成モード',
+      batchMode: 'エピソード生成',
+      singleMode: '単一生成',
+    },
+    dragSort: {
+      title: 'ドラッグで並び替え',
+      scriptDescription: 'シーン台本：',
+    },
+    scenes: {
+      editSceneName: 'クリックしてシーン名を編集',
+      selectPresetScene: 'クリックしてプリセットシーンを選択',
+      clickToSelectDoubleClickToEdit: 'クリックして選択、ダブルクリックして編集',
+    },
+    examples: {
+      series: {
+        name: '修仙恋愛記',
+        description: '修仙背景の恋愛物語',
+      },
+    },
+  },
+
   // 言語名マッピング
   languageNames: {
     'zh-CN': '中文',

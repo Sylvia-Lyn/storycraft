@@ -550,6 +550,74 @@ export const zhCN = {
     none: '无',
   },
 
+  // 短剧创作页面
+  shortplayEntry: {
+    title: '短剧创作',
+    tabs: {
+      script: '剧本',
+      audio: '场次',
+      image: '图片',
+      video: '视频',
+    },
+    generation: {
+      generating: '生成中...',
+      oneClickGenerate: '一键生成',
+      modelGenerate: '模型生成',
+    },
+    input: {
+      placeholder: '简单描述你想要的互动剧',
+      description: '请输入您想要的互动剧描述',
+      authTokenError: '未找到有效的身份验证令牌，请重新登录',
+      generateSuccess: '生成成功',
+      generateFailed: '生成失败，请重试',
+      userInfoParseError: '解析用户信息失败',
+    },
+    audio: {
+      voiceType: '声音类型',
+      male: '男声',
+      female: '女声',
+    },
+    image: {
+      backgroundType: '背景类型',
+      background: '背景',
+      character: '人物',
+      object: '物体',
+      style: '风格',
+      ancient: '古风',
+      modern: '现代',
+      scifi: '科幻',
+      cartoon: '卡通',
+    },
+    video: {
+      duration: '时长',
+      duration2s: '秒时长 2s',
+      duration5s: '秒时长 5s',
+      duration10s: '秒时长 10s',
+      resolution: '分辨率',
+      resolution1080p: '分辨率 1080p',
+      resolution720p: '分辨率 720p',
+      resolution4k: '分辨率 4K',
+      generateMode: '生成模式',
+      batchMode: '单集生成',
+      singleMode: '单个生成',
+    },
+    dragSort: {
+      title: '拖拽排序',
+      scriptDescription: '画面脚本：',
+    },
+    scenes: {
+      editSceneName: '点击编辑场次名称',
+      selectPresetScene: '点击选择预设场次',
+      clickToSelectDoubleClickToEdit: '单击选择，双击编辑',
+    },
+    examples: {
+      series: {
+        name: '修仙恋爱记',
+        description: '修仙背景的爱情故事',
+      },
+    },
+  },
+
   // 语言名称映射
   languageNames: {
     'zh-CN': '中文',

@@ -755,65 +755,16 @@ function ImageItemComponent({
           </div>
           <div className="flex items-center space-x-2">
             {editingTimeId === item.id ? (
-              <div className="flex items-center space-x-1 text-xs text-gray-400">
-                {/* 开始时间编辑 - 分钟 */}
-                <input
-                  type="number"
-                  min="0"
-                  max="59"
-                  value={editingStartMinutes}
-                  onChange={(e) => {
-                    const value = Math.max(0, Math.min(59, parseInt(e.target.value) || 0));
-                    onEditingStartMinutesChange(value.toString());
-                  }}
-                  className="text-xs w-8 text-center bg-transparent outline-none"
-                  placeholder="00"
-                  maxLength={2}
-                />
-                <span>:</span>
-                {/* 开始时间编辑 - 秒钟 */}
-                <input
-                  type="number"
-                  min="0"
-                  max="59"
-                  value={editingStartSeconds}
-                  onChange={(e) => {
-                    const value = Math.max(0, Math.min(59, parseInt(e.target.value) || 0));
-                    onEditingStartSecondsChange(value.toString());
-                  }}
-                  className="text-xs w-8 text-center bg-transparent outline-none"
-                  placeholder="00"
-                  maxLength={2}
-                />
-                <span>-</span>
-                {/* 结束时间编辑 - 分钟 */}
-                <input
-                  type="number"
-                  min="0"
-                  max="59"
-                  value={editingEndMinutes}
-                  onChange={(e) => {
-                    const value = Math.max(0, Math.min(59, parseInt(e.target.value) || 0));
-                    onEditingEndMinutesChange(value.toString());
-                  }}
-                  className="text-xs w-8 text-center bg-transparent outline-none"
-                  placeholder="00"
-                  maxLength={2}
-                />
-                <span>:</span>
-                {/* 结束时间编辑 - 秒钟 */}
-                <input
-                  type="number"
-                  min="0"
-                  max="59"
-                  value={editingEndSeconds}
-                  onChange={(e) => {
-                    const value = Math.max(0, Math.min(59, parseInt(e.target.value) || 0));
-                    onEditingEndSecondsChange(value.toString());
-                  }}
-                  className="text-xs w-8 text-center bg-transparent outline-none"
-                  placeholder="00"
-                  maxLength={2}
+              <div className="flex items-center space-x-1">
+                <TimeRangeInput
+                  startMinutes={editingStartMinutes}
+                  startSeconds={editingStartSeconds}
+                  endMinutes={editingEndMinutes}
+                  endSeconds={editingEndSeconds}
+                  onStartMinutesChange={onEditingStartMinutesChange}
+                  onStartSecondsChange={onEditingStartSecondsChange}
+                  onEndMinutesChange={onEditingEndMinutesChange}
+                  onEndSecondsChange={onEditingEndSecondsChange}
                 />
                 {/* 统一的保存和取消按钮 */}
                 <button
@@ -941,93 +892,16 @@ function VideoItemComponent({
           </div>
           <div className="flex items-center space-x-2">
             {editingTimeId === item.id ? (
-              <div className="flex items-center space-x-1 text-xs text-gray-400">
-                {/* 开始时间编辑 - 分钟 */}
-                <input
-                  type="number"
-                  min="0"
-                  max="59"
-                  value={editingStartMinutes}
-                  onChange={(e) => {
-                    const value = Math.max(0, Math.min(59, parseInt(e.target.value) || 0));
-                    onEditingStartMinutesChange(value.toString());
-                  }}
-                  className="text-xs w-8 text-center bg-transparent outline-none"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      onSaveTimeEdit(item.id);
-                    } else if (e.key === 'Escape') {
-                      onCancelTimeEdit();
-                    }
-                  }}
-                  placeholder="00"
-                  maxLength={2}
-                />
-                <span>:</span>
-                {/* 开始时间编辑 - 秒钟 */}
-                <input
-                  type="number"
-                  min="0"
-                  max="59"
-                  value={editingStartSeconds}
-                  onChange={(e) => {
-                    const value = Math.max(0, Math.min(59, parseInt(e.target.value) || 0));
-                    onEditingStartSecondsChange(value.toString());
-                  }}
-                  className="text-xs w-8 text-center bg-transparent outline-none"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      onSaveTimeEdit(item.id);
-                    } else if (e.key === 'Escape') {
-                      onCancelTimeEdit();
-                    }
-                  }}
-                  placeholder="00"
-                  maxLength={2}
-                />
-                <span>-</span>
-                {/* 结束时间编辑 - 分钟 */}
-                <input
-                  type="number"
-                  min="0"
-                  max="59"
-                  value={editingEndMinutes}
-                  onChange={(e) => {
-                    const value = Math.max(0, Math.min(59, parseInt(e.target.value) || 0));
-                    onEditingEndMinutesChange(value.toString());
-                  }}
-                  className="text-xs w-8 text-center bg-transparent outline-none"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      onSaveTimeEdit(item.id);
-                    } else if (e.key === 'Escape') {
-                      onCancelTimeEdit();
-                    }
-                  }}
-                  placeholder="00"
-                  maxLength={2}
-                />
-                <span>:</span>
-                {/* 结束时间编辑 - 秒钟 */}
-                <input
-                  type="number"
-                  min="0"
-                  max="59"
-                  value={editingEndSeconds}
-                  onChange={(e) => {
-                    const value = Math.max(0, Math.min(59, parseInt(e.target.value) || 0));
-                    onEditingEndSecondsChange(value.toString());
-                  }}
-                  className="text-xs w-8 text-center bg-transparent outline-none"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      onSaveTimeEdit(item.id);
-                    } else if (e.key === 'Escape') {
-                      onCancelTimeEdit();
-                    }
-                  }}
-                  placeholder="00"
-                  maxLength={2}
+              <div className="flex items-center space-x-1">
+                <TimeRangeInput
+                  startMinutes={editingStartMinutes}
+                  startSeconds={editingStartSeconds}
+                  endMinutes={editingEndMinutes}
+                  endSeconds={editingEndSeconds}
+                  onStartMinutesChange={onEditingStartMinutesChange}
+                  onStartSecondsChange={onEditingStartSecondsChange}
+                  onEndMinutesChange={onEditingEndMinutesChange}
+                  onEndSecondsChange={onEditingEndSecondsChange}
                 />
                 {/* 统一的保存和取消按钮 */}
                 <button
@@ -1373,6 +1247,14 @@ function ShortplayEntryPage() {
   const [editingEndMinutes, setEditingEndMinutes] = useState<string>('');
   const [editingEndSeconds, setEditingEndSeconds] = useState<string>('');
 
+  // 场次内容编辑状态
+  const [editingSceneItemId, setEditingSceneItemId] = useState<number | null>(null);
+  const [editingSceneContent, setEditingSceneContent] = useState<string>('');
+  const [editingSceneStartMinutes, setEditingSceneStartMinutes] = useState<string>('');
+  const [editingSceneStartSeconds, setEditingSceneStartSeconds] = useState<string>('');
+  const [editingSceneEndMinutes, setEditingSceneEndMinutes] = useState<string>('');
+  const [editingSceneEndSeconds, setEditingSceneEndSeconds] = useState<string>('');
+
   // 视频数据状态 (使用与图片相同的数据结构)
   const [videoItems, setVideoItems] = useState([]);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -1453,6 +1335,191 @@ function ShortplayEntryPage() {
   // 删除场次内容项
   const handleDeleteSceneItem = (id: number) => {
     setSceneContent((items) => items.filter((item) => item.id !== id));
+  };
+
+  // 时间格式验证和格式化函数
+  const validateTimeFormat = (time: string): boolean => {
+    const timeRegex = /^\d{1,2}:\d{1,2}$/;
+    if (!timeRegex.test(time)) return false;
+
+    const [minutes, seconds] = time.split(':').map(Number);
+    return minutes <= 59 && seconds <= 59;
+  };
+
+  const formatTime = (time: string): string => {
+    const timeRegex = /^(\d{1,2}):(\d{1,2})$/;
+    const match = time.match(timeRegex);
+    if (match) {
+      const minutes = parseInt(match[1], 10);
+      const seconds = parseInt(match[2], 10);
+      if (minutes <= 59 && seconds <= 59) {
+        return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      }
+    }
+    return time;
+  };
+
+  // 时间输入组件
+  const TimeRangeInput = ({
+    startMinutes,
+    startSeconds,
+    endMinutes,
+    endSeconds,
+    onStartMinutesChange,
+    onStartSecondsChange,
+    onEndMinutesChange,
+    onEndSecondsChange
+  }: {
+    startMinutes: string;
+    startSeconds: string;
+    endMinutes: string;
+    endSeconds: string;
+    onStartMinutesChange: (value: string) => void;
+    onStartSecondsChange: (value: string) => void;
+    onEndMinutesChange: (value: string) => void;
+    onEndSecondsChange: (value: string) => void;
+  }) => {
+    const handleNumberInputChange = (value: string, setter: (value: string) => void) => {
+      const numValue = Math.max(0, Math.min(59, parseInt(value) || 0));
+      setter(numValue.toString());
+    };
+
+    return (
+      <div className="flex items-center space-x-1 text-xs text-gray-400">
+        {/* 开始时间编辑 - 分钟 */}
+        <input
+          type="number"
+          min="0"
+          max="59"
+          value={startMinutes}
+          onChange={(e) => handleNumberInputChange(e.target.value, onStartMinutesChange)}
+          className="w-10 px-1 py-0.5 text-xs border border-gray-300 rounded text-center focus:outline-none focus:border-blue-500"
+        />
+        <span>:</span>
+        {/* 开始时间编辑 - 秒 */}
+        <input
+          type="number"
+          min="0"
+          max="59"
+          value={startSeconds}
+          onChange={(e) => handleNumberInputChange(e.target.value, onStartSecondsChange)}
+          className="w-10 px-1 py-0.5 text-xs border border-gray-300 rounded text-center focus:outline-none focus:border-blue-500"
+        />
+        <span>-</span>
+        {/* 结束时间编辑 - 分钟 */}
+        <input
+          type="number"
+          min="0"
+          max="59"
+          value={endMinutes}
+          onChange={(e) => handleNumberInputChange(e.target.value, onEndMinutesChange)}
+          className="w-10 px-1 py-0.5 text-xs border border-gray-300 rounded text-center focus:outline-none focus:border-blue-500"
+        />
+        <span>:</span>
+        {/* 结束时间编辑 - 秒 */}
+        <input
+          type="number"
+          min="0"
+          max="59"
+          value={endSeconds}
+          onChange={(e) => handleNumberInputChange(e.target.value, onEndSecondsChange)}
+          className="w-10 px-1 py-0.5 text-xs border border-gray-300 rounded text-center focus:outline-none focus:border-blue-500"
+        />
+      </div>
+    );
+  };
+
+  const handleTimeInputChange = (value: string, setter: (time: string) => void) => {
+    // 只允许数字和冒号
+    const cleanValue = value.replace(/[^0-9:]/g, '');
+
+    // 防止多个冒号
+    const parts = cleanValue.split(':');
+    if (parts.length > 2) {
+      return; // 不允许超过一个冒号
+    }
+
+    // 限制格式为 MM:SS
+    if (cleanValue.length <= 5) {
+      // 自动添加冒号：当输入2位数字且没有冒号时
+      if (cleanValue.length === 2 && !cleanValue.includes(':')) {
+        setter(cleanValue + ':');
+      } else {
+        // 验证每部分不超过59
+        const [minutes, seconds] = cleanValue.split(':');
+        if (minutes && parseInt(minutes) > 59) return;
+        if (seconds && parseInt(seconds) > 59) return;
+
+        setter(cleanValue);
+      }
+    }
+  };
+
+  // 开始编辑场次内容项
+  const handleEditSceneItem = (item: any) => {
+    setEditingSceneItemId(item.id);
+    setEditingSceneContent(item.content);
+
+    // 解析开始时间
+    const startTime = item.startTime || '00:00';
+    const [startMin, startSec] = startTime.split(':');
+    setEditingSceneStartMinutes(startMin || '00');
+    setEditingSceneStartSeconds(startSec || '00');
+
+    // 解析结束时间
+    const endTime = item.endTime || '00:00';
+    const [endMin, endSec] = endTime.split(':');
+    setEditingSceneEndMinutes(endMin || '00');
+    setEditingSceneEndSeconds(endSec || '00');
+  };
+
+  // 保存场次内容项编辑
+  const handleSaveSceneItem = () => {
+    if (editingSceneItemId === null) return;
+
+    // 构建时间字符串
+    const startTime = `${editingSceneStartMinutes.padStart(2, '0')}:${editingSceneStartSeconds.padStart(2, '0')}`;
+    const endTime = `${editingSceneEndMinutes.padStart(2, '0')}:${editingSceneEndSeconds.padStart(2, '0')}`;
+
+    // 验证时间逻辑
+    const startSeconds = parseInt(editingSceneStartMinutes) * 60 + parseInt(editingSceneStartSeconds);
+    const endSeconds = parseInt(editingSceneEndMinutes) * 60 + parseInt(editingSceneEndSeconds);
+
+    if (startSeconds >= endSeconds) {
+      alert('开始时间必须小于结束时间');
+      return;
+    }
+
+    setSceneContent((items) =>
+      items.map((item) =>
+        item.id === editingSceneItemId
+          ? {
+              ...item,
+              content: editingSceneContent,
+              startTime: startTime,
+              endTime: endTime,
+            }
+          : item
+      )
+    );
+
+    // 重置编辑状态
+    setEditingSceneItemId(null);
+    setEditingSceneContent('');
+    setEditingSceneStartMinutes('');
+    setEditingSceneStartSeconds('');
+    setEditingSceneEndMinutes('');
+    setEditingSceneEndSeconds('');
+  };
+
+  // 取消编辑场次内容项
+  const handleCancelEditSceneItem = () => {
+    setEditingSceneItemId(null);
+    setEditingSceneContent('');
+    setEditingSceneStartMinutes('');
+    setEditingSceneStartSeconds('');
+    setEditingSceneEndMinutes('');
+    setEditingSceneEndSeconds('');
   };
 
   // 时间解析和格式化函数
@@ -1837,50 +1904,46 @@ function ShortplayEntryPage() {
               </div>
 
               {/* Tab切换按钮组 */}
-              <div className="flex items-center bg-gray-100 border" style={{ height: '36px', width: '268px', borderRadius: '100px', borderColor: '#3e83f6' }}>
+              <div className="flex items-center bg-gray-100 border h-9 w-full max-w-[268px] min-w-[180px] rounded-full border-blue-500">
                 <button
-                  className={`flex-1 h-full text-sm font-medium transition-all flex items-center justify-center ${
+                  className={`flex-1 h-full text-sm font-medium transition-all flex items-center justify-center rounded-full truncate px-2 ${
                     activeTab === 'script'
                       ? 'bg-blue-500 text-white shadow-sm'
                       : 'text-gray-600 hover:text-gray-800'
                   }`}
-                  style={{ borderRadius: '100px' }}
                   onClick={() => setActiveTab('script')}
                 >
-                  剧本
+                  <span className="truncate">剧本</span>
                 </button>
                 <button
-                  className={`flex-1 h-full text-sm font-medium transition-all flex items-center justify-center ${
+                  className={`flex-1 h-full text-sm font-medium transition-all flex items-center justify-center rounded-full truncate px-2 ${
                     activeTab === 'audio'
                       ? 'bg-blue-500 text-white shadow-sm'
                       : 'text-gray-600 hover:text-gray-800'
                   }`}
-                  style={{ borderRadius: '100px' }}
                   onClick={() => setActiveTab('audio')}
                 >
-                  音频
+                  <span className="truncate">音频</span>
                 </button>
                 <button
-                  className={`flex-1 h-full text-sm font-medium transition-all flex items-center justify-center ${
+                  className={`flex-1 h-full text-sm font-medium transition-all flex items-center justify-center rounded-full truncate px-2 ${
                     activeTab === 'image'
                       ? 'bg-blue-500 text-white shadow-sm'
                       : 'text-gray-600 hover:text-gray-800'
                   }`}
-                  style={{ borderRadius: '100px' }}
                   onClick={() => setActiveTab('image')}
                 >
-                  图片
+                  <span className="truncate">图片</span>
                 </button>
                 <button
-                  className={`flex-1 h-full text-sm font-medium transition-all flex items-center justify-center ${
+                  className={`flex-1 h-full text-sm font-medium transition-all flex items-center justify-center rounded-full truncate px-2 ${
                     activeTab === 'video'
                       ? 'bg-blue-500 text-white shadow-sm'
                       : 'text-gray-600 hover:text-gray-800'
                   }`}
-                  style={{ borderRadius: '100px' }}
                   onClick={() => setActiveTab('video')}
                 >
-                  视频
+                  <span className="truncate">视频</span>
                 </button>
               </div>
             </div>
@@ -2114,33 +2177,99 @@ function ShortplayEntryPage() {
                       key={item.id}
                       className="p-3 bg-white border border-gray-200 rounded-lg"
                     >
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center space-x-2">
-                          <span className={`px-2 py-1 text-xs rounded ${
-                            item.type === 0
-                              ? 'bg-blue-100 text-blue-800'
-                              : 'bg-green-100 text-green-800'
-                          }`}>
-                            {item.type === 0 ? '画面' : '对话'}
-                          </span>
-                          <span className="text-sm text-gray-500">
-                            {item.startTime} - {item.endTime}
-                          </span>
-                          {item.roleName && (
-                            <span className="text-sm text-purple-600 font-medium">
-                              {item.roleName}
+                      {editingSceneItemId === item.id ? (
+                        // 编辑模式
+                        <div className="space-y-3">
+                          {/* 编辑时间输入 */}
+                          <div className="flex items-center space-x-2">
+                            <span className={`px-2 py-1 text-xs rounded ${
+                              item.type === 0
+                                ? 'bg-blue-100 text-blue-800'
+                                : 'bg-green-100 text-green-800'
+                            }`}>
+                              {item.type === 0 ? '画面' : '对话'}
                             </span>
-                          )}
+                            <TimeRangeInput
+                              startMinutes={editingSceneStartMinutes}
+                              startSeconds={editingSceneStartSeconds}
+                              endMinutes={editingSceneEndMinutes}
+                              endSeconds={editingSceneEndSeconds}
+                              onStartMinutesChange={setEditingSceneStartMinutes}
+                              onStartSecondsChange={setEditingSceneStartSeconds}
+                              onEndMinutesChange={setEditingSceneEndMinutes}
+                              onEndSecondsChange={setEditingSceneEndSeconds}
+                            />
+                            {item.roleName && (
+                              <span className="text-sm text-purple-600 font-medium">
+                                {item.roleName}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* 编辑内容输入 */}
+                          <textarea
+                            value={editingSceneContent}
+                            onChange={(e) => setEditingSceneContent(e.target.value)}
+                            className="w-full p-2 text-sm border border-gray-300 rounded resize-none"
+                            rows={3}
+                            placeholder="输入内容..."
+                          />
+
+                          {/* 编辑操作按钮 */}
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={handleSaveSceneItem}
+                              className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+                            >
+                              保存
+                            </button>
+                            <button
+                              onClick={handleCancelEditSceneItem}
+                              className="px-3 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600"
+                            >
+                              取消
+                            </button>
+                          </div>
                         </div>
-                        <Icon
-                          icon="ri:delete-bin-line"
-                          className="w-4 h-4 text-gray-400 cursor-pointer hover:text-red-500"
-                          onClick={() => handleDeleteSceneItem(item.id)}
-                        />
-                      </div>
-                      <div className="text-sm text-gray-800">
-                        {item.content}
-                      </div>
+                      ) : (
+                        // 显示模式
+                        <>
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center space-x-2">
+                              <span className={`px-2 py-1 text-xs rounded ${
+                                item.type === 0
+                                  ? 'bg-blue-100 text-blue-800'
+                                  : 'bg-green-100 text-green-800'
+                              }`}>
+                                {item.type === 0 ? '画面' : '对话'}
+                              </span>
+                              <span className="text-sm text-gray-500">
+                                {item.startTime} - {item.endTime}
+                              </span>
+                              {item.roleName && (
+                                <span className="text-sm text-purple-600 font-medium">
+                                  {item.roleName}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <Icon
+                                icon="ri:edit-line"
+                                className="w-4 h-4 text-gray-400 cursor-pointer hover:text-blue-500"
+                                onClick={() => handleEditSceneItem(item)}
+                              />
+                              <Icon
+                                icon="ri:delete-bin-line"
+                                className="w-4 h-4 text-gray-400 cursor-pointer hover:text-red-500"
+                                onClick={() => handleDeleteSceneItem(item.id)}
+                              />
+                            </div>
+                          </div>
+                          <div className="text-sm text-gray-800">
+                            {item.content}
+                          </div>
+                        </>
+                      )}
                     </div>
                   ))
                 ) : (

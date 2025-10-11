@@ -1767,7 +1767,7 @@ function ShortplayEntryPage() {
       const userStr = localStorage.getItem('user');
 
       // 解析user信息获取userId
-      let userId = "12"; // 默认值
+      let userId = "74"; // 默认值
       if (userStr) {
         try {
           const user = JSON.parse(userStr);
@@ -1790,8 +1790,6 @@ function ShortplayEntryPage() {
         body: JSON.stringify({
           userId: userId,
           userInput: userInput.trim(),
-          seriesName: "美丽的童话",
-          seriesDescription: "美丽的童话",
           provider: ""
         })
       });
@@ -1813,7 +1811,7 @@ function ShortplayEntryPage() {
       // 第二步：轮询获取生成结果
       const pollForResult = async (): Promise<void> => {
         try {
-          const detailResponse = await fetch(`${STORYAI_API_BASE}/series/detail?seriesId=${seriesId}&includeEpisodes=true`, {
+          const detailResponse = await fetch(`${STORYAI_API_BASE}/series/detail?seriesId=${seriesId}`, {
             method: 'GET',
             headers: {
               'X-Prompt-Manager-Token': token || '',
@@ -1827,13 +1825,21 @@ function ShortplayEntryPage() {
           const detailResult = await detailResponse.json();
           console.log('轮询结果:', detailResult);
 
-          if (detailResult.code === 0 && detailResult.data && detailResult.data.series) {
-            const { generationStatus: status, content } = detailResult.data.series;
+          if (detailResult.code === 0 && detailResult.data) {
+            const { generationStatus: status, seriesContent, scenes } = detailResult.data;
 
             if (status === 'COMPLETED') {
               // 生成完成
               setGenerationStatus('生成完成！');
-              setGeneratedContent(content || '');
+              setGeneratedContent(seriesContent || '');
+
+              // 更新场次选项
+              if (scenes && scenes.length > 0) {
+                const sceneOptions = scenes.map((scene: any) => scene.sceneName);
+                setSceneOptions(sceneOptions);
+                setSelectedScene(sceneOptions[0] || '');
+              }
+
               setUserInput(''); // 清空输入
               setIsGenerating(false);
               alert('剧本生成完成！');

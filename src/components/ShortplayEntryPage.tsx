@@ -1352,129 +1352,19 @@ function ShortplayEntryPage() {
   const [singleGenerate, setSingleGenerate] = useState<boolean>(false);
 
   // 场次管理状态
-  const [selectedScene, setSelectedScene] = useState<string>('1-2夜内 废弃工厂 (分支B)');
-  const [sceneOptions, setSceneOptions] = useState([
-    '1-2夜内 废弃工厂 (分支B)',
-    '1-1白天 学校走廊 (分支A)',
-    '2-1夜内 神秘房间 (分支C)',
-    '3-1黄昏 天台 (分支D)',
-    '4-1深夜 地下室 (分支E)'
-  ]);
+  const [selectedScene, setSelectedScene] = useState<string>('');
+  const [sceneOptions, setSceneOptions] = useState<string[]>([]);
+  const [scenesData, setScenesData] = useState<any[]>([]); // 存储完整的场次数据
+  const [sceneContent, setSceneContent] = useState<any[]>([]); // 存储当前场次的内容数据
 
   // 剧本卡片数据状态
-  const [scriptCards, setScriptCards] = useState<ScriptCardProps[]>([
-    {
-      id: 'script-1',
-      description: '瞬移技术下忙中的希，用自己的外套盖在她身上，他始起身，踏上濡湿下吊与最后一丝希望。',
-      dialogues: [
-        {
-          character: '千草折 (Chigusa Inori)',
-          content: '(急切地) 嗯！你快走！诗织她已经...'
-        },
-        {
-          character: '神谷瞬 (Kamiya Shun)',
-          content: '(打断她，大步走向诗织) 不！我不能就这么放弃她！'
-        }
-      ]
-    },
-    {
-      id: 'script-2',
-      description: '他张开双臂，没有害怕何威胁，拥住诗织的前额。',
-      dialogues: [
-        {
-          character: '神谷瞬 (Kamiya Shun)',
-          content: '(声音颤抖但坚大声) 诗织！看着我！我爱你！神谷瞬！你忘了我们一起在天台许的愿吗？你说要买一家全世界最好吃的蛋糕店！'
-        }
-      ]
-    },
-    {
-      id: 'script-3',
-      description: '魔化的诗织动作一顿，浑浊的眼中似乎闪过了一丝迷茫，她往后一步，仍徘徊在方向纠结。',
-      dialogues: [
-        {
-          character: '夏目诗织 (Natsume Shiori)',
-          content: '(低语，含泪不清) ......蛋糕......好子......好像......'
-        }
-      ]
-    },
-    {
-      id: 'script-4',
-      description: '瞬着到一丝希望，眼中燃起了光芒，趁住此时，诗织的速攻被挡弹跳的可塑感载攻代。她拉她挡起出一声失魂，眼中重新的光芒闪闪烁现了。',
-      dialogues: [
-        {
-          character: '夏目诗织 (Natsume Shiori)',
-          content: '(尖叫) 肉——！！！'
-        }
-      ]
-    }
-  ]);
+  const [scriptCards, setScriptCards] = useState<ScriptCardProps[]>([]);
 
   // 音频数据状态
-  const [audioItems, setAudioItems] = useState([
-    {
-      id: 'audio-1',
-      type: 'voice',
-      speaker: '男1',
-      content: '他抬头更是惊骇到了极点',
-      timeRange: '00:45\'-00:49\'',
-      icon: 'ri:user-line'
-    },
-    {
-      id: 'audio-2',
-      type: 'voice',
-      speaker: '男1',
-      content: '不知道会有什么程度',
-      timeRange: '00:49\'-00:53\'',
-      icon: 'ri:user-line'
-    },
-    {
-      id: 'audio-3',
-      type: 'sound',
-      speaker: '音效',
-      content: '需要悲伤的，沉重的.mp3',
-      timeRange: '00:49\'-00:59\'',
-      icon: 'ri:music-2-line'
-    }
-  ]);
+  const [audioItems, setAudioItems] = useState([]);
 
   // 图片数据状态
-  const [imageItems, setImageItems] = useState([
-    {
-      id: 'img-1',
-      description: '真实照片质感线波丽符写，银灰蓝色发丝浸润透光，反光材质玻璃感雾染柔雾...',
-      parameters: '柯达5219胶片颗粒｜快门速度1/48｜色温2800K｜F1.8浅景深｜霓虹辉光强度120%',
-      timeRange: '00:00\'-00:05\'',
-      image: '/api/placeholder/80/80'
-    },
-    {
-      id: 'img-2',
-      description: '金黄色调，手绘插画，金箔岩精美，华贵，奇秘，华丽异域风情纱丽少女，黑...',
-      parameters: '柯达5219胶片颗粒｜快门速度1/48｜色温2800K｜F1.8浅景深｜霓虹辉光强度120%',
-      timeRange: '00:05\'-00:10\'',
-      image: '/api/placeholder/80/80'
-    },
-    {
-      id: 'img-3',
-      description: '一头黑色的长发如瀑布般垂落，发间点缀着古老经生铜，有韵的闪烁着光芒。唯...',
-      parameters: '柯达5219胶片颗粒｜快门速度1/48｜色温2800K｜F1.8浅景深｜霓虹辉光强度120%',
-      timeRange: '00:11\'-00:15\'',
-      image: '/api/placeholder/80/80'
-    },
-    {
-      id: 'img-4',
-      description: '高定风，漫画中国古代金发美女，厚涂肌理，被紧细腺，超写实，超清晰，王...',
-      parameters: '柯达5219胶片颗粒｜快门速度1/48｜色温2800K｜F1.8浅景深｜霓虹辉光强度120%',
-      timeRange: '00:16\'-00:20\'',
-      image: '/api/placeholder/80/80'
-    },
-    {
-      id: 'img-5',
-      description: '古风女，深色长发，粉红衣服，花朵发饰，雨夜，怯感，颓靡，病娇，女脸上身...',
-      parameters: '柯达5219胶片颗粒｜快门速度1/48｜色温2800K｜F1.8浅景深｜霓虹辉光强度120%',
-      timeRange: '00:21\'-00:25\'',
-      image: '/api/placeholder/80/80'
-    }
-  ]);
+  const [imageItems, setImageItems] = useState([]);
 
   // 编辑时间状态
   const [editingTimeId, setEditingTimeId] = useState<string | null>(null);
@@ -1484,43 +1374,7 @@ function ShortplayEntryPage() {
   const [editingEndSeconds, setEditingEndSeconds] = useState<string>('');
 
   // 视频数据状态 (使用与图片相同的数据结构)
-  const [videoItems, setVideoItems] = useState([
-    {
-      id: 'video-1',
-      description: '真实照片质感线波丽符写，银灰蓝色发丝浸润透光，反光材质玻璃感雾染柔雾...',
-      parameters: '柯达5219胶片颗粒｜快门速度1/48｜色温2800K｜F1.8浅景深｜霓虹辉光强度120%',
-      timeRange: '00:00\'-00:05\'',
-      image: '/api/placeholder/80/80'
-    },
-    {
-      id: 'video-2',
-      description: '金黄色调，手绘插画，金箔岩精美，华贵，奇秘，华丽异域风情纱丽少女，黑...',
-      parameters: '柯达5219胶片颗粒｜快门速度1/48｜色温2800K｜F1.8浅景深｜霓虹辉光强度120%',
-      timeRange: '00:05\'-00:10\'',
-      image: '/api/placeholder/80/80'
-    },
-    {
-      id: 'video-3',
-      description: '一头黑色的长发如瀑布般垂落，发间点缀着古老经生铜，有韵的闪烁着光芒。唯...',
-      parameters: '柯达5219胶片颗粒｜快门速度1/48｜色温2800K｜F1.8浅景深｜霓虹辉光强度120%',
-      timeRange: '00:11\'-00:15\'',
-      image: '/api/placeholder/80/80'
-    },
-    {
-      id: 'video-4',
-      description: '高定风，漫画中国古代金发美女，厚涂肌理，被紧细腺，超写实，超清晰，王...',
-      parameters: '柯达5219胶片颗粒｜快门速度1/48｜色温2800K｜F1.8浅景深｜霓虹辉光强度120%',
-      timeRange: '00:16\'-00:20\'',
-      image: '/api/placeholder/80/80'
-    },
-    {
-      id: 'video-5',
-      description: '古风女，深色长发，粉红衣服，花朵发饰，雨夜，怯感，颓靡，病娇，女脸上身...',
-      parameters: '柯达5219胶片颗粒｜快门速度1/48｜色温2800K｜F1.8浅景深｜霓虹辉光强度120%',
-      timeRange: '00:21\'-00:25\'',
-      image: '/api/placeholder/80/80'
-    }
-  ]);
+  const [videoItems, setVideoItems] = useState([]);
   const videoRef = useRef<HTMLVideoElement>(null);
   const videoSrc = "/32767410413-1-192.mp4"; // 视频文件路径
 
@@ -1594,6 +1448,11 @@ function ShortplayEntryPage() {
   // 删除剧本卡片
   const handleDeleteScriptCard = (id: string) => {
     setScriptCards((items) => items.filter((item) => item.id !== id));
+  };
+
+  // 删除场次内容项
+  const handleDeleteSceneItem = (id: number) => {
+    setSceneContent((items) => items.filter((item) => item.id !== id));
   };
 
   // 时间解析和格式化函数
@@ -1752,6 +1611,80 @@ function ShortplayEntryPage() {
   const totalTimeDisplay = `${totalMinutes.toString().padStart(2, '0')}:${totalSeconds.toString().padStart(2, '0')}`;
 
 
+  // 获取场次内容
+  const loadSceneContent = async (sceneId: number) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${STORYAI_API_BASE}/scene/content?sceneId=${sceneId}`, {
+        method: 'GET',
+        headers: {
+          'X-Prompt-Manager-Token': token || '',
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.code === 0 && result.data) {
+          console.log('场次内容:', result.data);
+          setSceneContent(result.data);
+        }
+      }
+    } catch (error) {
+      console.error('加载场次内容失败:', error);
+    }
+  };
+
+  // 获取用户历史数据
+  const loadUserData = async () => {
+    try {
+      const userStr = localStorage.getItem('user');
+      if (!userStr) return;
+
+      const user = JSON.parse(userStr);
+      const userId = user.userId;
+      if (!userId) return;
+
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${STORYAI_API_BASE}/series/detail?userId=${userId}`, {
+        method: 'GET',
+        headers: {
+          'X-Prompt-Manager-Token': token || '',
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.code === 0 && result.data) {
+          const { seriesContent, scenes } = result.data;
+
+          // 如果有历史内容，则显示
+          if (seriesContent) {
+            setGeneratedContent(seriesContent);
+          }
+
+          // 如果有场次数据，则更新下拉列表
+          if (scenes && scenes.length > 0) {
+            setScenesData(scenes);
+            const sceneOptions = scenes.map((scene: any) => scene.sceneName);
+            setSceneOptions(sceneOptions);
+            setSelectedScene(sceneOptions[0] || '');
+            // 自动加载第一个场次的内容
+            if (scenes[0]?.sceneId) {
+              loadSceneContent(scenes[0].sceneId);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('加载用户历史数据失败:', error);
+    }
+  };
+
+  // 组件加载时获取用户历史数据
+  React.useEffect(() => {
+    loadUserData();
+  }, []);
+
   // 一键生成API调用
   const handleGenerate = async () => {
     if (!userInput.trim()) {
@@ -1767,14 +1700,19 @@ function ShortplayEntryPage() {
       const userStr = localStorage.getItem('user');
 
       // 解析user信息获取userId
-      let userId = "74"; // 默认值
+      let userId = "";
       if (userStr) {
         try {
           const user = JSON.parse(userStr);
-          userId = user.userId || userId;
+          userId = user.userId || "";
         } catch (error) {
           console.warn(t('shortplayEntry.input.userInfoParseError'), error);
         }
+      }
+
+      if (!userId) {
+        alert('用户信息不完整，请重新登录');
+        return;
       }
 
       // 从localStorage获取token
@@ -1835,9 +1773,14 @@ function ShortplayEntryPage() {
 
               // 更新场次选项
               if (scenes && scenes.length > 0) {
+                setScenesData(scenes);
                 const sceneOptions = scenes.map((scene: any) => scene.sceneName);
                 setSceneOptions(sceneOptions);
                 setSelectedScene(sceneOptions[0] || '');
+                // 自动加载第一个场次的内容
+                if (scenes[0]?.sceneId) {
+                  loadSceneContent(scenes[0].sceneId);
+                }
               }
 
               setUserInput(''); // 清空输入
@@ -1944,24 +1887,16 @@ function ShortplayEntryPage() {
           </div>
 
           {/* 内容区域 */}
-          <div className="flex-grow p-4 overflow-auto min-h-0">
+          <div className="flex-grow p-4 min-h-0">
             <div className="bg-white rounded-lg border border-gray-200 h-full flex flex-col">
               {/* 卡片内容区域 */}
-              <div className="flex-grow p-4 overflow-auto">
+              <div className="flex-grow p-4 overflow-auto min-h-0 h-96">
                 {activeTab === 'script' && (
                   <div className="space-y-4">
                     {/* 生成的内容显示 */}
                     {generatedContent ? (
-                      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                        <div className="flex items-center space-x-2 mb-3">
-                          <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                            <span className="text-xs text-white font-medium">AI</span>
-                          </div>
-                          <span className="text-sm font-medium text-green-800">AI生成的剧本内容</span>
-                        </div>
-                        <div className="text-sm text-gray-700 whitespace-pre-wrap">
-                          {generatedContent}
-                        </div>
+                      <div className="text-sm text-gray-700 whitespace-pre-wrap">
+                        {generatedContent}
                       </div>
                     ) : (
                       <>
@@ -2158,35 +2093,81 @@ function ShortplayEntryPage() {
             subtitleOptions={
               activeTab === 'script' || activeTab === 'audio' ? sceneOptions : undefined
             }
-            onSubtitleChange={(value) => setSelectedScene(value)}
+            onSubtitleChange={(value) => {
+              setSelectedScene(value);
+              // 根据场次名称找到对应的sceneId
+              const selectedSceneData = scenesData.find((scene: any) => scene.sceneName === value);
+              if (selectedSceneData?.sceneId) {
+                loadSceneContent(selectedSceneData.sceneId);
+              }
+            }}
             onOptionsChange={(options) => setSceneOptions(options)}
           />
 
           {/* 剧本内容区域 */}
-          <div className="flex-grow p-4 overflow-auto min-h-0">
+          <div className="flex-grow p-4 overflow-auto min-h-0 h-96">
             {activeTab === 'script' && (
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleScriptDragEnd}
-              >
-                <SortableContext
-                  items={scriptCards.map(item => item.id)}
-                  strategy={verticalListSortingStrategy}
-                >
-                  <div className="space-y-4">
-                    {scriptCards.map((item) => (
-                      <SortableScriptCard
-                        key={item.id}
-                        item={{
-                          ...item,
-                          onDelete: handleDeleteScriptCard
-                        }}
-                      />
-                    ))}
-                  </div>
-                </SortableContext>
-              </DndContext>
+              <div className="space-y-2">
+                {sceneContent.length > 0 ? (
+                  sceneContent.map((item) => (
+                    <div
+                      key={item.id}
+                      className="p-3 bg-white border border-gray-200 rounded-lg"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center space-x-2">
+                          <span className={`px-2 py-1 text-xs rounded ${
+                            item.type === 0
+                              ? 'bg-blue-100 text-blue-800'
+                              : 'bg-green-100 text-green-800'
+                          }`}>
+                            {item.type === 0 ? '画面' : '对话'}
+                          </span>
+                          <span className="text-sm text-gray-500">
+                            {item.startTime} - {item.endTime}
+                          </span>
+                          {item.roleName && (
+                            <span className="text-sm text-purple-600 font-medium">
+                              {item.roleName}
+                            </span>
+                          )}
+                        </div>
+                        <Icon
+                          icon="ri:delete-bin-line"
+                          className="w-4 h-4 text-gray-400 cursor-pointer hover:text-red-500"
+                          onClick={() => handleDeleteSceneItem(item.id)}
+                        />
+                      </div>
+                      <div className="text-sm text-gray-800">
+                        {item.content}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleScriptDragEnd}
+                  >
+                    <SortableContext
+                      items={scriptCards.map(item => item.id)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      <div className="space-y-4">
+                        {scriptCards.map((item) => (
+                          <SortableScriptCard
+                            key={item.id}
+                            item={{
+                              ...item,
+                              onDelete: handleDeleteScriptCard
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </SortableContext>
+                  </DndContext>
+                )}
+              </div>
             )}
 
             {activeTab === 'audio' && (

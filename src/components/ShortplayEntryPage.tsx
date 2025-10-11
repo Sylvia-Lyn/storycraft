@@ -1025,10 +1025,12 @@ interface SectionHeaderProps {
   subtitle?: string;
   subtitleOptions?: string[];
   onSubtitleChange?: (value: string) => void;
+  onSubtitleEdit?: (value: string) => Promise<boolean>; // 新增：专门处理编辑的回调
   onOptionsChange?: (options: string[]) => void;
+  onAddClick?: () => void;
 }
 
-function SectionHeader({ title, subtitle, subtitleOptions, onSubtitleChange, onOptionsChange }: SectionHeaderProps) {
+function SectionHeader({ title, subtitle, subtitleOptions, onSubtitleChange, onSubtitleEdit, onOptionsChange, onAddClick }: SectionHeaderProps) {
   const { t } = useI18n();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -1052,9 +1054,20 @@ function SectionHeader({ title, subtitle, subtitleOptions, onSubtitleChange, onO
   };
 
   // 处理编辑完成
-  const handleEditComplete = () => {
+  const handleEditComplete = async () => {
     if (editingValue.trim() && editingValue !== subtitle) {
-      onSubtitleChange?.(editingValue.trim());
+      // 如果有专门的编辑回调，优先使用它
+      if (onSubtitleEdit) {
+        const success = await onSubtitleEdit(editingValue.trim());
+        if (!success) {
+          // 编辑失败，恢复原值
+          setEditingValue(subtitle || '');
+          return;
+        }
+      } else {
+        // 否则使用通用的变更回调
+        onSubtitleChange?.(editingValue.trim());
+      }
     }
     setIsEditing(false);
     setEditingValue('');
@@ -1183,7 +1196,7 @@ function SectionHeader({ title, subtitle, subtitleOptions, onSubtitleChange, onO
             </div>
           )}
         </div>
-        <Icon icon="ri:add-circle-line" className="w-5 h-5 text-gray-400 cursor-pointer hover:text-gray-600" />
+        <Icon icon="ri:add-circle-line" className="w-5 h-5 text-gray-400 cursor-pointer hover:text-gray-600" onClick={onAddClick} />
       </div>
 
       {/* 点击其他地方关闭下拉框和编辑框 */}
@@ -1250,10 +1263,15 @@ function ShortplayEntryPage() {
   // 场次内容编辑状态
   const [editingSceneItemId, setEditingSceneItemId] = useState<number | null>(null);
   const [editingSceneContent, setEditingSceneContent] = useState<string>('');
+  const [editingSceneType, setEditingSceneType] = useState<number>(0); // 0: 画面, 1: 对话
+  const [editingSceneRoleName, setEditingSceneRoleName] = useState<string>(''); // 角色名称
   const [editingSceneStartMinutes, setEditingSceneStartMinutes] = useState<string>('');
   const [editingSceneStartSeconds, setEditingSceneStartSeconds] = useState<string>('');
   const [editingSceneEndMinutes, setEditingSceneEndMinutes] = useState<string>('');
   const [editingSceneEndSeconds, setEditingSceneEndSeconds] = useState<string>('');
+
+  // 删除确认状态
+  const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
 
   // 视频数据状态 (使用与图片相同的数据结构)
   const [videoItems, setVideoItems] = useState([]);
@@ -1332,9 +1350,106 @@ function ShortplayEntryPage() {
     setScriptCards((items) => items.filter((item) => item.id !== id));
   };
 
-  // 删除场次内容项
-  const handleDeleteSceneItem = (id: number) => {
-    setSceneContent((items) => items.filter((item) => item.id !== id));
+  // 显示删除确认对话框
+  const handleShowDeleteConfirm = (id: number) => {
+    setDeleteConfirmId(id);
+  };
+
+  // 确认删除场次内容项
+  const handleConfirmDelete = async () => {
+    if (deleteConfirmId === null) return;
+
+    const id = deleteConfirmId;
+    setDeleteConfirmId(null); // 先关闭对话框
+
+    // 如果是新创建的临时项（还没保存到服务器），直接从本地删除
+    if (id > 1000000000000) {
+      setSceneContent((items) => items.filter((item) => item.id !== id));
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${STORYAI_API_BASE}/scene/content/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'X-Prompt-Manager-Token': token || '',
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.code === 0) {
+          // 从本地状态中删除
+          setSceneContent((items) => items.filter((item) => item.id !== id));
+        } else {
+          alert('删除失败：' + (result.message || '未知错误'));
+        }
+      } else {
+        throw new Error(`请求失败: ${response.status}`);
+      }
+    } catch (error) {
+      console.error('删除场次内容失败:', error);
+      alert('删除失败：' + (error as Error).message);
+    }
+  };
+
+  // 取消删除
+  const handleCancelDelete = () => {
+    setDeleteConfirmId(null);
+  };
+
+  // 更新场次名称
+  const updateSceneName = async (sceneId: number, newSceneName: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${STORYAI_API_BASE}/scene`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Prompt-Manager-Token': token || '',
+        },
+        body: JSON.stringify({
+          id: sceneId,
+          sceneTitle: newSceneName
+        })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.code === 0) {
+          // 获取旧的场次名称
+          const oldSceneName = scenesData.find((scene: any) => scene.sceneId === sceneId)?.sceneName;
+
+          // 更新本地场次数据
+          setScenesData((scenes) =>
+            scenes.map((scene: any) =>
+              scene.sceneId === sceneId
+                ? { ...scene, sceneName: newSceneName }
+                : scene
+            )
+          );
+
+          // 更新场次选项
+          setSceneOptions((options) =>
+            options.map((option) =>
+              option === oldSceneName ? newSceneName : option
+            )
+          );
+
+          return true;
+        } else {
+          alert('场次名称更新失败：' + (result.message || '未知错误'));
+          return false;
+        }
+      } else {
+        throw new Error(`请求失败: ${response.status}`);
+      }
+    } catch (error) {
+      console.error('更新场次名称失败:', error);
+      alert('场次名称更新失败：' + (error as Error).message);
+      return false;
+    }
   };
 
   // 时间格式验证和格式化函数
@@ -1459,6 +1574,8 @@ function ShortplayEntryPage() {
   const handleEditSceneItem = (item: any) => {
     setEditingSceneItemId(item.id);
     setEditingSceneContent(item.content);
+    setEditingSceneType(item.type || 0); // 默认为画面
+    setEditingSceneRoleName(item.roleName || ''); // 角色名称
 
     // 解析开始时间
     const startTime = item.startTime || '00:00';
@@ -1474,7 +1591,7 @@ function ShortplayEntryPage() {
   };
 
   // 保存场次内容项编辑
-  const handleSaveSceneItem = () => {
+  const handleSaveSceneItem = async () => {
     if (editingSceneItemId === null) return;
 
     // 构建时间字符串
@@ -1490,36 +1607,155 @@ function ShortplayEntryPage() {
       return;
     }
 
-    setSceneContent((items) =>
-      items.map((item) =>
-        item.id === editingSceneItemId
-          ? {
-              ...item,
-              content: editingSceneContent,
-              startTime: startTime,
-              endTime: endTime,
-            }
-          : item
-      )
-    );
+    if (!editingSceneContent.trim()) {
+      alert('请输入内容');
+      return;
+    }
 
-    // 重置编辑状态
+    try {
+      const token = localStorage.getItem('token');
+
+      // 检查是否是新创建的项目（临时ID通常是时间戳，会很大）
+      const isNewItem = editingSceneItemId > 1000000000000;
+
+      // 获取当前选中场次的sceneId
+      const currentSceneData = scenesData.find((scene: any) => scene.sceneName === selectedScene);
+      const sceneId = currentSceneData?.sceneId;
+
+      if (isNewItem && !sceneId) {
+        alert('请先选择场次');
+        return;
+      }
+
+      // 构建API请求参数
+      let requestBody: any = {
+        type: editingSceneType,
+        content: editingSceneContent,
+        startTime: startTime, // 保持原有的MM:SS格式
+        endTime: endTime
+      };
+
+      // 新增时添加sceneId，编辑时添加id
+      if (isNewItem) {
+        requestBody.sceneId = sceneId;
+      } else {
+        requestBody.id = editingSceneItemId;
+      }
+
+      // 对话类型时添加角色名
+      if (editingSceneType === 1 && editingSceneRoleName) {
+        requestBody.roleName = editingSceneRoleName;
+      }
+
+      const response = await fetch(`${STORYAI_API_BASE}/scene/content`, {
+        method: isNewItem ? 'POST' : 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Prompt-Manager-Token': token || '',
+        },
+        body: JSON.stringify(requestBody)
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.code === 0) {
+          if (isNewItem) {
+            // 新项目：更新本地状态，使用服务器返回的真实ID
+            setSceneContent((items) =>
+              items.map((item) =>
+                item.id === editingSceneItemId
+                  ? {
+                      ...item,
+                      id: result.data?.id || item.id, // 使用服务器返回的真实ID
+                      type: editingSceneType,
+                      content: editingSceneContent,
+                      roleName: editingSceneType === 1 ? editingSceneRoleName : undefined,
+                      startTime: startTime,
+                      endTime: endTime,
+                    }
+                  : item
+              )
+            );
+          } else {
+            // 更新项目：正常更新
+            setSceneContent((items) =>
+              items.map((item) =>
+                item.id === editingSceneItemId
+                  ? {
+                      ...item,
+                      type: editingSceneType,
+                      content: editingSceneContent,
+                      roleName: editingSceneType === 1 ? editingSceneRoleName : undefined,
+                      startTime: startTime,
+                      endTime: endTime,
+                    }
+                  : item
+              )
+            );
+          }
+
+          // 重置编辑状态
+          setEditingSceneItemId(null);
+          setEditingSceneContent('');
+          setEditingSceneType(0);
+          setEditingSceneRoleName('');
+          setEditingSceneStartMinutes('');
+          setEditingSceneStartSeconds('');
+          setEditingSceneEndMinutes('');
+          setEditingSceneEndSeconds('');
+        } else {
+          alert('保存失败：' + (result.message || '未知错误'));
+        }
+      } else {
+        throw new Error(`请求失败: ${response.status}`);
+      }
+    } catch (error) {
+      console.error('保存场次内容失败:', error);
+      alert('保存失败：' + (error as Error).message);
+    }
+  };
+
+  // 取消编辑场次内容项
+  const handleCancelEditSceneItem = () => {
+    // 如果是新创建的项目且取消编辑，则删除该项目
+    if (editingSceneItemId !== null && editingSceneItemId > 1000000000000) {
+      setSceneContent((items) => items.filter((item) => item.id !== editingSceneItemId));
+    }
+
     setEditingSceneItemId(null);
     setEditingSceneContent('');
+    setEditingSceneType(0);
+    setEditingSceneRoleName('');
     setEditingSceneStartMinutes('');
     setEditingSceneStartSeconds('');
     setEditingSceneEndMinutes('');
     setEditingSceneEndSeconds('');
   };
 
-  // 取消编辑场次内容项
-  const handleCancelEditSceneItem = () => {
-    setEditingSceneItemId(null);
+  // 开始新增场次内容项 - 直接在内容区添加空白项
+  const handleStartAddNewItem = () => {
+    // 创建一个新的空白项目，直接进入编辑状态
+    const newItem = {
+      id: Date.now(), // 临时ID
+      type: 0, // 默认为画面
+      content: '',
+      roleName: '',
+      startTime: '00:00',
+      endTime: '00:05',
+    };
+
+    // 添加到内容列表
+    setSceneContent((items) => [...items, newItem]);
+
+    // 立即进入编辑状态
+    setEditingSceneItemId(newItem.id);
     setEditingSceneContent('');
-    setEditingSceneStartMinutes('');
-    setEditingSceneStartSeconds('');
-    setEditingSceneEndMinutes('');
-    setEditingSceneEndSeconds('');
+    setEditingSceneType(0); // 默认为画面
+    setEditingSceneRoleName(''); // 角色名为空
+    setEditingSceneStartMinutes('00');
+    setEditingSceneStartSeconds('00');
+    setEditingSceneEndMinutes('00');
+    setEditingSceneEndSeconds('05');
   };
 
   // 时间解析和格式化函数
@@ -2157,21 +2393,33 @@ function ShortplayEntryPage() {
               activeTab === 'script' || activeTab === 'audio' ? sceneOptions : undefined
             }
             onSubtitleChange={(value) => {
+              // 处理从下拉列表选择场次的情况
               setSelectedScene(value);
-              // 根据场次名称找到对应的sceneId
               const selectedSceneData = scenesData.find((scene: any) => scene.sceneName === value);
               if (selectedSceneData?.sceneId) {
                 loadSceneContent(selectedSceneData.sceneId);
               }
             }}
+            onSubtitleEdit={async (value) => {
+              // 处理直接编辑场次名称的情况
+              const currentSceneData = scenesData.find((scene: any) => scene.sceneName === selectedScene);
+              if (currentSceneData?.sceneId) {
+                const success = await updateSceneName(currentSceneData.sceneId, value);
+                if (success) {
+                  setSelectedScene(value);
+                }
+                return success;
+              }
+              return false;
+            }}
             onOptionsChange={(options) => setSceneOptions(options)}
+            onAddClick={activeTab === 'script' ? handleStartAddNewItem : undefined}
           />
 
           {/* 剧本内容区域 */}
           <div className="flex-grow p-4 overflow-auto min-h-0 h-96">
             {activeTab === 'script' && (
-              <div className="space-y-2">
-                {sceneContent.length > 0 ? (
+              <div className="space-y-2">{sceneContent.length > 0 ? (
                   sceneContent.map((item) => (
                     <div
                       key={item.id}
@@ -2180,15 +2428,16 @@ function ShortplayEntryPage() {
                       {editingSceneItemId === item.id ? (
                         // 编辑模式
                         <div className="space-y-3">
-                          {/* 编辑时间输入 */}
+                          {/* 类型选择和时间输入 */}
                           <div className="flex items-center space-x-2">
-                            <span className={`px-2 py-1 text-xs rounded ${
-                              item.type === 0
-                                ? 'bg-blue-100 text-blue-800'
-                                : 'bg-green-100 text-green-800'
-                            }`}>
-                              {item.type === 0 ? '画面' : '对话'}
-                            </span>
+                            <select
+                              value={editingSceneType}
+                              onChange={(e) => setEditingSceneType(parseInt(e.target.value))}
+                              className="px-2 py-1 text-xs rounded border border-gray-300"
+                            >
+                              <option value={0}>画面</option>
+                              <option value={1}>对话</option>
+                            </select>
                             <TimeRangeInput
                               startMinutes={editingSceneStartMinutes}
                               startSeconds={editingSceneStartSeconds}
@@ -2199,10 +2448,14 @@ function ShortplayEntryPage() {
                               onEndMinutesChange={setEditingSceneEndMinutes}
                               onEndSecondsChange={setEditingSceneEndSeconds}
                             />
-                            {item.roleName && (
-                              <span className="text-sm text-purple-600 font-medium">
-                                {item.roleName}
-                              </span>
+                            {editingSceneType === 1 && (
+                              <input
+                                type="text"
+                                value={editingSceneRoleName}
+                                onChange={(e) => setEditingSceneRoleName(e.target.value)}
+                                className="px-2 py-1 text-xs border border-gray-300 rounded"
+                                placeholder="角色名称"
+                              />
                             )}
                           </div>
 
@@ -2261,7 +2514,7 @@ function ShortplayEntryPage() {
                               <Icon
                                 icon="ri:delete-bin-line"
                                 className="w-4 h-4 text-gray-400 cursor-pointer hover:text-red-500"
-                                onClick={() => handleDeleteSceneItem(item.id)}
+                                onClick={() => handleShowDeleteConfirm(item.id)}
                               />
                             </div>
                           </div>
@@ -2590,6 +2843,37 @@ function ShortplayEntryPage() {
           </div>
         </>
       </div>
+
+      {/* 删除确认对话框 */}
+      {deleteConfirmId !== null && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4 shadow-xl">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <Icon icon="ri:delete-bin-line" className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-medium text-gray-900">删除确认</h3>
+                <p className="text-sm text-gray-500">确定要删除这条内容吗？删除后无法恢复。</p>
+              </div>
+            </div>
+            <div className="flex space-x-3 justify-end">
+              <button
+                onClick={handleCancelDelete}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+              >
+                取消
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+              >
+                删除
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

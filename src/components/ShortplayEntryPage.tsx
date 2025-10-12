@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Icon } from '@iconify/react';
 import { Button, Select } from 'antd';
+import toast from 'react-hot-toast';
 import { useI18n } from '../contexts/I18nContext';
 import {
   DndContext,
@@ -210,6 +211,206 @@ function SortableScriptCard({ item }: SortableScriptCardProps) {
   );
 }
 
+// 可排序的剧本项组件
+interface SortableScriptItemProps {
+  item: any;
+  editingSceneItemId: number | null;
+  editingSceneType: number;
+  editingSceneContent: string;
+  editingSceneRoleName: string;
+  editingSceneStartMinutes: string;
+  editingSceneStartSeconds: string;
+  editingSceneEndMinutes: string;
+  editingSceneEndSeconds: string;
+  onEditingSceneTypeChange: (type: number) => void;
+  onEditingSceneContentChange: (content: string) => void;
+  onEditingSceneRoleNameChange: (name: string) => void;
+  onEditingSceneStartMinutesChange: (minutes: string) => void;
+  onEditingSceneStartSecondsChange: (seconds: string) => void;
+  onEditingSceneEndMinutesChange: (minutes: string) => void;
+  onEditingSceneEndSecondsChange: (seconds: string) => void;
+  onEditSceneItem: (item: any) => void;
+  onSaveSceneItem: () => void;
+  onCancelEditSceneItem: () => void;
+  onShowDeleteConfirm: (id: number) => void;
+  TimeRangeInput: React.ComponentType<any>;
+}
+
+function SortableScriptItem({
+  item,
+  editingSceneItemId,
+  editingSceneType,
+  editingSceneContent,
+  editingSceneRoleName,
+  editingSceneStartMinutes,
+  editingSceneStartSeconds,
+  editingSceneEndMinutes,
+  editingSceneEndSeconds,
+  onEditingSceneTypeChange,
+  onEditingSceneContentChange,
+  onEditingSceneRoleNameChange,
+  onEditingSceneStartMinutesChange,
+  onEditingSceneStartSecondsChange,
+  onEditingSceneEndMinutesChange,
+  onEditingSceneEndSecondsChange,
+  onEditSceneItem,
+  onSaveSceneItem,
+  onCancelEditSceneItem,
+  onShowDeleteConfirm,
+  TimeRangeInput,
+}: SortableScriptItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.id.toString() });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    WebkitFontSmoothing: 'antialiased',
+    MozOsxFontSmoothing: 'grayscale',
+    willChange: isDragging ? 'transform' : 'auto',
+    backfaceVisibility: 'hidden',
+    transformStyle: 'preserve-3d',
+    width: isDragging ? '100%' : 'auto',
+    zIndex: isDragging ? 1000 : 'auto',
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      className={`p-3 bg-white border border-gray-200 rounded-lg transition-all ${
+        isDragging ? 'shadow-lg z-10' : ''
+      }`}
+    >
+      {editingSceneItemId === item.id ? (
+        // 编辑模式
+        <div className="space-y-3">
+          {/* 拖拽手柄和类型选择 */}
+          <div className="flex items-center space-x-2">
+            <div
+              {...listeners}
+              className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-100 rounded"
+              title="拖拽排序"
+            >
+              <Icon icon="ri:drag-move-2-line" className="w-4 h-4 text-gray-400" />
+            </div>
+            <select
+              value={editingSceneType}
+              onChange={(e) => onEditingSceneTypeChange(parseInt(e.target.value))}
+              className="px-2 py-1 text-xs rounded border border-gray-300"
+            >
+              <option value={0}>画面</option>
+              <option value={1}>对话</option>
+            </select>
+            <TimeRangeInput
+              startMinutes={editingSceneStartMinutes}
+              startSeconds={editingSceneStartSeconds}
+              endMinutes={editingSceneEndMinutes}
+              endSeconds={editingSceneEndSeconds}
+              onStartMinutesChange={onEditingSceneStartMinutesChange}
+              onStartSecondsChange={onEditingSceneStartSecondsChange}
+              onEndMinutesChange={onEditingSceneEndMinutesChange}
+              onEndSecondsChange={onEditingSceneEndSecondsChange}
+            />
+            {editingSceneType === 1 && (
+              <input
+                type="text"
+                value={editingSceneRoleName}
+                onChange={(e) => onEditingSceneRoleNameChange(e.target.value)}
+                className="px-2 py-1 text-xs border border-gray-300 rounded"
+                placeholder="角色名称"
+              />
+            )}
+          </div>
+
+          {/* 编辑内容输入 */}
+          <textarea
+            value={editingSceneContent}
+            onChange={(e) => onEditingSceneContentChange(e.target.value)}
+            className="w-full p-2 text-sm border border-gray-300 rounded resize-none"
+            rows={3}
+            placeholder="输入内容..."
+          />
+
+          {/* 编辑操作按钮 */}
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={onSaveSceneItem}
+              className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              保存
+            </button>
+            <button
+              onClick={onCancelEditSceneItem}
+              className="px-3 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600"
+            >
+              取消
+            </button>
+          </div>
+        </div>
+      ) : (
+        // 显示模式
+        <div className="flex items-start space-x-3">
+          {/* 拖拽手柄 */}
+          <div
+            {...listeners}
+            className="cursor-grab active:cursor-grabbing mt-1 p-1 hover:bg-gray-100 rounded"
+            title="拖拽排序"
+          >
+            <Icon icon="ri:drag-move-2-line" className="w-4 h-4 text-gray-400" />
+          </div>
+
+          {/* 内容区域 */}
+          <div className="flex-1">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center space-x-2">
+                <span className={`px-2 py-1 text-xs rounded ${
+                  item.type === 0
+                    ? 'bg-blue-100 text-blue-800'
+                    : 'bg-green-100 text-green-800'
+                }`}>
+                  {item.type === 0 ? '画面' : '对话'}
+                </span>
+                <span className="text-sm text-gray-500">
+                  {item.startTime} - {item.endTime}
+                </span>
+                {item.roleName && (
+                  <span className="text-sm text-purple-600 font-medium">
+                    {item.roleName}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center space-x-1">
+                <Icon
+                  icon="ri:edit-line"
+                  className="w-4 h-4 text-gray-400 cursor-pointer hover:text-blue-500"
+                  onClick={() => onEditSceneItem(item)}
+                />
+                <Icon
+                  icon="ri:delete-bin-line"
+                  className="w-4 h-4 text-gray-400 cursor-pointer hover:text-red-500"
+                  onClick={() => onShowDeleteConfirm(item.id)}
+                />
+              </div>
+            </div>
+            <div className="text-sm text-gray-800">
+              {item.content}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // 底部输入区域组件
 interface BottomInputAreaProps {
   activeTab: string;
@@ -392,7 +593,7 @@ function BottomInputArea({
                   : 'bg-blue-500 hover:bg-blue-600'
               }`}
             >
-              {isGenerating ? t('shortplayEntry.generation.generating') : t('shortplayEntry.generation.modelGenerate')}
+              {isGenerating ? t('shortplayEntry.generation.generating') : '一键生成'}
             </button>
           </div>
         </>
@@ -1247,8 +1448,12 @@ function ShortplayEntryPage() {
   // 剧本卡片数据状态
   const [scriptCards, setScriptCards] = useState<ScriptCardProps[]>([]);
 
-  // 音频数据状态
-  const [audioItems, setAudioItems] = useState([]);
+  // 音色数据状态
+  const [configuredVoices, setConfiguredVoices] = useState<any[]>([]);
+  const [availableVoices, setAvailableVoices] = useState<any[]>([]);
+  const [isConfiguredVoicesExpanded, setIsConfiguredVoicesExpanded] = useState(false);
+  const [isAvailableVoicesExpanded, setIsAvailableVoicesExpanded] = useState(false);
+  const [isLoadingVoices, setIsLoadingVoices] = useState(false);
 
   // 图片数据状态
   const [imageItems, setImageItems] = useState([]);
@@ -1290,16 +1495,56 @@ function ShortplayEntryPage() {
   );
 
   // 处理拖拽结束
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-      setAudioItems((items) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id);
-        const newIndex = items.findIndex((item) => item.id === over.id);
+      const oldItems = sceneContent;
+      const oldIndex = oldItems.findIndex((item) => item.id.toString() === active.id);
+      const newIndex = oldItems.findIndex((item) => item.id.toString() === over.id);
 
-        return arrayMove(items, oldIndex, newIndex);
-      });
+      if (oldIndex !== -1 && newIndex !== -1) {
+        // 先更新本地状态
+        const newItems = arrayMove(oldItems, oldIndex, newIndex);
+        setSceneContent(newItems);
+
+        // 调用API更新排序
+        try {
+          const token = localStorage.getItem('token');
+          const movedItem = oldItems[oldIndex];
+
+          // 计算新的orderNum：使用新位置的索引+1作为orderNum
+          const newOrderNum = newIndex + 1;
+
+          const response = await fetch(`${STORYAI_API_BASE}/scene/content`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Prompt-Manager-Token': token || '',
+            },
+            body: JSON.stringify({
+              id: movedItem.id,
+              orderNum: newOrderNum
+            })
+          });
+
+          if (!response.ok) {
+            throw new Error(`请求失败: ${response.status}`);
+          }
+
+          const result = await response.json();
+          if (result.code !== 0) {
+            throw new Error(result.message || '更新排序失败');
+          }
+
+          console.log('排序更新成功:', result);
+        } catch (error) {
+          console.error('更新排序失败:', error);
+          // API调用失败时，恢复原来的排序
+          setSceneContent(oldItems);
+          toast.error('排序更新失败：' + (error as Error).message);
+        }
+      }
     }
   };
 
@@ -1383,14 +1628,14 @@ function ShortplayEntryPage() {
           // 从本地状态中删除
           setSceneContent((items) => items.filter((item) => item.id !== id));
         } else {
-          alert('删除失败：' + (result.message || '未知错误'));
+          toast.error('删除失败：' + (result.message || '未知错误'));
         }
       } else {
         throw new Error(`请求失败: ${response.status}`);
       }
     } catch (error) {
       console.error('删除场次内容失败:', error);
-      alert('删除失败：' + (error as Error).message);
+      toast.error('删除失败：' + (error as Error).message);
     }
   };
 
@@ -1439,7 +1684,7 @@ function ShortplayEntryPage() {
 
           return true;
         } else {
-          alert('场次名称更新失败：' + (result.message || '未知错误'));
+          toast.error('场次名称更新失败：' + (result.message || '未知错误'));
           return false;
         }
       } else {
@@ -1447,7 +1692,7 @@ function ShortplayEntryPage() {
       }
     } catch (error) {
       console.error('更新场次名称失败:', error);
-      alert('场次名称更新失败：' + (error as Error).message);
+      toast.error('场次名称更新失败：' + (error as Error).message);
       return false;
     }
   };
@@ -1603,12 +1848,12 @@ function ShortplayEntryPage() {
     const endSeconds = parseInt(editingSceneEndMinutes) * 60 + parseInt(editingSceneEndSeconds);
 
     if (startSeconds >= endSeconds) {
-      alert('开始时间必须小于结束时间');
+      toast.error('开始时间必须小于结束时间');
       return;
     }
 
     if (!editingSceneContent.trim()) {
-      alert('请输入内容');
+      toast.error('请输入内容');
       return;
     }
 
@@ -1623,7 +1868,7 @@ function ShortplayEntryPage() {
       const sceneId = currentSceneData?.sceneId;
 
       if (isNewItem && !sceneId) {
-        alert('请先选择场次');
+        toast.error('请先选择场次');
         return;
       }
 
@@ -1704,14 +1949,14 @@ function ShortplayEntryPage() {
           setEditingSceneEndMinutes('');
           setEditingSceneEndSeconds('');
         } else {
-          alert('保存失败：' + (result.message || '未知错误'));
+          toast.error('保存失败：' + (result.message || '未知错误'));
         }
       } else {
         throw new Error(`请求失败: ${response.status}`);
       }
     } catch (error) {
       console.error('保存场次内容失败:', error);
-      alert('保存失败：' + (error as Error).message);
+      toast.error('保存失败：' + (error as Error).message);
     }
   };
 
@@ -1914,7 +2159,91 @@ function ShortplayEntryPage() {
   const totalTimeDisplay = `${totalMinutes.toString().padStart(2, '0')}:${totalSeconds.toString().padStart(2, '0')}`;
 
 
-  // 获取场次内容
+  // 获取音色列表
+  const loadVoiceList = async (status: number) => {
+    try {
+      const userStr = localStorage.getItem('user');
+      if (!userStr) return [];
+
+      const user = JSON.parse(userStr);
+      const userId = user.userId;
+      if (!userId) return [];
+
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${STORYAI_API_BASE}/voice/list`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Prompt-Manager-Token': token || '',
+        },
+        body: JSON.stringify({
+          userId: userId,
+          status: status
+        })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.code === 0 && result.data) {
+          return result.data;
+        }
+      }
+      return [];
+    } catch (error) {
+      console.error('获取音色列表失败:', error);
+      return [];
+    }
+  };
+
+  // 加载所有音色数据
+  const loadAllVoices = async () => {
+    setIsLoadingVoices(true);
+    try {
+      const [configured, available] = await Promise.all([
+        loadVoiceList(1), // 已设置的音色
+        loadVoiceList(2)  // 可用的音色
+      ]);
+      setConfiguredVoices(configured);
+      setAvailableVoices(available);
+    } finally {
+      setIsLoadingVoices(false);
+    }
+  };
+
+  // 应用音色到已设置列表
+  const handleApplyVoice = async (voiceId: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${STORYAI_API_BASE}/voice/update`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Prompt-Manager-Token': token || '',
+        },
+        body: JSON.stringify({
+          voiceId: voiceId,
+          status: 1
+        })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.code === 0) {
+          // 应用成功，刷新已设置的音色列表
+          const updatedConfigured = await loadVoiceList(1);
+          setConfiguredVoices(updatedConfigured);
+          toast.success('音色应用成功！');
+        } else {
+          throw new Error(result.message || '应用音色失败');
+        }
+      } else {
+        throw new Error(`请求失败: ${response.status}`);
+      }
+    } catch (error) {
+      console.error('应用音色失败:', error);
+      toast.error('应用音色失败：' + (error as Error).message);
+    }
+  };
   const loadSceneContent = async (sceneId: number) => {
     try {
       const token = localStorage.getItem('token');
@@ -1988,10 +2317,85 @@ function ShortplayEntryPage() {
     loadUserData();
   }, []);
 
-  // 一键生成API调用
+  // 音频tab切换时加载音色数据
+  React.useEffect(() => {
+    if (activeTab === 'audio') {
+      loadAllVoices();
+    }
+  }, [activeTab]);
+
+  // 音频生成API调用
+  const handleAudioGenerate = async () => {
+    if (!userInput.trim()) {
+      toast.error(t('shortplayEntry.input.description'));
+      return;
+    }
+
+    setIsGenerating(true);
+    setGenerationStatus('正在生成音频...');
+
+    try {
+      // 从localStorage获取user信息
+      const userStr = localStorage.getItem('user');
+      let userId = "";
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          userId = user.userId || "";
+        } catch (error) {
+          console.warn(t('shortplayEntry.input.userInfoParseError'), error);
+        }
+      }
+
+      if (!userId) {
+        toast.error('用户信息不完整，请重新登录');
+        return;
+      }
+
+      const token = localStorage.getItem('token');
+
+      const response = await fetch(`${STORYAI_API_BASE}/ai/voice/design`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Prompt-Manager-Token': token || '',
+        },
+        body: JSON.stringify({
+          prompt: userInput.trim(),
+          userId: userId
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`请求失败: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log('音频生成结果:', result);
+
+      if (result.code === 0) {
+        // 生成成功，刷新音频列表
+        setGenerationStatus('生成完成！');
+        setUserInput(''); // 清空输入
+
+        // 刷新音频列表（可用音色列表）
+        await loadAllVoices();
+
+        toast.success('音频生成完成！');
+      } else {
+        throw new Error(result.message || '音频生成失败');
+      }
+    } catch (error) {
+      console.error('音频生成失败:', error);
+      toast.error('音频生成失败：' + (error as Error).message);
+    } finally {
+      setIsGenerating(false);
+      setGenerationStatus('');
+    }
+  };
   const handleGenerate = async () => {
     if (!userInput.trim()) {
-      alert(t('shortplayEntry.input.description'));
+      toast.error(t('shortplayEntry.input.description'));
       return;
     }
 
@@ -2014,7 +2418,7 @@ function ShortplayEntryPage() {
       }
 
       if (!userId) {
-        alert('用户信息不完整，请重新登录');
+        toast.error('用户信息不完整，请重新登录');
         return;
       }
 
@@ -2088,7 +2492,7 @@ function ShortplayEntryPage() {
 
               setUserInput(''); // 清空输入
               setIsGenerating(false);
-              alert('剧本生成完成！');
+              toast.success('剧本生成完成！');
             } else if (status === 'PROCESSING') {
               // 继续轮询
               setGenerationStatus('正在生成剧本内容...');
@@ -2112,7 +2516,7 @@ function ShortplayEntryPage() {
 
     } catch (error) {
       console.error(t('shortplayEntry.input.generateFailed') + ':', error);
-      alert(t('shortplayEntry.input.generateFailed') + ': ' + (error as Error).message);
+      toast.error(t('shortplayEntry.input.generateFailed') + ': ' + (error as Error).message);
       setIsGenerating(false);
       setGenerationStatus('');
     }
@@ -2248,7 +2652,7 @@ function ShortplayEntryPage() {
                     <div className="space-y-3">
                       <div className="relative w-24">
                         <select className="w-full h-9 pl-3 pr-8 text-sm rounded-lg bg-white focus:outline-none appearance-none">
-                          <option value="dubbing">配音</option>
+                          <option value="voice">音色</option>
                           <option value="sound_effects">音效</option>
                         </select>
                         <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
@@ -2259,36 +2663,128 @@ function ShortplayEntryPage() {
                       </div>
 
                       {/* 已设置的配音人员 */}
-                      <div className="space-y-3">
-                        <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                          <div className="w-8 h-8 bg-amber-600 rounded-full flex items-center justify-center">
-                            <span className="text-xs text-white font-medium">楚</span>
-                          </div>
-                          <span className="text-sm text-gray-800">楚青</span>
-                          <div className="flex space-x-2 ml-auto">
-                            <button className="px-2 py-1 text-xs border border-gray-300 rounded text-gray-600">试听</button>
-                            <button className="px-2 py-1 text-xs border border-gray-300 rounded text-gray-600">删除</button>
-                          </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-gray-700">已设置的音色</span>
+                          <button
+                            onClick={() => setIsConfiguredVoicesExpanded(!isConfiguredVoicesExpanded)}
+                            className="p-1 hover:bg-gray-100 rounded"
+                          >
+                            <Icon
+                              icon={isConfiguredVoicesExpanded ? "ri:arrow-up-s-line" : "ri:arrow-down-s-line"}
+                              className="w-4 h-4 text-gray-400"
+                            />
+                          </button>
+                        </div>
+
+                        {/* 显示第一条或全部 */}
+                        <div className="space-y-2">
+                          {isLoadingVoices ? (
+                            <div className="flex items-center justify-center p-4 text-gray-500">
+                              <Icon icon="ri:loader-4-line" className="w-4 h-4 animate-spin mr-2" />
+                              加载中...
+                            </div>
+                          ) : (
+                            configuredVoices
+                              .slice(0, isConfiguredVoicesExpanded ? configuredVoices.length : 1)
+                              .map((voice, index) => (
+                                <div key={voice.voiceId} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                                  <div className="w-8 h-8 bg-amber-600 rounded-full flex items-center justify-center">
+                                    <span className="text-xs text-white font-medium">
+                                      {voice.voiceName?.charAt(0) || '音'}
+                                    </span>
+                                  </div>
+                                  <div className="flex-1">
+                                    <div className="text-sm text-gray-800">{voice.voiceName}</div>
+                                    {voice.voiceDescription && (
+                                      <div className="text-xs text-gray-500">{voice.voiceDescription}</div>
+                                    )}
+                                  </div>
+                                  <div className="flex space-x-2">
+                                    <button
+                                      className="px-2 py-1 text-xs border border-gray-300 rounded text-gray-600 hover:bg-gray-100"
+                                      onClick={() => {
+                                        if (voice.sampleAudioUrl) {
+                                          const audio = new Audio(voice.sampleAudioUrl);
+                                          audio.play();
+                                        }
+                                      }}
+                                    >
+                                      试听
+                                    </button>
+                                    <button className="px-2 py-1 text-xs border border-gray-300 rounded text-gray-600 hover:bg-gray-100">
+                                      删除
+                                    </button>
+                                  </div>
+                                </div>
+                              ))
+                          )}
                         </div>
                       </div>
 
                       {/* 音频文件列表 */}
                       <div className="space-y-2">
-                        <div className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg">
-                          <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                            <Icon icon="ri:music-2-line" className="w-4 h-4 text-white" />
-                          </div>
-                          <div className="flex-1">
-                            <div className="text-sm font-medium text-gray-800">清潮少年音.mp3</div>
-                          </div>
-                          <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
-                            <span className="text-xs text-white font-medium">男</span>
-                          </div>
-                          <Icon icon="ri:arrow-down-s-line" className="w-4 h-4 text-gray-400" />
-                          <div className="flex space-x-2">
-                            <button className="px-3 py-1 text-xs border border-blue-500 text-blue-500 rounded">播放</button>
-                            <button className="px-3 py-1 text-xs bg-blue-500 text-white rounded">应用</button>
-                          </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-gray-700">可用音色</span>
+                          <button
+                            onClick={() => setIsAvailableVoicesExpanded(!isAvailableVoicesExpanded)}
+                            className="p-1 hover:bg-gray-100 rounded"
+                          >
+                            <Icon
+                              icon={isAvailableVoicesExpanded ? "ri:arrow-up-s-line" : "ri:arrow-down-s-line"}
+                              className="w-4 h-4 text-gray-400"
+                            />
+                          </button>
+                        </div>
+
+                        <div className="space-y-2">
+                          {isLoadingVoices ? (
+                            <div className="flex items-center justify-center p-4 text-gray-500">
+                              <Icon icon="ri:loader-4-line" className="w-4 h-4 animate-spin mr-2" />
+                              加载中...
+                            </div>
+                          ) : (
+                            availableVoices
+                              .slice(0, isAvailableVoicesExpanded ? availableVoices.length : 1)
+                              .map((voice, index) => (
+                                <div key={voice.voiceId} className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg">
+                                  <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                                    <Icon icon="ri:music-2-line" className="w-4 h-4 text-white" />
+                                  </div>
+                                  <div className="flex-1">
+                                    <div className="text-sm font-medium text-gray-800">{voice.voiceName}</div>
+                                    {voice.voiceDescription && (
+                                      <div className="text-xs text-gray-500">{voice.voiceDescription}</div>
+                                    )}
+                                  </div>
+                                  <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+                                    <span className="text-xs text-white font-medium">
+                                      {voice.voiceSource === 'CUSTOM' ? '定' : '系'}
+                                    </span>
+                                  </div>
+                                  <Icon icon="ri:arrow-down-s-line" className="w-4 h-4 text-gray-400" />
+                                  <div className="flex space-x-2">
+                                    <button
+                                      className="px-3 py-1 text-xs border border-blue-500 text-blue-500 rounded hover:bg-blue-50"
+                                      onClick={() => {
+                                        if (voice.sampleAudioUrl) {
+                                          const audio = new Audio(voice.sampleAudioUrl);
+                                          audio.play();
+                                        }
+                                      }}
+                                    >
+                                      播放
+                                    </button>
+                                    <button
+                                      className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+                                      onClick={() => handleApplyVoice(voice.voiceId)}
+                                    >
+                                      应用
+                                    </button>
+                                  </div>
+                                </div>
+                              ))
+                          )}
                         </div>
                       </div>
                     </div>
@@ -2356,7 +2852,7 @@ function ShortplayEntryPage() {
                 userInput={userInput}
                 onInputChange={setUserInput}
                 isGenerating={isGenerating}
-                onGenerate={handleGenerate}
+                onGenerate={activeTab === 'audio' ? handleAudioGenerate : handleGenerate}
                 placeholder={t('shortplayEntry.input.placeholder')}
                 generationStatus={generationStatus}
                 voiceType={voiceType}
@@ -2413,143 +2909,51 @@ function ShortplayEntryPage() {
               return false;
             }}
             onOptionsChange={(options) => setSceneOptions(options)}
-            onAddClick={activeTab === 'script' ? handleStartAddNewItem : undefined}
+            onAddClick={activeTab === 'script' || activeTab === 'audio' ? handleStartAddNewItem : undefined}
           />
 
           {/* 剧本内容区域 */}
           <div className="flex-grow p-4 overflow-auto min-h-0 h-96">
             {activeTab === 'script' && (
-              <div className="space-y-2">{sceneContent.length > 0 ? (
-                  sceneContent.map((item) => (
-                    <div
-                      key={item.id}
-                      className="p-3 bg-white border border-gray-200 rounded-lg"
-                    >
-                      {editingSceneItemId === item.id ? (
-                        // 编辑模式
-                        <div className="space-y-3">
-                          {/* 类型选择和时间输入 */}
-                          <div className="flex items-center space-x-2">
-                            <select
-                              value={editingSceneType}
-                              onChange={(e) => setEditingSceneType(parseInt(e.target.value))}
-                              className="px-2 py-1 text-xs rounded border border-gray-300"
-                            >
-                              <option value={0}>画面</option>
-                              <option value={1}>对话</option>
-                            </select>
-                            <TimeRangeInput
-                              startMinutes={editingSceneStartMinutes}
-                              startSeconds={editingSceneStartSeconds}
-                              endMinutes={editingSceneEndMinutes}
-                              endSeconds={editingSceneEndSeconds}
-                              onStartMinutesChange={setEditingSceneStartMinutes}
-                              onStartSecondsChange={setEditingSceneStartSeconds}
-                              onEndMinutesChange={setEditingSceneEndMinutes}
-                              onEndSecondsChange={setEditingSceneEndSeconds}
-                            />
-                            {editingSceneType === 1 && (
-                              <input
-                                type="text"
-                                value={editingSceneRoleName}
-                                onChange={(e) => setEditingSceneRoleName(e.target.value)}
-                                className="px-2 py-1 text-xs border border-gray-300 rounded"
-                                placeholder="角色名称"
-                              />
-                            )}
-                          </div>
-
-                          {/* 编辑内容输入 */}
-                          <textarea
-                            value={editingSceneContent}
-                            onChange={(e) => setEditingSceneContent(e.target.value)}
-                            className="w-full p-2 text-sm border border-gray-300 rounded resize-none"
-                            rows={3}
-                            placeholder="输入内容..."
-                          />
-
-                          {/* 编辑操作按钮 */}
-                          <div className="flex items-center space-x-2">
-                            <button
-                              onClick={handleSaveSceneItem}
-                              className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
-                            >
-                              保存
-                            </button>
-                            <button
-                              onClick={handleCancelEditSceneItem}
-                              className="px-3 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600"
-                            >
-                              取消
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        // 显示模式
-                        <>
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center space-x-2">
-                              <span className={`px-2 py-1 text-xs rounded ${
-                                item.type === 0
-                                  ? 'bg-blue-100 text-blue-800'
-                                  : 'bg-green-100 text-green-800'
-                              }`}>
-                                {item.type === 0 ? '画面' : '对话'}
-                              </span>
-                              <span className="text-sm text-gray-500">
-                                {item.startTime} - {item.endTime}
-                              </span>
-                              {item.roleName && (
-                                <span className="text-sm text-purple-600 font-medium">
-                                  {item.roleName}
-                                </span>
-                              )}
-                            </div>
-                            <div className="flex items-center space-x-1">
-                              <Icon
-                                icon="ri:edit-line"
-                                className="w-4 h-4 text-gray-400 cursor-pointer hover:text-blue-500"
-                                onClick={() => handleEditSceneItem(item)}
-                              />
-                              <Icon
-                                icon="ri:delete-bin-line"
-                                className="w-4 h-4 text-gray-400 cursor-pointer hover:text-red-500"
-                                onClick={() => handleShowDeleteConfirm(item.id)}
-                              />
-                            </div>
-                          </div>
-                          <div className="text-sm text-gray-800">
-                            {item.content}
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  ))
-                ) : (
-                  <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    onDragEnd={handleScriptDragEnd}
-                  >
-                    <SortableContext
-                      items={scriptCards.map(item => item.id)}
-                      strategy={verticalListSortingStrategy}
-                    >
-                      <div className="space-y-4">
-                        {scriptCards.map((item) => (
-                          <SortableScriptCard
-                            key={item.id}
-                            item={{
-                              ...item,
-                              onDelete: handleDeleteScriptCard
-                            }}
-                          />
-                        ))}
-                      </div>
-                    </SortableContext>
-                  </DndContext>
-                )}
-              </div>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={sceneContent.map(item => item.id.toString())}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="space-y-2">
+                    {sceneContent.map((item) => (
+                      <SortableScriptItem
+                        key={item.id}
+                        item={item}
+                        editingSceneItemId={editingSceneItemId}
+                        editingSceneType={editingSceneType}
+                        editingSceneContent={editingSceneContent}
+                        editingSceneRoleName={editingSceneRoleName}
+                        editingSceneStartMinutes={editingSceneStartMinutes}
+                        editingSceneStartSeconds={editingSceneStartSeconds}
+                        editingSceneEndMinutes={editingSceneEndMinutes}
+                        editingSceneEndSeconds={editingSceneEndSeconds}
+                        onEditingSceneTypeChange={setEditingSceneType}
+                        onEditingSceneContentChange={setEditingSceneContent}
+                        onEditingSceneRoleNameChange={setEditingSceneRoleName}
+                        onEditingSceneStartMinutesChange={setEditingSceneStartMinutes}
+                        onEditingSceneStartSecondsChange={setEditingSceneStartSeconds}
+                        onEditingSceneEndMinutesChange={setEditingSceneEndMinutes}
+                        onEditingSceneEndSecondsChange={setEditingSceneEndSeconds}
+                        onEditSceneItem={handleEditSceneItem}
+                        onSaveSceneItem={handleSaveSceneItem}
+                        onCancelEditSceneItem={handleCancelEditSceneItem}
+                        onShowDeleteConfirm={handleShowDeleteConfirm}
+                        TimeRangeInput={TimeRangeInput}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
             )}
 
             {activeTab === 'audio' && (
@@ -2559,12 +2963,22 @@ function ShortplayEntryPage() {
                 onDragEnd={handleDragEnd}
               >
                 <SortableContext
-                  items={audioItems.map(item => item.id)}
+                  items={sceneContent.map(item => item.id.toString())}
                   strategy={verticalListSortingStrategy}
                 >
                   <div className="space-y-4">
-                    {audioItems.map((item) => (
-                      <SortableAudioItem key={item.id} item={item} />
+                    {sceneContent.map((item) => (
+                      <SortableAudioItem
+                        key={item.id}
+                        item={{
+                          id: item.id.toString(),
+                          type: item.type === 1 ? 'voice' : 'sound',
+                          speaker: item.roleName || (item.type === 1 ? '对话' : '音效'),
+                          content: item.content,
+                          timeRange: `${item.startTime}-${item.endTime}`,
+                          icon: item.type === 1 ? 'ri:user-voice-line' : 'ri:music-2-line'
+                        }}
+                      />
                     ))}
                   </div>
                 </SortableContext>

@@ -1161,6 +1161,184 @@ function VideoItemComponent({
   );
 }
 
+// 可排序的分镜板项组件
+interface SortableStoryboardItemProps {
+  item: any;
+  index: number;
+  editingTimeId: string | null;
+  editingStartMinutes: string;
+  editingStartSeconds: string;
+  editingEndMinutes: string;
+  editingEndSeconds: string;
+  onEditingStartMinutesChange: (value: string) => void;
+  onEditingStartSecondsChange: (value: string) => void;
+  onEditingEndMinutesChange: (value: string) => void;
+  onEditingEndSecondsChange: (value: string) => void;
+  onStartEditTime: (itemId: string, timeRange: string) => void;
+  onSaveTimeEdit: (itemId: string) => void;
+  onCancelTimeEdit: () => void;
+  TimeRangeInput: React.ComponentType<any>;
+}
+
+function SortableStoryboardItem({
+  item,
+  index,
+  editingTimeId,
+  editingStartMinutes,
+  editingStartSeconds,
+  editingEndMinutes,
+  editingEndSeconds,
+  onEditingStartMinutesChange,
+  onEditingStartSecondsChange,
+  onEditingEndMinutesChange,
+  onEditingEndSecondsChange,
+  onStartEditTime,
+  onSaveTimeEdit,
+  onCancelTimeEdit,
+  TimeRangeInput,
+}: SortableStoryboardItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.id.toString() });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    WebkitFontSmoothing: 'antialiased',
+    MozOsxFontSmoothing: 'grayscale',
+    willChange: isDragging ? 'transform' : 'auto',
+    backfaceVisibility: 'hidden',
+    transformStyle: 'preserve-3d',
+    width: isDragging ? '100%' : 'auto',
+    zIndex: isDragging ? 1000 : 'auto',
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      className={`bg-white rounded-lg border border-gray-200 p-3 flex items-stretch space-x-3 min-h-[100px] transition-all ${
+        isDragging ? 'shadow-lg z-10' : ''
+      }`}
+    >
+      {/* 序号和操作按钮列 */}
+      <div className="flex flex-col justify-between items-center h-full min-w-[20px]">
+        <div className="text-lg font-medium text-blue-600">
+          {item.storyboardOrder || index + 1}
+        </div>
+        <div className="flex flex-col items-center space-y-1">
+          <div
+            {...listeners}
+            className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-100 rounded"
+            title="拖拽排序"
+          >
+            <Icon icon="ri:drag-move-2-line" className="w-4 h-4 text-gray-400" />
+          </div>
+          <button className="p-1 hover:bg-gray-100 rounded">
+            <Icon icon="ri:add-circle-line" className="w-4 h-4 text-gray-400" />
+          </button>
+          <button
+            className="p-1 hover:bg-gray-100 rounded"
+            onClick={() => {
+              toast.success('删除功能待实现');
+            }}
+          >
+            <Icon icon="ri:delete-bin-line" className="w-4 h-4 text-gray-400 hover:text-red-500" />
+          </button>
+        </div>
+      </div>
+
+      {/* 图片缩略图 */}
+      <div className="w-20 h-20 bg-gray-200 rounded-lg flex-shrink-0 overflow-hidden">
+        {item.fileUrl ? (
+          <img
+            src={item.fileUrl}
+            alt={item.fileName || '分镜图片'}
+            className="w-full h-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+            }}
+            onClick={() => {
+              window.open(item.fileUrl, '_blank');
+            }}
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-purple-200 via-pink-200 to-blue-200 flex items-center justify-center">
+            <Icon icon="ri:image-line" className="w-8 h-8 text-white" />
+          </div>
+        )}
+      </div>
+
+      {/* 内容区域 */}
+      <div className="flex-1 min-w-0 flex space-x-4">
+        {/* 左侧：描述 */}
+        <div className="flex-1 text-sm text-gray-800 leading-relaxed">
+          分镜板 #{item.storyboardOrder || index + 1}
+          {item.description && (
+            <div className="text-xs text-gray-600 mt-1">{item.description}</div>
+          )}
+        </div>
+        {/* 右侧：参数和时间 */}
+        <div className="flex-1 flex flex-col justify-between">
+          <div className="text-xs text-gray-500 leading-relaxed">
+            文件ID: {item.fileId}
+            {item.fileName && (
+              <div>文件名: {item.fileName}</div>
+            )}
+          </div>
+          <div className="flex items-center space-x-2">
+            {editingTimeId === item.id ? (
+              <div className="flex items-center space-x-1">
+                <TimeRangeInput
+                  startMinutes={editingStartMinutes}
+                  startSeconds={editingStartSeconds}
+                  endMinutes={editingEndMinutes}
+                  endSeconds={editingEndSeconds}
+                  onStartMinutesChange={onEditingStartMinutesChange}
+                  onStartSecondsChange={onEditingStartSecondsChange}
+                  onEndMinutesChange={onEditingEndMinutesChange}
+                  onEndSecondsChange={onEditingEndSecondsChange}
+                />
+                <button
+                  onClick={() => onSaveTimeEdit(item.id)}
+                  className="text-green-600 hover:text-green-800 ml-1 p-0 border-0 bg-transparent outline-none cursor-pointer"
+                >
+                  <Icon icon="ri:check-line" className="w-3 h-3" />
+                </button>
+                <button
+                  onClick={onCancelTimeEdit}
+                  className="text-red-600 hover:text-red-800 p-0 border-0 bg-transparent outline-none cursor-pointer"
+                >
+                  <Icon icon="ri:close-line" className="w-3 h-3" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-1 text-xs text-gray-400">
+                <span>00:00</span>
+                <span>-</span>
+                <span>00:05</span>
+                <button
+                  onClick={() => onStartEditTime(item.id, "00:00'-00:05'")}
+                  className="text-gray-400 hover:text-blue-600 ml-1 p-0 border-0 bg-transparent outline-none cursor-pointer"
+                >
+                  <Icon icon="ri:edit-line" className="w-3 h-3" />
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // 可排序的视频项组件
 interface SortableVideoItemProps {
   item: VideoItem;
@@ -1480,8 +1658,140 @@ function ShortplayEntryPage() {
   const [bgmList, setBgmList] = useState<any[]>([]);
   const [isLoadingBgm, setIsLoadingBgm] = useState(false);
 
+  // 图片聊天记录数据状态
+  const [imageChatHistory, setImageChatHistory] = useState<any[]>([]);
+  const [isLoadingImageHistory, setIsLoadingImageHistory] = useState<boolean>(false);
+
+  // 加载图片聊天记录
+  const loadImageChatHistory = async () => {
+    // 获取当前选中场次的sceneId
+    const currentSceneData = scenesData.find((scene: any) => scene.sceneName === selectedScene);
+    const sceneId = currentSceneData?.sceneId;
+
+    if (!sceneId) {
+      console.log('No scene selected, skipping image chat history load');
+      return;
+    }
+
+    setIsLoadingImageHistory(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${STORYAI_API_BASE}/chat-history/query`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Prompt-Manager-Token': token || '',
+        },
+        body: JSON.stringify({
+          sceneId: sceneId.toString(),
+          chatScene: "IMAGE",
+          type: "AI_ANSWER",
+          pageNum: 1,
+          pageSize: 24
+        })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.code === 0 && result.data) {
+          setImageChatHistory(result.data.records || result.data || []);
+        }
+      }
+    } catch (error) {
+      console.error('加载图片聊天记录失败:', error);
+    } finally {
+      setIsLoadingImageHistory(false);
+    }
+  };
+
   // 图片数据状态
   const [imageItems, setImageItems] = useState([]);
+
+  // 图片分镜板数据状态
+  const [storyboardItems, setStoryboardItems] = useState<any[]>([]);
+  const [isLoadingStoryboard, setIsLoadingStoryboard] = useState<boolean>(false);
+
+  // 加载分镜板列表
+  const loadStoryboardList = async () => {
+    // 获取当前选中场次的sceneId
+    const currentSceneData = scenesData.find((scene: any) => scene.sceneName === selectedScene);
+    const sceneId = currentSceneData?.sceneId;
+
+    if (!sceneId) {
+      console.log('No scene selected, skipping storyboard list load');
+      return;
+    }
+
+    setIsLoadingStoryboard(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${STORYAI_API_BASE}/storyboard/list?sceneId=${sceneId}`, {
+        method: 'GET',
+        headers: {
+          'X-Prompt-Manager-Token': token || '',
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.code === 0 && result.data) {
+          setStoryboardItems(result.data || []);
+        }
+      }
+    } catch (error) {
+      console.error('加载分镜板列表失败:', error);
+    } finally {
+      setIsLoadingStoryboard(false);
+    }
+  };
+
+  // 创建分镜板
+  const handleCreateStoryboard = async (fileId: string, fileName: string) => {
+    // 获取当前选中场次的sceneId
+    const currentSceneData = scenesData.find((scene: any) => scene.sceneName === selectedScene);
+    const sceneId = currentSceneData?.sceneId;
+
+    if (!sceneId) {
+      toast.error('请先选择场次');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+
+      // 计算下一个排序号 (当前列表长度 + 1)
+      const storyboardOrder = storyboardItems.length + 1;
+
+      const response = await fetch(`${STORYAI_API_BASE}/storyboard/create`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Prompt-Manager-Token': token || '',
+        },
+        body: JSON.stringify({
+          sceneId: sceneId,
+          storyboardOrder: storyboardOrder,
+          fileId: fileId
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`请求失败: ${response.status}`);
+      }
+
+      const result = await response.json();
+      if (result.code === 0) {
+        toast.success(`已应用图片: ${fileName}`);
+        // 刷新分镜板列表
+        await loadStoryboardList();
+      } else {
+        throw new Error(result.message || '应用图片失败');
+      }
+    } catch (error) {
+      console.error('创建分镜板失败:', error);
+      toast.error('应用图片失败：' + (error as Error).message);
+    }
+  };
 
   // 编辑时间状态
   const [editingTimeId, setEditingTimeId] = useState<string | null>(null);
@@ -1584,6 +1894,41 @@ function ShortplayEntryPage() {
 
         return arrayMove(items, oldIndex, newIndex);
       });
+    }
+  };
+
+  // 分镜板拖拽处理
+  const handleStoryboardDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldItems = storyboardItems;
+      const oldIndex = oldItems.findIndex((item) => item.id.toString() === active.id);
+      const newIndex = oldItems.findIndex((item) => item.id.toString() === over.id);
+
+      if (oldIndex !== -1 && newIndex !== -1) {
+        // 先更新本地状态
+        const newItems = arrayMove(oldItems, oldIndex, newIndex);
+        setStoryboardItems(newItems);
+
+        // 这里可以调用API更新分镜板排序
+        try {
+          const token = localStorage.getItem('token');
+          const movedItem = oldItems[oldIndex];
+
+          // 计算新的storyboardOrder：使用新位置的索引+1作为storyboardOrder
+          const newStoryboardOrder = newIndex + 1;
+
+          // 可以在这里添加API调用来更新排序
+          console.log(`移动分镜板 ${movedItem.id} 到位置 ${newStoryboardOrder}`);
+          toast.success('分镜板排序已更新！');
+        } catch (error) {
+          console.error('更新分镜板排序失败:', error);
+          // API调用失败时，恢复原来的排序
+          setStoryboardItems(oldItems);
+          toast.error('排序更新失败：' + (error as Error).message);
+        }
+      }
     }
   };
 
@@ -2404,6 +2749,67 @@ function ShortplayEntryPage() {
     }
   };
 
+  // 图片生成API调用
+  const handleImageGenerate = async () => {
+    if (!userInput.trim()) {
+      toast.error(t('shortplayEntry.input.description'));
+      return;
+    }
+
+    // 获取当前选中场次的sceneId
+    const currentSceneData = scenesData.find((scene: any) => scene.sceneName === selectedScene);
+    const sceneId = currentSceneData?.sceneId;
+
+    if (!sceneId) {
+      toast.error('请先选择场次');
+      return;
+    }
+
+    setIsGenerating(true);
+    setGenerationStatus('正在生成图片...');
+
+    try {
+      const token = localStorage.getItem('token');
+
+      const response = await fetch(`${STORYAI_API_BASE}/ai/image/generate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Prompt-Manager-Token': token || '',
+        },
+        body: JSON.stringify({
+          sceneId: sceneId,
+          userInput: userInput.trim()
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`请求失败: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log('图片生成结果:', result);
+
+      if (result.code === 0) {
+        setGenerationStatus('生成完成！');
+        setUserInput(''); // 清空输入
+
+        // 刷新图片聊天记录列表
+        await loadImageChatHistory();
+
+        toast.success('图片生成完成！');
+      } else {
+        throw new Error(result.message || '图片生成失败');
+      }
+    } catch (error) {
+      console.error('图片生成失败:', error);
+      toast.error('图片生成失败：' + (error as Error).message);
+    } finally {
+      setIsGenerating(false);
+      setGenerationStatus('');
+    }
+  };
+
   // 音效生成API调用
   const handleBgmGenerate = async () => {
     if (!userInput.trim()) {
@@ -2494,8 +2900,15 @@ function ShortplayEntryPage() {
     }
   };
 
+  // 用户数据加载状态
+  const [isLoadingUserData, setIsLoadingUserData] = useState<boolean>(false);
+
   // 获取用户历史数据
   const loadUserData = async () => {
+    // 防止重复调用
+    if (isLoadingUserData) return;
+    setIsLoadingUserData(true);
+
     try {
       const userStr = localStorage.getItem('user');
       if (!userStr) return;
@@ -2537,6 +2950,8 @@ function ShortplayEntryPage() {
       }
     } catch (error) {
       console.error('加载用户历史数据失败:', error);
+    } finally {
+      setIsLoadingUserData(false);
     }
   };
 
@@ -2553,8 +2968,11 @@ function ShortplayEntryPage() {
       } else {
         loadBgmList();
       }
+    } else if (activeTab === 'image') {
+      loadImageChatHistory();
+      loadStoryboardList();
     }
-  }, [activeTab, audioType]);
+  }, [activeTab, audioType, selectedScene]);
 
   // 音频生成API调用
   const handleAudioGenerate = async () => {
@@ -3134,26 +3552,129 @@ function ShortplayEntryPage() {
 
                 {activeTab === 'image' && (
                   <div className="space-y-4">
-                    {/* 分镜选择区域 */}
+                    {/* 图片聊天记录内容区域 */}
                     <div className="space-y-3">
-                      <div className="relative w-24">
-                        <select className="w-full h-9 pl-3 pr-8 text-sm rounded-lg bg-white focus:outline-none appearance-none">
-                          <option value="shot1">分镜1</option>
-                          <option value="shot2">分镜2</option>
-                          <option value="shot3">分镜3</option>
-                          <option value="shot4">分镜4</option>
-                        </select>
-                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                          <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M1 1L6 6L11 1" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
+                      {isLoadingImageHistory ? (
+                        <div className="flex items-center justify-center p-4 text-gray-500">
+                          <Icon icon="ri:loader-4-line" className="w-4 h-4 animate-spin mr-2" />
+                          加载中...
                         </div>
-                      </div>
-                    </div>
+                      ) : imageChatHistory.length > 0 ? (
+                        (() => {
+                          // 将所有records的files合并成一个数组
+                          const allFiles: any[] = [];
+                          imageChatHistory.forEach((item, itemIndex) => {
+                            if (item.files && item.files.length > 0) {
+                              item.files.forEach((file: any) => {
+                                if (file.fileType === 'IMAGE' && file.downloadUrl) {
+                                  allFiles.push({
+                                    ...file,
+                                    recordIndex: itemIndex,
+                                    recordContent: item.content || item.message || '图片内容',
+                                    createTime: item.createTime
+                                  });
+                                }
+                              });
+                            } else if (item.imageUrl) {
+                              // 兼容旧格式
+                              allFiles.push({
+                                downloadUrl: item.imageUrl,
+                                fileName: '生成的图片',
+                                fileType: 'IMAGE',
+                                recordIndex: itemIndex,
+                                recordContent: item.content || item.message || '图片内容',
+                                createTime: item.createTime
+                              });
+                            }
+                          });
 
-                    {/* 图片功能内容区域 */}
-                    <div className="flex items-center justify-center h-full text-gray-500">
-                      <span>图片功能开发中...</span>
+                          return (
+                            <div className="space-y-3">
+                              {allFiles.map((file, index) => (
+                                <div key={`file-${file.fileId || index}`} className="bg-white rounded-lg border border-gray-200 p-3">
+                                  <div className="flex items-start space-x-3">
+                                    {/* 序号 */}
+                                    <div className="text-sm font-medium text-blue-600 min-w-[20px]">
+                                      {index + 1}
+                                    </div>
+
+                                    {/* 图片缩略图 */}
+                                    <div className="w-16 h-16 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
+                                      <img
+                                        src={file.downloadUrl}
+                                        alt={file.fileName || '生成的图片'}
+                                        className="w-full h-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                                        onError={(e) => {
+                                          e.currentTarget.style.display = 'none';
+                                        }}
+                                        onClick={() => {
+                                          window.open(file.downloadUrl, '_blank');
+                                        }}
+                                      />
+                                    </div>
+
+                                    {/* 内容信息 */}
+                                    <div className="flex-1 min-w-0">
+                                      <div className="text-sm text-gray-800 mb-1">
+                                        {file.recordContent}
+                                      </div>
+                                      <div className="text-xs text-gray-500 mb-1">
+                                        文件名: {file.fileName}
+                                      </div>
+                                      <div className="text-xs text-gray-400">
+                                        来源记录: #{file.recordIndex + 1}
+                                        {file.createTime && (
+                                          <span className="ml-2">
+                                            {new Date(file.createTime).toLocaleString()}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    {/* 操作按钮 */}
+                                    <div className="flex items-center space-x-2">
+                                      <button
+                                        onClick={() => window.open(file.downloadUrl, '_blank')}
+                                        className="p-1 hover:bg-gray-100 rounded"
+                                        title="查看原图"
+                                      >
+                                        <Icon icon="ri:eye-line" className="w-4 h-4 text-gray-400 hover:text-blue-500" />
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          const link = document.createElement('a');
+                                          link.href = file.downloadUrl;
+                                          link.download = file.fileName || '图片';
+                                          document.body.appendChild(link);
+                                          link.click();
+                                          document.body.removeChild(link);
+                                        }}
+                                        className="p-1 hover:bg-gray-100 rounded"
+                                        title="下载图片"
+                                      >
+                                        <Icon icon="ri:download-line" className="w-4 h-4 text-gray-400 hover:text-green-500" />
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          handleCreateStoryboard(file.fileId, file.fileName);
+                                        }}
+                                        className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                                        title="应用此图片"
+                                      >
+                                        应用
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        })()
+                      ) : (
+                        <div className="text-center text-gray-500 py-8">
+                          暂无图片记录
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -3196,6 +3717,8 @@ function ShortplayEntryPage() {
                 onGenerate={
                   activeTab === 'audio'
                     ? (audioType === 'voice' ? handleAudioGenerate : handleBgmGenerate)
+                    : activeTab === 'image'
+                    ? handleImageGenerate
                     : handleGenerate
                 }
                 placeholder={t('shortplayEntry.input.placeholder')}
@@ -3228,10 +3751,11 @@ function ShortplayEntryPage() {
             subtitle={
               activeTab === 'script' ? selectedScene :
               activeTab === 'audio' ? selectedScene :
+              activeTab === 'image' ? selectedScene :
               undefined
             }
             subtitleOptions={
-              activeTab === 'script' || activeTab === 'audio' ? sceneOptions : undefined
+              activeTab === 'script' || activeTab === 'audio' || activeTab === 'image' ? sceneOptions : undefined
             }
             onSubtitleChange={(value) => {
               // 处理从下拉列表选择场次的情况
@@ -3239,6 +3763,10 @@ function ShortplayEntryPage() {
               const selectedSceneData = scenesData.find((scene: any) => scene.sceneName === value);
               if (selectedSceneData?.sceneId) {
                 loadSceneContent(selectedSceneData.sceneId);
+                if (activeTab === 'image') {
+                  loadImageChatHistory();
+                  loadStoryboardList();
+                }
               }
             }}
             onSubtitleEdit={async (value) => {
@@ -3254,7 +3782,9 @@ function ShortplayEntryPage() {
               return false;
             }}
             onOptionsChange={(options) => setSceneOptions(options)}
-            onAddClick={activeTab === 'script' || activeTab === 'audio' ? handleStartAddNewItem : undefined}
+            onAddClick={
+              activeTab === 'script' || activeTab === 'audio' ? handleStartAddNewItem : undefined
+            }
           />
 
           {/* 剧本内容区域 */}
@@ -3337,33 +3867,44 @@ function ShortplayEntryPage() {
               <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
-                onDragEnd={handleImageDragEnd}
+                onDragEnd={handleStoryboardDragEnd}
               >
                 <SortableContext
-                  items={imageItems.map(item => item.id)}
+                  items={storyboardItems.map(item => item.id.toString())}
                   strategy={verticalListSortingStrategy}
                 >
                   <div className="space-y-3">
-                    {imageItems.map((item, index) => (
-                      <SortableImageItem
-                        key={item.id}
-                        item={item}
-                        index={index}
-                        editingTimeId={editingTimeId}
-                        editingStartMinutes={editingStartMinutes}
-                        editingStartSeconds={editingStartSeconds}
-                        editingEndMinutes={editingEndMinutes}
-                        editingEndSeconds={editingEndSeconds}
-                        onEditingStartMinutesChange={setEditingStartMinutes}
-                        onEditingStartSecondsChange={setEditingStartSeconds}
-                        onEditingEndMinutesChange={setEditingEndMinutes}
-                        onEditingEndSecondsChange={setEditingEndSeconds}
-                        onStartEditTime={startEditTime}
-                        onSaveTimeEdit={(itemId) => saveTimeEdit(itemId, true)}
-                        onCancelTimeEdit={cancelTimeEdit}
-                        parseTimeRange={parseTimeRange}
-                      />
-                    ))}
+                    {isLoadingStoryboard ? (
+                      <div className="flex items-center justify-center p-4 text-gray-500">
+                        <Icon icon="ri:loader-4-line" className="w-4 h-4 animate-spin mr-2" />
+                        加载中...
+                      </div>
+                    ) : storyboardItems.length > 0 ? (
+                      storyboardItems.map((item, index) => (
+                        <SortableStoryboardItem
+                          key={item.id}
+                          item={item}
+                          index={index}
+                          editingTimeId={editingTimeId}
+                          editingStartMinutes={editingStartMinutes}
+                          editingStartSeconds={editingStartSeconds}
+                          editingEndMinutes={editingEndMinutes}
+                          editingEndSeconds={editingEndSeconds}
+                          onEditingStartMinutesChange={setEditingStartMinutes}
+                          onEditingStartSecondsChange={setEditingStartSeconds}
+                          onEditingEndMinutesChange={setEditingEndMinutes}
+                          onEditingEndSecondsChange={setEditingEndSeconds}
+                          onStartEditTime={startEditTime}
+                          onSaveTimeEdit={(itemId) => saveTimeEdit(itemId, true)}
+                          onCancelTimeEdit={cancelTimeEdit}
+                          TimeRangeInput={TimeRangeInput}
+                        />
+                      ))
+                    ) : (
+                      <div className="text-center text-gray-500 py-8">
+                        暂无分镜板数据
+                      </div>
+                    )}
                   </div>
                 </SortableContext>
               </DndContext>

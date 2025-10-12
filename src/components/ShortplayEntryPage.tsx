@@ -40,9 +40,12 @@ interface AudioItem {
 
 interface SortableAudioItemProps {
   item: AudioItem;
+  audioType: 'voice' | 'sound';
+  configuredVoices: any[];
+  onVoiceSelect?: (itemId: string, voiceId: string) => void;
 }
 
-function SortableAudioItem({ item }: SortableAudioItemProps) {
+function SortableAudioItem({ item, audioType, configuredVoices, onVoiceSelect }: SortableAudioItemProps) {
   const {
     attributes,
     listeners,
@@ -94,8 +97,21 @@ function SortableAudioItem({ item }: SortableAudioItemProps) {
         </div>
         <div className="flex items-center space-x-2">
           <span className="text-sm font-medium text-gray-800">{item.speaker}</span>
-          {item.type === 'voice' && (
-            <Icon icon="ri:arrow-down-s-line" className="w-4 h-4 text-gray-400" />
+          {item.type === 'voice' && audioType === 'voice' && (
+            <div className="relative">
+              <select
+                className="text-xs border border-gray-300 rounded px-2 py-1 bg-white focus:outline-none focus:border-blue-500"
+                onChange={(e) => onVoiceSelect?.(item.id, e.target.value)}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <option value="">选择音色</option>
+                {configuredVoices.map((voice) => (
+                  <option key={voice.voiceId} value={voice.voiceId}>
+                    {voice.voiceName}
+                  </option>
+                ))}
+              </select>
+            </div>
           )}
         </div>
         <div className="flex-1 text-sm text-gray-600">{item.content}</div>
@@ -1454,6 +1470,15 @@ function ShortplayEntryPage() {
   const [isConfiguredVoicesExpanded, setIsConfiguredVoicesExpanded] = useState(false);
   const [isAvailableVoicesExpanded, setIsAvailableVoicesExpanded] = useState(false);
   const [isLoadingVoices, setIsLoadingVoices] = useState(false);
+  const [editingVoiceId, setEditingVoiceId] = useState<string | null>(null);
+  const [editingVoiceName, setEditingVoiceName] = useState<string>('');
+
+  // 音频类型选择状态（音色/音效）
+  const [audioType, setAudioType] = useState<'voice' | 'sound'>('voice');
+
+  // 音效数据状态
+  const [bgmList, setBgmList] = useState<any[]>([]);
+  const [isLoadingBgm, setIsLoadingBgm] = useState(false);
 
   // 图片数据状态
   const [imageItems, setImageItems] = useState([]);
@@ -2244,6 +2269,209 @@ function ShortplayEntryPage() {
       toast.error('应用音色失败：' + (error as Error).message);
     }
   };
+
+  // 开始编辑音色名称
+  const handleStartEditVoiceName = (voiceId: string, currentName: string) => {
+    setEditingVoiceId(voiceId);
+    setEditingVoiceName(currentName);
+  };
+
+  // 保存音色名称修改
+  const handleSaveVoiceName = async () => {
+    if (!editingVoiceId || !editingVoiceName.trim()) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${STORYAI_API_BASE}/voice/update`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Prompt-Manager-Token': token || '',
+        },
+        body: JSON.stringify({
+          voiceId: editingVoiceId,
+          voiceName: editingVoiceName.trim()
+        })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.code === 0) {
+          // 更新成功，刷新音色列表
+          await loadAllVoices();
+          toast.success('音色名称更新成功！');
+        } else {
+          throw new Error(result.message || '更新音色名称失败');
+        }
+      } else {
+        throw new Error(`请求失败: ${response.status}`);
+      }
+    } catch (error) {
+      console.error('更新音色名称失败:', error);
+      toast.error('更新音色名称失败：' + (error as Error).message);
+    } finally {
+      setEditingVoiceId(null);
+      setEditingVoiceName('');
+    }
+  };
+
+  // 取消编辑音色名称
+  const handleCancelEditVoiceName = () => {
+    setEditingVoiceId(null);
+    setEditingVoiceName('');
+  };
+
+  // 处理音色名称编辑的键盘事件
+  const handleVoiceNameKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSaveVoiceName();
+    } else if (e.key === 'Escape') {
+      handleCancelEditVoiceName();
+    }
+  };
+
+  // 处理音色选择
+  const handleVoiceSelect = async (itemId: string, voiceId: string) => {
+    if (!voiceId) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${STORYAI_API_BASE}/ai/voice/batch-bind`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Prompt-Manager-Token': token || '',
+        },
+        body: JSON.stringify({
+          bindings: [
+            {
+              voiceId: voiceId,
+              subtitleId: parseInt(itemId)
+            }
+          ]
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`请求失败: ${response.status}`);
+      }
+
+      const result = await response.json();
+      if (result.code === 0) {
+        toast.success('音色绑定成功！');
+      } else {
+        throw new Error(result.message || '音色绑定失败');
+      }
+    } catch (error) {
+      console.error('音色绑定失败:', error);
+      toast.error('音色绑定失败：' + (error as Error).message);
+    }
+  };
+
+  // 加载音效列表
+  const loadBgmList = async () => {
+    setIsLoadingBgm(true);
+    try {
+      const userStr = localStorage.getItem('user');
+      if (!userStr) return;
+
+      const user = JSON.parse(userStr);
+      const userId = user.userId;
+      if (!userId) return;
+
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${STORYAI_API_BASE}/bgm/list`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Prompt-Manager-Token': token || '',
+        },
+        body: JSON.stringify({
+          userId: userId.toString()
+        })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.code === 0 && result.data) {
+          setBgmList(result.data);
+        }
+      }
+    } catch (error) {
+      console.error('获取音效列表失败:', error);
+    } finally {
+      setIsLoadingBgm(false);
+    }
+  };
+
+  // 音效生成API调用
+  const handleBgmGenerate = async () => {
+    if (!userInput.trim()) {
+      toast.error(t('shortplayEntry.input.description'));
+      return;
+    }
+
+    setIsGenerating(true);
+    setGenerationStatus('正在生成音效...');
+
+    try {
+      const userStr = localStorage.getItem('user');
+      let userId = "";
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          userId = user.userId || "";
+        } catch (error) {
+          console.warn(t('shortplayEntry.input.userInfoParseError'), error);
+        }
+      }
+
+      if (!userId) {
+        toast.error('用户信息不完整，请重新登录');
+        return;
+      }
+
+      const token = localStorage.getItem('token');
+
+      const response = await fetch(`${STORYAI_API_BASE}/ai/bgm/generate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Prompt-Manager-Token': token || '',
+        },
+        body: JSON.stringify({
+          userId: parseInt(userId),
+          style: style, // 使用图片tab的style参数
+          userInput: userInput.trim()
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`请求失败: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log('音效生成结果:', result);
+
+      if (result.code === 0) {
+        setGenerationStatus('生成完成！');
+        setUserInput(''); // 清空输入
+
+        // 刷新音效列表
+        await loadBgmList();
+
+        toast.success('音效生成完成！');
+      } else {
+        throw new Error(result.message || '音效生成失败');
+      }
+    } catch (error) {
+      console.error('音效生成失败:', error);
+      toast.error('音效生成失败：' + (error as Error).message);
+    } finally {
+      setIsGenerating(false);
+      setGenerationStatus('');
+    }
+  };
   const loadSceneContent = async (sceneId: number) => {
     try {
       const token = localStorage.getItem('token');
@@ -2317,12 +2545,16 @@ function ShortplayEntryPage() {
     loadUserData();
   }, []);
 
-  // 音频tab切换时加载音色数据
+  // 音频tab切换时加载数据
   React.useEffect(() => {
     if (activeTab === 'audio') {
-      loadAllVoices();
+      if (audioType === 'voice') {
+        loadAllVoices();
+      } else {
+        loadBgmList();
+      }
     }
-  }, [activeTab]);
+  }, [activeTab, audioType]);
 
   // 音频生成API调用
   const handleAudioGenerate = async () => {
@@ -2651,9 +2883,13 @@ function ShortplayEntryPage() {
                     {/* 配音选择区域 */}
                     <div className="space-y-3">
                       <div className="relative w-24">
-                        <select className="w-full h-9 pl-3 pr-8 text-sm rounded-lg bg-white focus:outline-none appearance-none">
+                        <select
+                          value={audioType}
+                          onChange={(e) => setAudioType(e.target.value as 'voice' | 'sound')}
+                          className="w-full h-9 pl-3 pr-8 text-sm rounded-lg bg-white focus:outline-none appearance-none"
+                        >
                           <option value="voice">音色</option>
-                          <option value="sound_effects">音效</option>
+                          <option value="sound">音效</option>
                         </select>
                         <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
                           <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -2662,131 +2898,236 @@ function ShortplayEntryPage() {
                         </div>
                       </div>
 
-                      {/* 已设置的配音人员 */}
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-gray-700">已设置的音色</span>
-                          <button
-                            onClick={() => setIsConfiguredVoicesExpanded(!isConfiguredVoicesExpanded)}
-                            className="p-1 hover:bg-gray-100 rounded"
-                          >
-                            <Icon
-                              icon={isConfiguredVoicesExpanded ? "ri:arrow-up-s-line" : "ri:arrow-down-s-line"}
-                              className="w-4 h-4 text-gray-400"
-                            />
-                          </button>
-                        </div>
-
-                        {/* 显示第一条或全部 */}
-                        <div className="space-y-2">
-                          {isLoadingVoices ? (
-                            <div className="flex items-center justify-center p-4 text-gray-500">
-                              <Icon icon="ri:loader-4-line" className="w-4 h-4 animate-spin mr-2" />
-                              加载中...
+                      {audioType === 'voice' ? (
+                        <>
+                          {/* 已设置的配音人员 */}
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium text-gray-700">已设置的音色</span>
+                              <button
+                                onClick={() => setIsConfiguredVoicesExpanded(!isConfiguredVoicesExpanded)}
+                                className="p-1 hover:bg-gray-100 rounded"
+                              >
+                                <Icon
+                                  icon={isConfiguredVoicesExpanded ? "ri:arrow-up-s-line" : "ri:arrow-down-s-line"}
+                                  className="w-4 h-4 text-gray-400"
+                                />
+                              </button>
                             </div>
-                          ) : (
-                            configuredVoices
-                              .slice(0, isConfiguredVoicesExpanded ? configuredVoices.length : 1)
-                              .map((voice, index) => (
-                                <div key={voice.voiceId} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                                  <div className="w-8 h-8 bg-amber-600 rounded-full flex items-center justify-center">
-                                    <span className="text-xs text-white font-medium">
-                                      {voice.voiceName?.charAt(0) || '音'}
-                                    </span>
-                                  </div>
-                                  <div className="flex-1">
-                                    <div className="text-sm text-gray-800">{voice.voiceName}</div>
-                                    {voice.voiceDescription && (
-                                      <div className="text-xs text-gray-500">{voice.voiceDescription}</div>
-                                    )}
-                                  </div>
-                                  <div className="flex space-x-2">
-                                    <button
-                                      className="px-2 py-1 text-xs border border-gray-300 rounded text-gray-600 hover:bg-gray-100"
-                                      onClick={() => {
-                                        if (voice.sampleAudioUrl) {
-                                          const audio = new Audio(voice.sampleAudioUrl);
-                                          audio.play();
-                                        }
-                                      }}
-                                    >
-                                      试听
-                                    </button>
-                                    <button className="px-2 py-1 text-xs border border-gray-300 rounded text-gray-600 hover:bg-gray-100">
-                                      删除
-                                    </button>
-                                  </div>
+
+                            {/* 显示第一条或全部 */}
+                            <div className="space-y-2">
+                              {isLoadingVoices ? (
+                                <div className="flex items-center justify-center p-4 text-gray-500">
+                                  <Icon icon="ri:loader-4-line" className="w-4 h-4 animate-spin mr-2" />
+                                  加载中...
                                 </div>
-                              ))
-                          )}
-                        </div>
-                      </div>
-
-                      {/* 音频文件列表 */}
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-gray-700">可用音色</span>
-                          <button
-                            onClick={() => setIsAvailableVoicesExpanded(!isAvailableVoicesExpanded)}
-                            className="p-1 hover:bg-gray-100 rounded"
-                          >
-                            <Icon
-                              icon={isAvailableVoicesExpanded ? "ri:arrow-up-s-line" : "ri:arrow-down-s-line"}
-                              className="w-4 h-4 text-gray-400"
-                            />
-                          </button>
-                        </div>
-
-                        <div className="space-y-2">
-                          {isLoadingVoices ? (
-                            <div className="flex items-center justify-center p-4 text-gray-500">
-                              <Icon icon="ri:loader-4-line" className="w-4 h-4 animate-spin mr-2" />
-                              加载中...
+                              ) : (
+                                configuredVoices
+                                  .slice(0, isConfiguredVoicesExpanded ? configuredVoices.length : 1)
+                                  .map((voice, index) => (
+                                    <div key={voice.voiceId} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                                      <div className="w-8 h-8 bg-amber-600 rounded-full flex items-center justify-center">
+                                        <span className="text-xs text-white font-medium">
+                                          {voice.voiceName?.charAt(0) || '音'}
+                                        </span>
+                                      </div>
+                                      <div className="flex-1">
+                                        {editingVoiceId === voice.voiceId ? (
+                                          <div className="flex items-center space-x-2">
+                                            <input
+                                              type="text"
+                                              value={editingVoiceName}
+                                              onChange={(e) => setEditingVoiceName(e.target.value)}
+                                              onKeyDown={handleVoiceNameKeyDown}
+                                              className="text-sm border border-blue-500 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                              autoFocus
+                                            />
+                                            <button
+                                              onClick={handleSaveVoiceName}
+                                              className="text-green-600 hover:text-green-800"
+                                            >
+                                              <Icon icon="ri:check-line" className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                              onClick={handleCancelEditVoiceName}
+                                              className="text-red-600 hover:text-red-800"
+                                            >
+                                              <Icon icon="ri:close-line" className="w-4 h-4" />
+                                            </button>
+                                          </div>
+                                        ) : (
+                                          <div
+                                            className="text-sm text-gray-800 cursor-pointer hover:text-blue-600"
+                                            onClick={() => handleStartEditVoiceName(voice.voiceId, voice.voiceName)}
+                                          >
+                                            {voice.voiceName}
+                                          </div>
+                                        )}
+                                      </div>
+                                      <div className="flex space-x-2">
+                                        <button
+                                          className="px-2 py-1 text-xs border border-gray-300 rounded text-gray-600 hover:bg-gray-100"
+                                          onClick={() => {
+                                            if (voice.sampleAudioUrl) {
+                                              const audio = new Audio(voice.sampleAudioUrl);
+                                              audio.play();
+                                            }
+                                          }}
+                                        >
+                                          试听
+                                        </button>
+                                        <button className="px-2 py-1 text-xs border border-gray-300 rounded text-gray-600 hover:bg-gray-100">
+                                          删除
+                                        </button>
+                                      </div>
+                                    </div>
+                                  ))
+                              )}
                             </div>
-                          ) : (
-                            availableVoices
-                              .slice(0, isAvailableVoicesExpanded ? availableVoices.length : 1)
-                              .map((voice, index) => (
-                                <div key={voice.voiceId} className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg">
-                                  <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                                    <Icon icon="ri:music-2-line" className="w-4 h-4 text-white" />
-                                  </div>
-                                  <div className="flex-1">
-                                    <div className="text-sm font-medium text-gray-800">{voice.voiceName}</div>
-                                    {voice.voiceDescription && (
-                                      <div className="text-xs text-gray-500">{voice.voiceDescription}</div>
-                                    )}
-                                  </div>
-                                  <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
-                                    <span className="text-xs text-white font-medium">
-                                      {voice.voiceSource === 'CUSTOM' ? '定' : '系'}
-                                    </span>
-                                  </div>
-                                  <Icon icon="ri:arrow-down-s-line" className="w-4 h-4 text-gray-400" />
-                                  <div className="flex space-x-2">
-                                    <button
-                                      className="px-3 py-1 text-xs border border-blue-500 text-blue-500 rounded hover:bg-blue-50"
-                                      onClick={() => {
-                                        if (voice.sampleAudioUrl) {
-                                          const audio = new Audio(voice.sampleAudioUrl);
-                                          audio.play();
-                                        }
-                                      }}
-                                    >
-                                      播放
-                                    </button>
-                                    <button
-                                      className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
-                                      onClick={() => handleApplyVoice(voice.voiceId)}
-                                    >
-                                      应用
-                                    </button>
-                                  </div>
+                          </div>
+
+                          {/* 音频文件列表 */}
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium text-gray-700">可用音色</span>
+                              <button
+                                onClick={() => setIsAvailableVoicesExpanded(!isAvailableVoicesExpanded)}
+                                className="p-1 hover:bg-gray-100 rounded"
+                              >
+                                <Icon
+                                  icon={isAvailableVoicesExpanded ? "ri:arrow-up-s-line" : "ri:arrow-down-s-line"}
+                                  className="w-4 h-4 text-gray-400"
+                                />
+                              </button>
+                            </div>
+
+                            <div className="space-y-2">
+                              {isLoadingVoices ? (
+                                <div className="flex items-center justify-center p-4 text-gray-500">
+                                  <Icon icon="ri:loader-4-line" className="w-4 h-4 animate-spin mr-2" />
+                                  加载中...
                                 </div>
-                              ))
-                          )}
-                        </div>
-                      </div>
+                              ) : (
+                                availableVoices
+                                  .slice(0, isAvailableVoicesExpanded ? availableVoices.length : 1)
+                                  .map((voice, index) => (
+                                    <div key={voice.voiceId} className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg">
+                                      <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                                        <Icon icon="ri:music-2-line" className="w-4 h-4 text-white" />
+                                      </div>
+                                      <div className="flex-1">
+                                        {editingVoiceId === voice.voiceId ? (
+                                          <div className="flex items-center space-x-2">
+                                            <input
+                                              type="text"
+                                              value={editingVoiceName}
+                                              onChange={(e) => setEditingVoiceName(e.target.value)}
+                                              onKeyDown={handleVoiceNameKeyDown}
+                                              className="text-sm border border-blue-500 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                              autoFocus
+                                            />
+                                            <button
+                                              onClick={handleSaveVoiceName}
+                                              className="text-green-600 hover:text-green-800"
+                                            >
+                                              <Icon icon="ri:check-line" className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                              onClick={handleCancelEditVoiceName}
+                                              className="text-red-600 hover:text-red-800"
+                                            >
+                                              <Icon icon="ri:close-line" className="w-4 h-4" />
+                                            </button>
+                                          </div>
+                                        ) : (
+                                          <div
+                                            className="text-sm font-medium text-gray-800 cursor-pointer hover:text-blue-600"
+                                            onClick={() => handleStartEditVoiceName(voice.voiceId, voice.voiceName)}
+                                          >
+                                            {voice.voiceName}
+                                          </div>
+                                        )}
+                                      </div>
+                                      <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+                                        <span className="text-xs text-white font-medium">
+                                          {voice.voiceSource === 'CUSTOM' ? '定' : '系'}
+                                        </span>
+                                      </div>
+                                      <Icon icon="ri:arrow-down-s-line" className="w-4 h-4 text-gray-400" />
+                                      <div className="flex space-x-2">
+                                        <button
+                                          className="px-3 py-1 text-xs border border-blue-500 text-blue-500 rounded hover:bg-blue-50"
+                                          onClick={() => {
+                                            if (voice.sampleAudioUrl) {
+                                              const audio = new Audio(voice.sampleAudioUrl);
+                                              audio.play();
+                                            }
+                                          }}
+                                        >
+                                          播放
+                                        </button>
+                                        <button
+                                          className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+                                          onClick={() => handleApplyVoice(voice.voiceId)}
+                                        >
+                                          应用
+                                        </button>
+                                      </div>
+                                    </div>
+                                  ))
+                              )}
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          {/* 音效文件列表 */}
+                          <div className="space-y-2">
+                            <span className="text-sm font-medium text-gray-700">音效文件</span>
+                            <div className="space-y-2">
+                              {isLoadingBgm ? (
+                                <div className="flex items-center justify-center p-4 text-gray-500">
+                                  <Icon icon="ri:loader-4-line" className="w-4 h-4 animate-spin mr-2" />
+                                  加载中...
+                                </div>
+                              ) : (
+                                bgmList.map((bgm, index) => (
+                                  <div key={bgm.id || index} className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg">
+                                    <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                                      <Icon icon="ri:music-2-line" className="w-4 h-4 text-white" />
+                                    </div>
+                                    <div className="flex-1">
+                                      <div className="text-sm font-medium text-gray-800">{bgm.name || bgm.title || '音效文件'}</div>
+                                      {bgm.description && (
+                                        <div className="text-xs text-gray-500">{bgm.description}</div>
+                                      )}
+                                    </div>
+                                    <div className="flex space-x-2">
+                                      <button
+                                        className="px-3 py-1 text-xs border border-green-500 text-green-500 rounded hover:bg-green-50"
+                                        onClick={() => {
+                                          if (bgm.audioUrl || bgm.url) {
+                                            const audio = new Audio(bgm.audioUrl || bgm.url);
+                                            audio.play();
+                                          }
+                                        }}
+                                      >
+                                        播放
+                                      </button>
+                                    </div>
+                                  </div>
+                                ))
+                              )}
+                              {!isLoadingBgm && bgmList.length === 0 && (
+                                <div className="text-center text-gray-500 py-4">
+                                  暂无音效文件
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                 )}
@@ -2852,7 +3193,11 @@ function ShortplayEntryPage() {
                 userInput={userInput}
                 onInputChange={setUserInput}
                 isGenerating={isGenerating}
-                onGenerate={activeTab === 'audio' ? handleAudioGenerate : handleGenerate}
+                onGenerate={
+                  activeTab === 'audio'
+                    ? (audioType === 'voice' ? handleAudioGenerate : handleBgmGenerate)
+                    : handleGenerate
+                }
                 placeholder={t('shortplayEntry.input.placeholder')}
                 generationStatus={generationStatus}
                 voiceType={voiceType}
@@ -2978,6 +3323,9 @@ function ShortplayEntryPage() {
                           timeRange: `${item.startTime}-${item.endTime}`,
                           icon: item.type === 1 ? 'ri:user-voice-line' : 'ri:music-2-line'
                         }}
+                        audioType={audioType}
+                        configuredVoices={configuredVoices}
+                        onVoiceSelect={handleVoiceSelect}
                       />
                     ))}
                   </div>

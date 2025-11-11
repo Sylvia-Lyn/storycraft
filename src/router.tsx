@@ -48,51 +48,51 @@ const router = createHashRouter([
     children: [
       {
         path: 'home',
-        element: <HomePage />
+        element: <ProtectedRoute><HomePage /></ProtectedRoute>
       },
       {
         path: 'shortplay-entry',
-        element: <ShortplayEntryPage />
+        element: <ProtectedRoute><ShortplayEntryPage /></ProtectedRoute>
       },
       {
         path: 'editor',
-        element: <ScriptEditor />
+        element: <ProtectedRoute><ScriptEditor /></ProtectedRoute>
       },
       {
         path: 'outline',
-        element: <OutlinePage />
+        element: <ProtectedRoute><OutlinePage /></ProtectedRoute>
       },
       {
         path: 'characters',
-        element: <CharactersPage />
+        element: <ProtectedRoute><CharactersPage /></ProtectedRoute>
       },
       {
         path: 'relations',
-        element: <RelationsPage />
+        element: <ProtectedRoute><RelationsPage /></ProtectedRoute>
       },
       {
         path: 'chapters',
-        element: <ChaptersPage />
+        element: <ProtectedRoute><ChaptersPage /></ProtectedRoute>
       },
       {
         path: 'scenes',
-        element: <SceneList />
+        element: <ProtectedRoute><SceneList /></ProtectedRoute>
       },
       {
         path: 'scenes/:sceneId',
-        element: <SceneEditor />
+        element: <ProtectedRoute><SceneEditor /></ProtectedRoute>
       },
       {
         path: 'story-settings',
-        element: <StorySettingsPage />
+        element: <ProtectedRoute><StorySettingsPage /></ProtectedRoute>
       },
       {
         path: 'knowledge/:knowledgeId',
-        element: <KnowledgeBasePage />
+        element: <ProtectedRoute><KnowledgeBasePage /></ProtectedRoute>
       },
       {
         path: 'knowledge/:knowledgeId/upload',
-        element: <KnowledgeUploadPage />
+        element: <ProtectedRoute><KnowledgeUploadPage /></ProtectedRoute>
       },
       {
         path: 'vip',

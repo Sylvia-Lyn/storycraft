@@ -9,4 +9,150 @@
   width: 100%;
   height: 100vh;
   overflow: hidden;
+}
+
+/* 视频播放进度条样式 - 参考 react-project */
+[data-progress-bar] {
+  position: relative;
+  width: 100%;
+  height: 24px;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  user-select: none;
+}
+
+/* 进度条填充效果 - 渐变色 + 阴影 */
+.progress-bar-fill {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  height: 5px;
+  background: linear-gradient(90deg, #3b82f6, #1e40af);
+  border-radius: 6px;
+  transition: width 0.05s linear;
+  pointer-events: none;
+  transform: translateY(-50%);
+  z-index: 1;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4), inset 0 0 4px rgba(255, 255, 255, 0.1);
+}
+
+/* 进度条 slider 样式 */
+.progress-slider {
+  position: relative;
+  width: 100%;
+  height: 24px;
+  cursor: pointer;
+  appearance: none;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  -webkit-appearance: none;
+  z-index: 2;
+}
+
+/* Webkit 浏览器 (Chrome, Safari, Edge) */
+.progress-slider::-webkit-slider-runnable-track {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  height: 5px;
+  background: linear-gradient(to right, #1f2937 0%, #374151 50%, #1f2937 100%);
+  border-radius: 6px;
+  border: none;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.progress-slider::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 4px;
+  height: 14px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #3b82f6 0%, #1e40af 100%);
+  cursor: grab;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.6), 0 0 8px rgba(59, 130, 246, 0.3);
+  border: 1px solid #fff;
+  margin-top: -3px;
+  transition: all 0.2s ease;
+}
+
+.progress-slider::-webkit-slider-thumb:hover {
+  width: 6px;
+  height: 18px;
+  margin-top: -5px;
+  cursor: grab;
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.8), 0 0 12px rgba(59, 130, 246, 0.5);
+  transform: scale(1.1);
+}
+
+.progress-slider::-webkit-slider-thumb:active {
+  cursor: grabbing;
+  transform: scale(0.95);
+}
+
+/* Firefox 浏览器 */
+.progress-slider::-moz-range-track {
+  background: linear-gradient(to right, #1f2937 0%, #374151 50%, #1f2937 100%);
+  border: none;
+  border-radius: 6px;
+  height: 5px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.progress-slider::-moz-range-progress {
+  background: linear-gradient(90deg, #3b82f6, #1e40af);
+  border-radius: 6px;
+  height: 5px;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+}
+
+.progress-slider::-moz-range-thumb {
+  width: 4px;
+  height: 14px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #3b82f6 0%, #1e40af 100%);
+  cursor: grab;
+  border: 1px solid #fff;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.6), 0 0 8px rgba(59, 130, 246, 0.3);
+  transition: all 0.2s ease;
+}
+
+.progress-slider::-moz-range-thumb:hover {
+  width: 6px;
+  height: 18px;
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.8), 0 0 12px rgba(59, 130, 246, 0.5);
+  transform: scale(1.1);
+}
+
+.progress-slider::-moz-range-thumb:active {
+  cursor: grabbing;
+  transform: scale(0.95);
+}
+
+/* 时间显示样式 */
+.time-display {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+  color: #9ca3af;
+  gap: 6px;
+  font-family: 'Monaco', 'Courier New', monospace;
+}
+
+.current-time {
+  color: #60a5fa;
+  font-weight: 600;
+}
+
+.separator {
+  opacity: 0.5;
+}
+
+.duration {
+  opacity: 0.7;
 } 

@@ -555,7 +555,7 @@ export const zhCN = {
     title: '短剧创作',
     tabs: {
       script: '剧本',
-      audio: '场次',
+      audio: '音频',
       image: '图片',
       video: '视频',
     },
@@ -563,9 +563,18 @@ export const zhCN = {
       generating: '生成中...',
       oneClickGenerate: '一键生成',
       modelGenerate: '模型生成',
+      uploadImage: '上传图片',
+      uploadProgress: '上传进度',
+      uploadedCount: '已上传',
+      images: '张图片',
+      remove: '移除',
     },
     input: {
       placeholder: '简单描述你想要的互动剧',
+      scriptPlaceholder: '简单描述你想要的互动剧',
+      audioPlaceholder: '简单描述你想要的声音风格',
+      imagePlaceholder: '简单描述你想要的画面风格',
+      videoPlaceholder: '简单描述你想要的画面风格',
       description: '请输入您想要的互动剧描述',
       authTokenError: '未找到有效的身份验证令牌，请重新登录',
       generateSuccess: '生成成功',
@@ -576,6 +585,11 @@ export const zhCN = {
       voiceType: '声音类型',
       male: '男声',
       female: '女声',
+      voice: '音色',
+      sound: '音效',
+      configured: '已设置',
+      listen: '试听',
+      deleteVoice: '删除',
     },
     image: {
       backgroundType: '背景类型',
@@ -587,9 +601,11 @@ export const zhCN = {
       modern: '现代',
       scifi: '科幻',
       cartoon: '卡通',
+      relevance: '相关性',
     },
     video: {
       duration: '时长',
+      videoDuration: '视频时长',
       duration2s: '秒时长 2s',
       duration5s: '秒时长 5s',
       duration10s: '秒时长 10s',
@@ -600,6 +616,8 @@ export const zhCN = {
       generateMode: '生成模式',
       batchMode: '单集生成',
       singleMode: '单个生成',
+      singleImageGeneration: '单图生成',
+      multiImageGeneration: '多图生成',
     },
     dragSort: {
       title: '拖拽排序',
@@ -608,13 +626,197 @@ export const zhCN = {
     scenes: {
       editSceneName: '点击编辑场次名称',
       selectPresetScene: '点击选择预设场次',
-      clickToSelectDoubleClickToEdit: '单击选择，双击编辑',
+      clickToSelectOrEdit: '单击选择或编辑',
     },
     examples: {
       series: {
         name: '修仙恋爱记',
         description: '修仙背景的爱情故事',
       },
+    },
+
+    // 按钮文本
+    buttons: {
+      play: '播放',
+      pause: '暂停',
+      apply: '应用',
+      preview: '预览',
+      download: '下载',
+      add: '新增',
+      insertOption: '插入选项',
+      addOption: '新增选项',
+      save: '保存',
+      cancel: '取消',
+      discard: '丢弃',
+      delete: '删除',
+      viewOriginal: '查看原图',
+      playVideo: '播放视频',
+    },
+
+    // 状态提示
+    status: {
+      loading: '加载中...',
+      generating: '生成中...',
+      defaultVoiceName: '该音色',
+      defaultSoundName: '音效',
+      defaultImageAlt: '生成的图片',
+      lastFrameAlt: '最后一帧',
+      customizeVoice: '定制音色',
+      systemVoice: '系',
+    },
+
+    // 验证错误
+    validation: {
+      selectSceneFirst: '请先选择场次',
+      startTimeLessThanEnd: '开始时间必须小于结束时间',
+      enterContent: '请输入内容',
+      enterGeneratedContent: '请输入生成内容',
+      soundNotFound: '未找到该音效',
+      sceneNotFound: '场景不存在',
+    },
+
+    // 用户错误
+    userErrors: {
+      userInfoMissing: '用户信息不存在，请重新登录',
+      userIdMissing: '用户ID不存在，请重新登录',
+      userInfoIncomplete: '用户信息不完整，请重新登录',
+      parseUserInfoFailed: '解析用户信息失败',
+      soundMissingAttachmentId: '音效文件缺少attachmentId',
+    },
+
+    // 成功消息
+    messages: {
+      unsavedChanges: '存在未保存的更改',
+      unsavedChangesDetail: '当前有未保存的编辑内容，切换标签页会丢弃这些更改。确定要继续吗？',
+      success: {
+        storyboardDeleted: '分镜板删除成功！',
+        deleted: '删除成功！',
+        storyboardSorted: '分镜板排序已更新！',
+        timeUpdated: '时间更新成功！',
+        videoPreviewLoaded: '视频预览已加载',
+        voiceApplied: '音色应用成功！',
+        voiceNameUpdated: '音色名称更新成功！',
+        voiceBound: '音色绑定成功！',
+        soundApplied: '音效应用成功！',
+        imageGenerated: '图片生成完成！',
+        videoGenerationStarted: '视频生成任务已开始！',
+        videoGenerated: '视频生成成功！',
+        scriptGenerated: '剧本生成完成！',
+        downloadStarted: '开始下载视频',
+        frameInserted: '已插入最后一帧图片',
+        saved: '已保存',
+        audioPlaybackFailed: '音频播放失败',
+        voiceStillGenerating: '音色生成中',
+        sceneAdded: '场景已添加',
+        sceneDeleted: '场景已删除',
+      },
+
+      // 失败消息
+      error: {
+        sortingFailed: '排序更新失败：{error}',
+        deleteFailed: '删除失败：{error}',
+        sceneNameUpdateFailed: '场次名称更新失败：{error}',
+        saveFailed: '保存失败：{error}',
+        voiceDeleteFailed: '删除音色失败：{error}',
+        voiceApplyFailed: '应用音色失败：{error}',
+        voiceNameUpdateFailed: '更新音色名称失败：{error}',
+        voiceBindFailed: '音色绑定失败：{error}',
+        audioPlayError: '播放音频失败：{error}',
+        imageApplyFailed: '应用图片失败：{error}',
+        imageGenerationFailed: '图片生成失败：{error}',
+        videoPreviewFailed: '视频预览失败：{error}',
+        soundApplyFailed: '应用音效失败：{error}',
+        videoGenerationFailed: '视频生成失败：{error}',
+        videoGenerationRetry: '视频生成失败，请重试',
+        noVideoToDownload: '暂无可下载的视频，请先点击预览或应用',
+        noFrameCache: '暂无缓存的最后一帧图片，请先点击预览或应用',
+        soundGenerationFailed: '音效生成失败：{error}',
+        updateFailed: '更新失败',
+        sceneAddFailed: '场景创建失败：{error}',
+        sceneDeleteFailed: '场景删除失败：{error}',
+      }
+    },
+
+    // 对话框文本
+    dialogs: {
+      deleteConfirm: {
+        title: '删除确认',
+        message: '确定要删除这条内容吗？删除后无法恢复。',
+        delete: '删除',
+        cancel: '取消',
+      }
+    },
+
+    // 提示文本
+    tooltips: {
+      viewOriginal: '查看原图',
+      applyImage: '应用此图片',
+      playVideo: '播放视频',
+      applyVideo: '应用此视频',
+      deleteOption: '删除选项',
+    },
+
+    // 编辑器文本
+    editor: {
+      editTitle: '点击编辑题目',
+      titlePlaceholder: '输入题目...',
+      defaultOption: '选项{number}',
+      editOption: '编辑选项',
+    },
+
+    // 类型标签
+    types: {
+      scene: '画面',
+      dialog: '对话',
+      sound: '音效',
+      scenarioLabel: '场景',
+      typeLabel: '类型',
+    },
+
+    // 侧边栏
+    sidebar: {
+      aiCreation: 'AI创作',
+    },
+
+    // 头部和底部导航
+    navigation: {
+      appName: '叙梦',
+      myProfile: '我的',
+    },
+
+    // 预览和内容相关
+    preview: {
+      close: '关闭',
+      edit: '编辑',
+      view: '查看',
+      apply: '应用',
+      delete: '删除',
+      playbackLocation: '播放位置',
+    },
+
+    // 内容类型
+    contentTypes: {
+      sceneScript: '画面脚本',
+      characterDialogue: '角色台词',
+    },
+
+    // 其他UI文本
+    ui: {
+      noFrameCacheHint: '暂无缓存的最后一帧图片，请先点击预览或应用',
+      noVideoDownloadHint: '暂无可下载的视频，请先点击预览或应用',
+      creatingPreview: '生成中...',
+      editTitleHint: '点击编辑题目',
+      inputTitlePlaceholder: '输入题目...',
+      defaultOptionPrefix: '选项',
+      defaultSoundName: '音效文件',
+      generatedImageAlt: '生成的图片',
+      lastFrameAlt: '最后一帧',
+      customizeVoiceLabel: '定制音色',
+      systemVoiceLabel: '系',
+      edit: '编辑',
+      inputSceneName: '请输入场景名称',
+      addScene: '新增场景',
+      noSceneYet: '暂无场景',
     },
   },
 

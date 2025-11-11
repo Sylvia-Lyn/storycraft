@@ -69,9 +69,10 @@ export const WorksProvider: React.FC<WorksProviderProps> = ({ children }) => {
         try {
             console.log('开始加载作品列表...');
             setIsLoading(true);
-            const worksData = await worksService.getWorks();
-            console.log('作品列表加载成功:', worksData);
-            setWorks(worksData);
+            // const worksData = await worksService.getWorks();
+            // console.log('作品列表加载成功:', worksData);
+            // setWorks(worksData);
+            setWorks([]);
         } catch (error) {
             console.error('加载作品列表失败:', error);
             toast.error(t('common.workListLoadFailed'));

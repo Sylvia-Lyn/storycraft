@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { HomeOutlined, UserOutlined, CrownOutlined, LoginOutlined, LogoutOutlined, DownOutlined, GlobalOutlined, LockOutlined } from '@ant-design/icons';
+import { HomeOutlined, UserOutlined, CrownOutlined, LoginOutlined, LogoutOutlined, DownOutlined, GlobalOutlined } from '@ant-design/icons';
 import { Dropdown, Menu, Avatar } from 'antd';
 import { useAuth } from '../contexts/AuthContext';
 import { useI18n, languageNames, Language } from '../contexts/I18nContext';
@@ -8,8 +8,36 @@ import { useI18n, languageNames, Language } from '../contexts/I18nContext';
 const TopBar: React.FC = () => {
     const navigate = useNavigate();
     const { user, isAuthenticated, logout, refreshUserInfo } = useAuth();
-    const { language, setLanguage, t, canChangeLanguage } = useI18n();
+    const { language, setLanguage, t } = useI18n();
     const [userMenuVisible, setUserMenuVisible] = useState(false);
+
+    // 获取显示的用户名
+    const getDisplayUserName = () => {
+        // 首先尝试从 sessionStorage 获取保存的用户名（最准确）
+        const savedUserName = sessionStorage.getItem('userName');
+        if (savedUserName && savedUserName !== '用户') {
+            return savedUserName;
+        }
+
+        if (!user) {
+            return '用户';
+        }
+
+        // 使用 user 对象中的用户名
+        if (user.user_name && user.user_name !== '用户') {
+            return user.user_name;
+        }
+        if (user.user_email) {
+            return user.user_email;
+        }
+        if (user.user_id) {
+            return `User ${user.user_id}`;
+        }
+        if (user.userId) {
+            return `User ${user.userId}`;
+        }
+        return '用户';
+    };
 
     // 获取会员状态显示文本
     const getMemberStatusText = () => {
@@ -40,13 +68,15 @@ const TopBar: React.FC = () => {
 
     const userMenu = (
         <Menu>
-            <Menu.Item key="profile" onClick={() => navigate('/app/profile')}>
+            {/* 个人资料 - 已隐藏 */}
+            {/* <Menu.Item key="profile" onClick={() => navigate('/app/profile')}>
                 <UserOutlined /> {t('topbar.profile')}
-            </Menu.Item>
-            <Menu.Item key="vip" onClick={() => navigate('/app/vip')}>
+            </Menu.Item> */}
+            {/* 会员中心 - 已隐藏 */}
+            {/* <Menu.Item key="vip" onClick={() => navigate('/app/vip')}>
                 <CrownOutlined /> {t('topbar.memberCenter')}
             </Menu.Item>
-            <Menu.Divider />
+            <Menu.Divider /> */}
             <Menu.Item key="logout" onClick={handleLogout}>
                 <LogoutOutlined /> {t('topbar.logout')}
             </Menu.Item>
@@ -54,37 +84,22 @@ const TopBar: React.FC = () => {
     );
 
     const handleLanguageClick = (lang: Language) => {
-        if (lang === 'zh-CN' || canChangeLanguage) {
-            setLanguage(lang);
-        } else {
-            // 显示需要会员的提示
-            const confirmUpgrade = window.confirm('多语言功能需要会员权限，是否前往升级页面？');
-            if (confirmUpgrade) {
-                navigate('/app/vip');
-            }
-        }
+        // 允许所有用户改变语言
+        setLanguage(lang);
     };
 
     const languageMenu = (
         <Menu>
             {Object.entries(languageNames).map(([lang, name]) => {
-                const isLocked = lang !== 'zh-CN' && !canChangeLanguage;
                 const isCurrent = language === lang;
-                
+
                 return (
-                    <Menu.Item 
-                        key={lang} 
+                    <Menu.Item
+                        key={lang}
                         onClick={() => handleLanguageClick(lang as Language)}
                         className={isCurrent ? 'bg-blue-50' : ''}
-                        style={{ 
-                            opacity: isLocked ? 0.6 : 1,
-                            cursor: isLocked ? 'not-allowed' : 'pointer'
-                        }}
                     >
-                        <div className="flex items-center justify-between">
-                            <span>{name}</span>
-                            {isLocked && <LockOutlined className="text-gray-400" />}
-                        </div>
+                        <span>{name}</span>
                     </Menu.Item>
                 );
             })}
@@ -111,17 +126,20 @@ const TopBar: React.FC = () => {
                         <DownOutlined className="ml-1 text-xs" />
                     </button>
                 </Dropdown>
-                <button
+                {/* 会员入口 - 已隐藏 */}
+                {/* <button
                     onClick={() => navigate('/app/vip')}
                     className="px-4 py-2 text-sm font-medium text-blue-700 bg-blue-100 border border-blue-200 rounded-md hover:bg-blue-200 flex items-center"
                 >
                     <CrownOutlined className="mr-1" />{getMemberStatusText()}
-                </button>
+                </button> */}
                 {isAuthenticated && user ? (
                     <Dropdown overlay={userMenu} trigger={['click']} onVisibleChange={setUserMenuVisible}>
                         <div className="flex items-center space-x-2 px-3 py-2 rounded-md hover:bg-gray-100 cursor-pointer">
                             <Avatar size="small" icon={<UserOutlined />} />
-                            <span className="text-sm font-medium text-gray-700">{user.user_name}</span>
+                            <span className="text-sm font-medium text-gray-700">
+                                {getDisplayUserName()}
+                            </span>
                             <DownOutlined className="text-xs text-gray-500" />
                         </div>
                     </Dropdown>

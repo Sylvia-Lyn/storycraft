@@ -2,20 +2,23 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { zhCN } from '../locales/zh-CN';
 import { enUS } from '../locales/en-US';
 import { jaJP } from '../locales/ja-JP';
+import { koKR } from '../locales/ko-KR';
 import { useAuth } from './AuthContext';
 
-export type Language = 'zh-CN' | 'en-US' | 'ja-JP';
+export type Language = 'zh-CN' | 'en-US' | 'ja-JP' | 'ko-KR';
 
 export const languageNames: Record<Language, string> = {
   'zh-CN': '简体中文',
   'en-US': 'English',
   'ja-JP': '日本語',
+  'ko-KR': '한국어',
 };
 
 const translations = {
   'zh-CN': zhCN,
   'en-US': enUS,
   'ja-JP': jaJP,
+  'ko-KR': koKR,
 };
 
 interface I18nContextType {
@@ -33,10 +36,10 @@ interface I18nProviderProps {
 
 export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
   const { user } = useAuth();
-  
-  // 检查用户是否有 multilingual 计划
-  const canChangeLanguage = user?.user_plan === 'multilingual';
-  
+
+  // 允许所有用户改变语言（已移除会员限制）
+  const canChangeLanguage = true;
+
   const [language, setLanguageState] = useState<Language>(() => {
     // 从 localStorage 获取保存的语言设置，默认为简体中文
     const saved = localStorage.getItem('storycraft-language') as Language;
@@ -44,11 +47,9 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
   });
 
   const setLanguage = (lang: Language) => {
-    // 只有 multilingual 计划的用户才能切换语言
-    if (canChangeLanguage) {
-      setLanguageState(lang);
-      localStorage.setItem('storycraft-language', lang);
-    }
+    // 允许所有用户切换语言
+    setLanguageState(lang);
+    localStorage.setItem('storycraft-language', lang);
   };
 
   const t = (key: string, params?: Record<string, string | number>): string => {

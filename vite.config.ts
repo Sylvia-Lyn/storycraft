@@ -29,10 +29,9 @@ export default defineConfig({
         target: 'http://localhost:5173',
         changeOrigin: true,
       },
-      '/episode-api': {
-        target: 'http://8.136.8.24:8321',
+      '/storyai': {
+        target: 'http://18.181.192.140',//8.136.8.24:8321 //18.181.192.140 43.167.212.77:8321
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/episode-api/, ''),
       },
     },
   },

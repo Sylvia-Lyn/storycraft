@@ -553,7 +553,7 @@ export const enUS = {
     title: 'Short Play Creation',
     tabs: {
       script: 'Script',
-      audio: 'Scene',
+      audio: 'Audio',
       image: 'Image',
       video: 'Video',
     },
@@ -561,9 +561,18 @@ export const enUS = {
       generating: 'Generating...',
       oneClickGenerate: 'One-click Generate',
       modelGenerate: 'Model Generate',
+      uploadImage: 'Upload Image',
+      uploadProgress: 'Upload Progress',
+      uploadedCount: 'Uploaded',
+      images: 'Images',
+      remove: 'Remove',
     },
     input: {
       placeholder: 'Simply describe the interactive drama you want',
+      scriptPlaceholder: 'Simply describe the interactive drama you want',
+      audioPlaceholder: 'Simply describe the voice style you want',
+      imagePlaceholder: 'Simply describe the visual style you want',
+      videoPlaceholder: 'Simply describe the visual style you want',
       description: 'Please enter your desired interactive drama description',
       authTokenError: 'No valid authentication token found, please log in again',
       generateSuccess: 'Generation successful',
@@ -574,6 +583,11 @@ export const enUS = {
       voiceType: 'Voice Type',
       male: 'Male Voice',
       female: 'Female Voice',
+      voice: 'Voice',
+      sound: 'Sound',
+      configured: 'Configured',
+      listen: 'Listen',
+      deleteVoice: 'Delete',
     },
     image: {
       backgroundType: 'Background Type',
@@ -585,9 +599,11 @@ export const enUS = {
       modern: 'Modern',
       scifi: 'Sci-fi',
       cartoon: 'Cartoon',
+      relevance: 'Relevance',
     },
     video: {
       duration: 'Duration',
+      videoDuration: 'Video Duration',
       duration2s: '2s Duration',
       duration5s: '5s Duration',
       duration10s: '10s Duration',
@@ -598,6 +614,8 @@ export const enUS = {
       generateMode: 'Generate Mode',
       batchMode: 'Episode Generation',
       singleMode: 'Single Generation',
+      singleImageGeneration: 'Single Image Generation',
+      multiImageGeneration: 'Multi Image Generation',
     },
     dragSort: {
       title: 'Drag to Sort',
@@ -606,13 +624,197 @@ export const enUS = {
     scenes: {
       editSceneName: 'Click to edit scene name',
       selectPresetScene: 'Click to select preset scene',
-      clickToSelectDoubleClickToEdit: 'Click to select, double-click to edit',
+      clickToSelectOrEdit: 'Click to select or edit',
     },
     examples: {
       series: {
         name: 'Cultivation Love Story',
         description: 'Love story in cultivation background',
       },
+    },
+
+    // Button text
+    buttons: {
+      play: 'Play',
+      pause: 'Pause',
+      apply: 'Apply',
+      preview: 'Preview',
+      download: 'Download',
+      add: 'Add',
+      insertOption: 'Insert Option',
+      addOption: 'Add Option',
+      save: 'Save',
+      cancel: 'Cancel',
+      discard: 'Discard',
+      delete: 'Delete',
+      viewOriginal: 'View Original',
+      playVideo: 'Play Video',
+    },
+
+    // Status prompts
+    status: {
+      loading: 'Loading...',
+      generating: 'Generating...',
+      defaultVoiceName: 'This voice',
+      defaultSoundName: 'Sound Effect',
+      defaultImageAlt: 'Generated Image',
+      lastFrameAlt: 'Last Frame',
+      customizeVoice: 'Customize Voice',
+      systemVoice: 'System',
+    },
+
+    // Validation errors
+    validation: {
+      selectSceneFirst: 'Please select a scene first',
+      startTimeLessThanEnd: 'Start time must be less than end time',
+      enterContent: 'Please enter content',
+      enterGeneratedContent: 'Please enter generated content',
+      soundNotFound: 'Sound effect not found',
+      sceneNotFound: 'Scene does not exist',
+    },
+
+    // User errors
+    userErrors: {
+      userInfoMissing: 'User information does not exist, please log in again',
+      userIdMissing: 'User ID does not exist, please log in again',
+      userInfoIncomplete: 'User information is incomplete, please log in again',
+      parseUserInfoFailed: 'Failed to parse user information',
+      soundMissingAttachmentId: 'Sound effect file is missing attachmentId',
+    },
+
+    // Success messages
+    messages: {
+      unsavedChanges: 'Unsaved Changes',
+      unsavedChangesDetail: 'You have unsaved edits. Switching tabs will discard these changes. Are you sure you want to continue?',
+      success: {
+        storyboardDeleted: 'Storyboard deleted successfully!',
+        deleted: 'Deleted successfully!',
+        storyboardSorted: 'Storyboard sorting updated!',
+        timeUpdated: 'Time updated successfully!',
+        videoPreviewLoaded: 'Video preview loaded',
+        voiceApplied: 'Voice applied successfully!',
+        voiceNameUpdated: 'Voice name updated successfully!',
+        voiceBound: 'Voice bound successfully!',
+        soundApplied: 'Sound effect applied successfully!',
+        imageGenerated: 'Image generation completed!',
+        videoGenerationStarted: 'Video generation task started!',
+        videoGenerated: 'Video generated successfully!',
+        scriptGenerated: 'Script generation completed!',
+        downloadStarted: 'Starting video download',
+        frameInserted: 'Last frame image inserted',
+        saved: 'Saved',
+        audioPlaybackFailed: 'Audio playback failed',
+        voiceStillGenerating: 'Voice is still generating',
+        sceneAdded: 'Scene added',
+        sceneDeleted: 'Scene deleted',
+      },
+
+      // Error messages
+      error: {
+        sortingFailed: 'Sorting update failed: {error}',
+        deleteFailed: 'Delete failed: {error}',
+        sceneNameUpdateFailed: 'Scene name update failed: {error}',
+        saveFailed: 'Save failed: {error}',
+        voiceDeleteFailed: 'Failed to delete voice: {error}',
+        voiceApplyFailed: 'Failed to apply voice: {error}',
+        voiceNameUpdateFailed: 'Failed to update voice name: {error}',
+        voiceBindFailed: 'Failed to bind voice: {error}',
+        audioPlayError: 'Failed to play audio: {error}',
+        imageApplyFailed: 'Failed to apply image: {error}',
+        imageGenerationFailed: 'Image generation failed: {error}',
+        videoPreviewFailed: 'Video preview failed: {error}',
+        soundApplyFailed: 'Failed to apply sound effect: {error}',
+        videoGenerationFailed: 'Video generation failed: {error}',
+        videoGenerationRetry: 'Video generation failed, please try again',
+        noVideoToDownload: 'No video available for download, please click preview or apply first',
+        noFrameCache: 'No cached last frame image, please click preview or apply first',
+        soundGenerationFailed: 'Sound effect generation failed: {error}',
+        updateFailed: 'Update failed',
+        sceneAddFailed: 'Scene creation failed: {error}',
+        sceneDeleteFailed: 'Scene deletion failed: {error}',
+      }
+    },
+
+    // Dialog text
+    dialogs: {
+      deleteConfirm: {
+        title: 'Delete Confirmation',
+        message: 'Are you sure you want to delete this content? It cannot be recovered after deletion.',
+        delete: 'Delete',
+        cancel: 'Cancel',
+      }
+    },
+
+    // Tooltip text
+    tooltips: {
+      viewOriginal: 'View Original',
+      applyImage: 'Apply This Image',
+      playVideo: 'Play Video',
+      applyVideo: 'Apply This Video',
+      deleteOption: 'Delete Option',
+    },
+
+    // Editor text
+    editor: {
+      editTitle: 'Click to edit title',
+      titlePlaceholder: 'Enter title...',
+      defaultOption: 'Option {number}',
+      editOption: 'Edit Option',
+    },
+
+    // Type labels
+    types: {
+      scene: 'Scene',
+      dialog: 'Dialog',
+      sound: 'Sound',
+      scenarioLabel: 'Scenario',
+      typeLabel: 'Type',
+    },
+
+    // Sidebar
+    sidebar: {
+      aiCreation: 'AI Creation',
+    },
+
+    // Header and footer navigation
+    navigation: {
+      appName: 'Storytales',
+      myProfile: 'My',
+    },
+
+    // Preview and content related
+    preview: {
+      close: 'Close',
+      edit: 'Edit',
+      view: 'View',
+      apply: 'Apply',
+      delete: 'Delete',
+      playbackLocation: 'Playback Location',
+    },
+
+    // Content types
+    contentTypes: {
+      sceneScript: 'Scene Script',
+      characterDialogue: 'Character Dialogue',
+    },
+
+    // Other UI text
+    ui: {
+      noFrameCacheHint: 'No cached last frame image. Please click preview or apply first',
+      noVideoDownloadHint: 'No video available for download. Please click preview or apply first',
+      creatingPreview: 'Generating...',
+      editTitleHint: 'Click to edit title',
+      inputTitlePlaceholder: 'Enter title...',
+      defaultOptionPrefix: 'Option',
+      defaultSoundName: 'Sound effect file',
+      generatedImageAlt: 'Generated image',
+      lastFrameAlt: 'Last frame',
+      customizeVoiceLabel: 'Customize voice',
+      systemVoiceLabel: 'System',
+      edit: 'Edit',
+      inputSceneName: 'Please enter scene name',
+      addScene: 'Add Scene',
+      noSceneYet: 'No scene yet',
     },
   },
 

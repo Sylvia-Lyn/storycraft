@@ -22,6 +22,7 @@ class ApiInterceptor {
     private static instance: ApiInterceptor;
     private onTokenExpired: (() => void) | null = null;
     private onTokenRefresh: (() => Promise<boolean>) | null = null;
+    private onUnauthorized: (() => void) | null = null;
 
     public static getInstance(): ApiInterceptor {
         if (!ApiInterceptor.instance) {
@@ -42,6 +43,49 @@ class ApiInterceptor {
      */
     public setTokenRefreshCallback(callback: () => Promise<boolean>): void {
         this.onTokenRefresh = callback;
+    }
+
+    /**
+     * 设置未授权回调函数（用户未登陆时调用）
+     */
+    public setUnauthorizedCallback(callback: () => void): void {
+        this.onUnauthorized = callback;
+    }
+
+    /**
+     * 触发未授权错误（当用户未登录时调用）
+     */
+    public triggerUnauthorized(): void {
+        console.log('🔴 [ApiInterceptor] 触发未授权错误');
+        if (this.onUnauthorized) {
+            this.onUnauthorized();
+        } else {
+            // 如果没有设置回调，直接重定向
+            console.warn('⚠️ [ApiInterceptor] 未授权回调未设置，直接重定向到登录页面');
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/#/app/login';
+        }
+    }
+
+    /**
+     * 检查响应是否为未授权错误（用户未登陆）
+     */
+    private isUnauthorizedError(errorData?: any): boolean {
+        if (!errorData) return false;
+
+        // 检查响应中的code字段是否为401
+        if (errorData.code === 401) {
+            return true;
+        }
+
+        // 检查错误消息
+        const message = errorData.message || '';
+        if (message.includes('用户未登录') || message.includes('未登陆')) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -103,6 +147,22 @@ class ApiInterceptor {
             }
         } catch (error) {
             console.error('解析响应数据失败:', error);
+        }
+
+        // 首先检查是否为未授权错误（用户未登陆）
+        if (this.isUnauthorizedError(responseData)) {
+            console.log('检测到用户未登陆，触发重定向到登陆页面');
+            message.error('用户未登录，请重新登陆');
+
+            if (this.onUnauthorized) {
+                this.onUnauthorized();
+            }
+
+            return {
+                success: false,
+                error: '用户未登录',
+                code: 401
+            };
         }
 
         // 检查是否为token过期错误
@@ -188,14 +248,30 @@ class ApiInterceptor {
     ): Promise<ApiResponse<T>> {
         try {
             const result = await callFunction();
-            
+
             // 检查云函数返回的错误
             if (result && result.result) {
-                const { success, error, code } = result.result;
-                
+                const { success, error, code, message: resultMessage } = result.result;
+
+                // 首先检查是否为未授权错误
+                if (this.isUnauthorizedError({ code, message: resultMessage, error })) {
+                    console.log('云函数检测到用户未登陆，触发重定向到登陆页面');
+                    message.error('用户未登录，请重新登陆');
+
+                    if (this.onUnauthorized) {
+                        this.onUnauthorized();
+                    }
+
+                    return {
+                        success: false,
+                        error: '用户未登录',
+                        code: 401
+                    };
+                }
+
                 // 检查是否为token过期错误
                 if (!success && this.isTokenExpiredError(
-                    { status: code || 401 } as Response, 
+                    { status: code || 401 } as Response,
                     { error, code }
                 )) {
                     console.log('云函数检测到token过期，尝试刷新token');

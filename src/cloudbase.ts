@@ -102,37 +102,77 @@ export function getAuthHeader(): string | null {
     return bearerToken;
 }
 
-// 确保已登录到 CloudBase（如未登录则匿名登录）
-export async function ensureCloudbaseLogin(): Promise<void> {
-    const authInstance = getCloudbaseAuth();
-    const anyAuth: any = authInstance as any;
-    
-    // 使用本地持久化，减少凭证丢失导致的过期问题
+// 使用 JWT Token 登录到 CloudBase
+export async function loginWithJWT(jwtToken: string): Promise<boolean> {
     try {
-        anyAuth?.persistence && anyAuth.persistence('local');
-    } catch (_) {}
-    
-    try {
-        const loginState = anyAuth?.getLoginState ? await anyAuth.getLoginState() : null;
-        console.log('🔍 [CloudBase] 当前登录状态:', loginState ? '已登录' : '未登录');
-        
-        if (!loginState) {
-            console.log('🔄 [CloudBase] 未登录，尝试匿名登录');
-            if (anyAuth?.signInAnonymously) {
-                await anyAuth.signInAnonymously();
-                console.log('✅ [CloudBase] 匿名登录成功');
+        const authInstance = getCloudbaseAuth();
+        const anyAuth: any = authInstance as any;
+
+        // 使用本地持久化，减少凭证丢失导致的过期问题
+        try {
+            anyAuth?.persistence && anyAuth.persistence('local');
+        } catch (_) {}
+
+        console.log('🔐 [CloudBase] 尝试使用 JWT Token 登录...');
+
+        // 尝试使用 signInWithCustomToken（CloudBase 支持的自定义 token 登录）
+        if (anyAuth?.signInWithCustomToken) {
+            try {
+                await anyAuth.signInWithCustomToken(jwtToken);
+                console.log('✅ [CloudBase] JWT Token 登录成功');
+                return true;
+            } catch (e) {
+                console.warn('⚠️ [CloudBase] signInWithCustomToken 失败:', e);
             }
         }
-    } catch (e) {
-        console.warn('⚠️ [CloudBase] 获取登录状态失败:', e);
-        // 某些环境下 getLoginState 可能抛错，直接尝试匿名登录（若可用）
-        try { 
-            if (anyAuth?.signInAnonymously) { 
-                await anyAuth.signInAnonymously();
-                console.log('✅ [CloudBase] 匿名登录成功（备用方法）');
-            } 
-        } catch (anonymousError) {
-            console.warn('⚠️ [CloudBase] 匿名登录也失败了:', anonymousError);
+
+        // 如果 JWT 登录失败，尝试匿名登录作为后备
+        console.log('🔄 [CloudBase] JWT 登录失败，改用匿名登录');
+        if (anyAuth?.signInAnonymously) {
+            await anyAuth.signInAnonymously();
+            console.log('✅ [CloudBase] 匿名登录成功');
+            return true;
         }
+
+        return false;
+    } catch (error) {
+        console.error('❌ [CloudBase] CloudBase 登录失败:', error);
+        return false;
+    }
+}
+
+// 确保已登录到 CloudBase（如未登录则匿名登录）
+export async function ensureCloudbaseLogin(): Promise<void> {
+    try {
+        // 首先检查是否有 JWT token
+        const token = localStorage.getItem('token');
+        if (token) {
+            console.log('🔐 [CloudBase] 发现 JWT Token，尝试使用 Token 登录');
+            const success = await loginWithJWT(token);
+            if (success) {
+                console.log('✅ [CloudBase] Token 登录成功');
+                return;
+            }
+        }
+
+        // 如果没有 Token 或 Token 登录失败，尝试匿名登录
+        console.log('🔄 [CloudBase] 尝试匿名登录');
+        const authInstance = getCloudbaseAuth();
+        const anyAuth: any = authInstance as any;
+
+        // 使用本地持久化
+        try {
+            anyAuth?.persistence && anyAuth.persistence('local');
+        } catch (_) {}
+
+        const loginState = anyAuth?.getLoginState ? await anyAuth.getLoginState() : null;
+        console.log('🔍 [CloudBase] 当前登录状态:', loginState ? '已登录' : '未登录');
+
+        if (!loginState && anyAuth?.signInAnonymously) {
+            await anyAuth.signInAnonymously();
+            console.log('✅ [CloudBase] 匿名登录成功');
+        }
+    } catch (e) {
+        console.warn('⚠️ [CloudBase] 登录过程异常:', e);
     }
 }

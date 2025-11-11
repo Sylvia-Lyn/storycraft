@@ -6,6 +6,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { getCloudbaseAuth, getAuthHeader } from '../cloudbase';
 import { paymentService } from '../services/paymentService';
 import { useI18n } from '../contexts/I18nContext';
+import AuthService from '../services/authService';
+import { setCurrentUserId } from '../services/shortplayService';
 import { log } from 'console';
 
 const { Title, Text } = Typography;
@@ -66,7 +68,7 @@ const emailValidationRules = {
 };
 
 const LoginPage: React.FC = () => {
-    const [mode, setMode] = useState<'phone' | 'account' | 'email'>('phone');
+    const [mode, setMode] = useState<'phone' | 'account' | 'email'>('account');
     const [countryCode, setCountryCode] = useState('+86');
     const [phone, setPhone] = useState('');
     const [code, setCode] = useState('');
@@ -97,7 +99,7 @@ const LoginPage: React.FC = () => {
                     user_point: userData.user_point || '0',
                     subscription_expires_at: userData.subscription_expires_at,
                     subscription_status: userData.subscription_status,
-                    userId: userData.userId
+                    userId: userData.userId || userData.user_id || 0  // 确保userId存在
                 };
                 // 提取纯token，去掉Bearer前缀
                 const token = authHeader ? authHeader.replace('Bearer ', '') : null;
@@ -187,15 +189,23 @@ const LoginPage: React.FC = () => {
             });
 
             setMsg(t('login.loginSuccess'));
-            message.success(t('login.loginSuccess'));
+            // message.success(t('login.loginSuccess')); // 去掉登录成功的toast提示
             const authHeader = getAuthHeader();
             // 提取纯token，去掉Bearer前缀
             const token = authHeader ? authHeader.replace('Bearer ', '') : null;
             
             // 获取用户信息并更新AuthContext
             const userInfoUpdated = await fetchAndUpdateUserInfo(authHeader);
+
+            // 获取返回路径
+            const redirectPath = sessionStorage.getItem('redirectAfterLogin');
+            const finalRedirectPath = (redirectPath && redirectPath !== '/app/login') ? redirectPath : '/app/home';
+
             if (userInfoUpdated) {
-                navigate('/app/home');
+                if (redirectPath && redirectPath !== '/app/login') {
+                    sessionStorage.removeItem('redirectAfterLogin');
+                }
+                navigate(finalRedirectPath);
             } else {
                 // 如果获取用户信息失败，使用默认信息
                 const userInfo = {
@@ -203,11 +213,15 @@ const LoginPage: React.FC = () => {
                     user_name: phoneNumber,
                     user_email: '',
                     user_plan: 'free' as const,
-                    user_point: '0'
+                    user_point: '0',
+                    userId: 1  // 使用默认userId
                 };
                 console.log('手机号登录 - 使用默认用户信息:', userInfo);
                 await login(userInfo, token || '');
-                navigate('/app/home');
+                if (redirectPath && redirectPath !== '/app/login') {
+                    sessionStorage.removeItem('redirectAfterLogin');
+                }
+                navigate(finalRedirectPath);
             }
         } catch (e) {
             console.error('登录失败:', e);
@@ -228,37 +242,52 @@ const LoginPage: React.FC = () => {
         setLoading(true);
         setMsg('');
         try {
-            await getCloudbaseAuth().signIn({
-                username,
-                password,
-            });
-            setMsg(t('common.loginSuccess'));
-            message.success(t('common.loginSuccess'));
+            // 调用统一的API端点登录
+            const response = await AuthService.login(username, password);
 
-            const authHeader = getAuthHeader();
-            // 提取纯token，去掉Bearer前缀
-            const token = authHeader ? authHeader.replace('Bearer ', '') : null;
-            
-            // 获取用户信息并更新AuthContext
-            const userInfoUpdated = await fetchAndUpdateUserInfo(authHeader);
-            if (userInfoUpdated) {
-                navigate('/app/home');
-            } else {
-                // 如果获取用户信息失败，使用默认信息
+            if (response.data && response.data.userId) {
+                // 使用username作为token（后端不返回JWT token）
+                const token = response.data.username;
+                const userId = response.data.userId;
+
+                // 构建用户信息，确保包含userId字段供后续API调用使用
                 const userInfo = {
-                    user_id: 1,
-                    user_name: username,
+                    user_id: parseInt(String(userId)) || 1,
+                    user_name: response.data.username || username,
                     user_email: '',
                     user_plan: 'free' as const,
-                    user_point: '0'
+                    user_point: '0',
+                    userId: userId  // 重要：需要这个字段用于API调用
                 };
-                console.log('用户名密码登录 - 使用默认用户信息:', userInfo);
-                await login(userInfo, token || '');
-                navigate('/app/home');
+
+                // 保存userId和userName到sessionStorage（仅当前标签页有效）
+                sessionStorage.setItem('userId', String(userId));
+                sessionStorage.setItem('userName', response.data.username || username);
+                console.log('💾 [LoginPage] userId已保存到sessionStorage:', userId);
+                console.log('💾 [LoginPage] userName已保存到sessionStorage:', response.data.username || username);
+
+                // 设置userId到shortplayService（基于session，不持久化）
+                setCurrentUserId(userId);
+
+                setMsg(t('common.loginSuccess'));
+                // message.success(t('common.loginSuccess')); // 去掉登录成功的toast提示
+                console.log('用户名密码登录成功:', userInfo);
+
+                // 更新AuthContext
+                await login(userInfo, token);
+
+                // 检查是否有保存的返回路径，有则返回原页面，否则返回首页
+                const redirectPath = sessionStorage.getItem('redirectAfterLogin');
+                if (redirectPath && redirectPath !== '/app/login') {
+                    sessionStorage.removeItem('redirectAfterLogin');
+                    navigate(redirectPath);
+                } else {
+                    navigate('/app/home');
+                }
             }
         } catch (e) {
             console.error('登录失败:', e);
-            const errorMsg = e.message || t('common.loginFailed');
+            const errorMsg = e instanceof Error ? e.message : t('common.loginFailed');
             setMsg(`${t('common.loginFailed')}: ${errorMsg}`);
             message.error(`${t('common.loginFailed')}: ${errorMsg}`);
         }
@@ -281,15 +310,23 @@ const LoginPage: React.FC = () => {
                 username: email,
                 password,
             });
-            message.success(t('common.loginSuccess'));
+            // message.success(t('common.loginSuccess')); // 去掉登录成功的toast提示
             const authHeader = getAuthHeader();
             // 提取纯token，去掉Bearer前缀
             const token = authHeader ? authHeader.replace('Bearer ', '') : null;
             
             // 获取用户信息并更新AuthContext
             const userInfoUpdated = await fetchAndUpdateUserInfo(authHeader);
+
+            // 获取返回路径
+            const redirectPath = sessionStorage.getItem('redirectAfterLogin');
+            const finalRedirectPath = (redirectPath && redirectPath !== '/app/login') ? redirectPath : '/app/home';
+
             if (userInfoUpdated) {
-                navigate('/app/home');
+                if (redirectPath && redirectPath !== '/app/login') {
+                    sessionStorage.removeItem('redirectAfterLogin');
+                }
+                navigate(finalRedirectPath);
             } else {
                 // 如果获取用户信息失败，使用默认信息
                 const userInfo = {
@@ -298,10 +335,14 @@ const LoginPage: React.FC = () => {
                     user_email: email,
                     user_plan: 'free' as const,
                     user_point: '0',
+                    userId: 1  // 使用默认userId
                 };
                 console.log('邮箱登录 - 使用默认用户信息:', userInfo);
                 await login(userInfo, token || '');
-                navigate('/app/home');
+                if (redirectPath && redirectPath !== '/app/login') {
+                    sessionStorage.removeItem('redirectAfterLogin');
+                }
+                navigate(finalRedirectPath);
             }
         } catch (e) {
             console.error('登录失败:', e);
@@ -320,7 +361,8 @@ const LoginPage: React.FC = () => {
                     <Title level={2} style={{ marginBottom: 0 }}>{t('login.welcomeTitle')}</Title>
                     <Text type="secondary">{t('login.subtitle')}</Text>
                 </div>
-                <div style={{ display: 'flex', marginBottom: 16 }}>
+                {/* 登录方式切换 - 仅保留用户名密码登录 */}
+                {/* <div style={{ display: 'flex', marginBottom: 16 }}>
                     <button
                         onClick={() => setMode('phone')}
                         style={{
@@ -360,102 +402,38 @@ const LoginPage: React.FC = () => {
                     >
                         {t('login.emailLogin')}
                     </button>
-                </div>
+                </div> */}
+                {/* 仅保留用户名密码登录表单 */}
+                <>
+                    <Form.Item label={t('login.username')} required>
+                        <Input
+                            prefix={<UserOutlined />}
+                            placeholder={t('login.enterUsername')}
+                            value={username}
+                            onChange={e => setUsername(e.target.value)}
+                        />
+                    </Form.Item>
+                    <Form.Item label={t('login.password')} required>
+                        <Input.Password
+                            prefix={<LockOutlined />}
+                            placeholder={t('login.enterPassword')}
+                            value={password}
+                            onChange={e => setPassword(e.target.value)}
+                        />
+                    </Form.Item>
+                    <Button type="primary" block loading={loading} onClick={handleAccountLogin} disabled={loading || !username || !password}>
+                        {t('login.login')}
+                    </Button>
+                </>
+                {/* 隐藏的登录方式
                 {mode === 'phone' ? (
-                    <>
-                        <Form.Item label={t('login.phoneNumber')} required>
-                            <Space.Compact style={{width: '100%' }}>
-                                <Select
-                                    showSearch
-                                    value={countryCode}
-                                    style={{ width: 100 }}
-                                    onChange={setCountryCode}
-                                    optionFilterProp="children"
-                                    filterOption={(input, option) =>
-                                        String(option?.children).toLowerCase().includes(input.toLowerCase())
-                                    }
-                                >
-                                    <Option value="+86">{t('login.countryOptions.china')}</Option>
-                                    <Option value="+852">{t('login.countryOptions.hongkong')}</Option>
-                                    <Option value="+853">{t('login.countryOptions.macau')}</Option>
-                                    <Option value="+886">{t('login.countryOptions.taiwan')}</Option>
-                                </Select>
-                                <Input
-                                    style={{ flex: 1 }}
-                                    placeholder={t('login.enterPhoneNumber')}
-                                    prefix={<PhoneOutlined />}
-                                    value={phone}
-                                    onChange={e => setPhone(e.target.value)}
-                                />
-                            </Space.Compact>
-                        </Form.Item>
-                        {/* 手机号格式调试信息 */}
-                        <div style={{ marginBottom: 8, color: '#888', fontSize: 12 }}>
-                            {t('login.formattedPhoneNumber')}: <span style={{ color: '#333' }}>{debugPhone}</span>
-                        </div>
-                        <Form.Item label={t('login.verificationCode')} required>
-                            <Space.Compact style={{ width: '100%' }}>
-                                <Input
-                                    style={{ flex: 1 }}
-                                    placeholder={t('login.enterVerificationCode')}
-                                    value={code}
-                                    onChange={e => setCode(e.target.value)}
-                                />
-                                <Button style={{ width: 120 }} onClick={handleGetCode} disabled={loading || !phone} loading={loading}>
-                                    {t('login.sendCode')}
-                                </Button>
-                            </Space.Compact>
-                        </Form.Item>
-                        <Button type="primary" block loading={loading} onClick={handlePhoneLogin} disabled={loading || !phone || !code}>
-                            {t('login.login')}
-                        </Button>
-                    </>
+                    ...手机号登录表单...
                 ) :  mode === 'account' ? (
-                    <>
-                        <Form.Item label={t('login.username')} required>
-                            <Input
-                                prefix={<UserOutlined />}
-                                placeholder={t('login.enterUsername')}
-                                value={username}
-                                onChange={e => setUsername(e.target.value)}
-                            />
-                        </Form.Item>
-                        <Form.Item label={t('login.password')} required>
-                            <Input.Password
-                                prefix={<LockOutlined />}
-                                placeholder={t('login.enterPassword')}
-                                value={password}
-                                onChange={e => setPassword(e.target.value)}
-                            />
-                        </Form.Item>
-                        <Button type="primary" block loading={loading} onClick={handleAccountLogin} disabled={loading || !username || !password}>
-                            {t('login.login')}
-                        </Button>
-                    </>
+                    ...用户名密码登录表单...
                 ) : (
-                    <>
-                        {/* 邮箱登录表单 */}
-                        <Form.Item label={t('login.email')} required>
-                            <Input
-                                prefix={<MailOutlined />}
-                                placeholder={t('login.enterEmail')}
-                                value={email}
-                                onChange={e => setEmail(e.target.value)}
-                            />
-                        </Form.Item>
-                        <Form.Item label={t('login.password')} required>
-                            <Input.Password
-                                prefix={<LockOutlined />}
-                                placeholder={t('login.enterPassword')}
-                                value={password}
-                                onChange={e => setPassword(e.target.value)}
-                            />
-                        </Form.Item>
-                        <Button type="primary" block loading={loading} onClick={handleEmailLogin} disabled={loading || !email || !password}>
-                            {t('login.login')}
-                        </Button>
-                    </>
-                )}
+                    ...邮箱登录表单...
+                )
+                */}
                 {msg && <div style={{ marginTop: 16, color: msg.includes('成功') ? 'green' : 'red' }}>{msg}</div>}
                 <Form.Item style={{ marginBottom: 0, textAlign: 'center' }}>
                     <Text type="secondary">{t('login.noAccount')} <Link to="/app/register">{t('login.registerNow')}</Link></Text>
